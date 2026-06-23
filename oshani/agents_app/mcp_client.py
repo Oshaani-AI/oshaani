@@ -81,18 +81,26 @@ class MCPClient:
         """Validate command and arguments for security."""
         # Allow only explicitly approved executables for stdio MCP servers.
         # Keep this list narrow and update intentionally when adding support.
+        # Map aliases to canonical executable names we will actually execute.
         allowed_commands = {
-            "python",
-            "python3",
-            "node",
-            "npx",
-            "uvx",
+            "python": "python3",
+            "python3": "python3",
+            "node": "node",
+            "npx": "npx",
+            "uvx": "uvx",
         }
 
         normalized_command = (command or "").strip()
         command_basename = os.path.basename(normalized_command).lower()
-        if command_basename not in allowed_commands:
+        canonical_command = allowed_commands.get(command_basename)
+        if not canonical_command:
             logger.error(f"[MCPClient] Command not in allowlist: {command}")
+            return False
+
+        # Do not allow arbitrary absolute/relative paths from user input.
+        # Only allow known executable names from the allowlist.
+        if normalized_command not in allowed_commands:
+            logger.error(f"[MCPClient] Non-canonical command format rejected: {command}")
             return False
         
         # Block shell metacharacters in command
@@ -106,6 +114,9 @@ class MCPClient:
             if any(char in arg for char in dangerous_chars):
                 logger.error(f"[MCPClient] Dangerous characters in argument: {arg}")
                 return False
+
+        # Store canonical safe executable for process launch.
+        self.command = canonical_command
         
         return True
     
