@@ -5,6 +5,7 @@ import subprocess
 import threading
 import queue
 import time
+import os
 from typing import Dict, Any, List, Optional
 from enum import Enum
 
@@ -78,15 +79,25 @@ class MCPClient:
     
     def _validate_command(self, command: str, args: List[str]) -> bool:
         """Validate command and arguments for security."""
-        # Block dangerous commands
-        dangerous_commands = ['rm', 'del', 'format', 'mkfs', 'dd', 'shutdown', 'reboot', 'halt']
-        if any(cmd in command.lower() for cmd in dangerous_commands):
-            logger.error(f"[MCPClient] Dangerous command blocked: {command}")
+        # Allow only explicitly approved executables for stdio MCP servers.
+        # Keep this list narrow and update intentionally when adding support.
+        allowed_commands = {
+            "python",
+            "python3",
+            "node",
+            "npx",
+            "uvx",
+        }
+
+        normalized_command = (command or "").strip()
+        command_basename = os.path.basename(normalized_command).lower()
+        if command_basename not in allowed_commands:
+            logger.error(f"[MCPClient] Command not in allowlist: {command}")
             return False
         
         # Block shell metacharacters in command
         dangerous_chars = [';', '&', '|', '`', '$', '(', ')', '<', '>', '\n', '\r']
-        if any(char in command for char in dangerous_chars):
+        if any(char in normalized_command for char in dangerous_chars):
             logger.error(f"[MCPClient] Dangerous characters in command: {command}")
             return False
         
