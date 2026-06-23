@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>{% block title %}AI Agents Dashboard{% endblock %}</title>
+    {% block extra_head %}{% endblock %}
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-draft { background-color: #e9ecef; color: #495057; }
+        .status-training { background-color: #fff3cd; color: #856404; }
+        .status-testing { background-color: #cfe2ff; color: #084298; }
+        .status-published { background-color: #d1e7dd; color: #0f5132; }
+        
+        /* Navigation bar enhancements */
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            z-index: 1030 !important;
+            position: relative;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar-brand img {
+            height: 32px;
+            width: auto;
+        }
+        .navbar-nav .nav-link {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s;
+        }
+        .navbar-nav .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.25rem;
+        }
+        .navbar-nav .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 0.25rem;
+        }
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1055 !important; /* Ensure dropdowns appear above other content */
+        }
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s;
+        }
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        .dropdown-item i {
+            width: 1.25rem;
+            margin-right: 0.5rem;
+        }
+        /* Ensure navbar dropdowns are always visible */
+        .navbar-nav .dropdown {
+            position: static;
+        }
+        .navbar-nav .dropdown-menu {
+            z-index: 1055 !important;
+        }
+        /* Fix for user dropdown specifically */
+        #userDropdown + .dropdown-menu {
+            z-index: 1055 !important;
+        }
+        .navbar-toggler {
+            border: none;
+        }
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .navbar-brand img {
+                height: 28px;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.625rem 0.875rem;
+                min-height: 44px; /* Touch-friendly */
+                display: flex;
+                align-items: center;
+            }
+            
+            .dropdown-menu {
+                max-width: 100%;
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.625rem 0.875rem;
+                min-height: 44px; /* Touch-friendly */
+                display: flex;
+                align-items: center;
+            }
+            
+            .btn {
+                min-height: 44px; /* Touch-friendly */
+                padding: 0.625rem 1rem;
+            }
+            
+            .form-control,
+            .form-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px; /* Touch-friendly */
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .navbar-brand img {
+                height: 24px;
+            }
+        }
+        
+        /* ========== Left Sidebar Layout ========== */
+        :root {
+            --sidebar-w: 248px;
+            --sidebar-w-collapsed: 72px;
+            --topbar-h: 56px;
+            --side-bg: #0b1220;
+            --side-bg-2: #0f172a;
+            --side-ink: #e2e8f0;
+            --side-ink-soft: rgba(226,232,240,0.72);
+            --side-ink-mute: rgba(226,232,240,0.55);
+            --side-border: rgba(255,255,255,0.06);
+            --side-accent: #6366f1;
+        }
+        body { padding-left: var(--sidebar-w); }
+        .app-sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: linear-gradient(180deg, var(--side-bg) 0%, var(--side-bg-2) 100%);
+            color: var(--side-ink);
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--side-border);
+            z-index: 1040;
+            box-shadow: 1px 0 0 rgba(0,0,0,0.04);
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid var(--side-border);
+        }
+        .sidebar-brand .navbar-brand {
+            color: #fff; text-decoration: none;
+            font-family: 'Sora', 'Inter', system-ui, sans-serif;
+            font-weight: 700; font-size: 1.05rem;
+            display: inline-flex; align-items: center; gap: 10px; margin: 0;
+        }
+        .sidebar-brand .navbar-brand img { height: 30px; width: auto; }
+        .sidebar-brand .navbar-brand span { letter-spacing: -0.01em; }
+        .sidebar-close {
+            background: transparent; border: 0; color: var(--side-ink-soft);
+            font-size: 1.4rem; padding: 4px 8px; border-radius: 8px; cursor: pointer;
+        }
+        .sidebar-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+        .sidebar-section-label {
+            font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--side-ink-mute); padding: 14px 18px 6px; font-weight: 700;
+        }
+
+        .sidebar-nav {
+            flex: 1; min-height: 0; overflow-y: auto;
+            padding: 8px 10px 10px;
+            display: flex; flex-direction: column; gap: 2px;
+            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar { width: 6px; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+        .sidebar-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px; border-radius: 10px;
+            color: var(--side-ink-soft); text-decoration: none;
+            font-size: 0.93rem; font-weight: 500;
+            transition: background 0.15s ease, color 0.15s ease;
+            position: relative;
+        }
+        .sidebar-link i { font-size: 1.05rem; width: 22px; text-align: center; color: var(--side-ink-mute); }
+        .sidebar-link .badge-dot {
+            margin-left: auto; background: rgba(99,102,241,0.25); color: #c7d2fe;
+            font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+        }
+        .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .sidebar-link:hover i { color: #fff; }
+        .sidebar-link.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(139,92,246,0.18));
+        }
+        .sidebar-link.active::before {
+            content: ''; position: absolute; left: -10px; top: 8px; bottom: 8px; width: 3px;
+            background: var(--side-accent); border-radius: 0 3px 3px 0;
+        }
+        .sidebar-link.active i { color: #c7d2fe; }
+
+        .sidebar-credits {
+            margin: 8px 12px 0;
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 12px;
+            background: rgba(245,158,11,0.10); color: #fde68a;
+            border: 1px solid rgba(245,158,11,0.25);
+            text-decoration: none; transition: background 0.15s ease;
+        }
+        .sidebar-credits:hover { background: rgba(245,158,11,0.18); color: #fef3c7; }
+        .sidebar-credits i { font-size: 1.2rem; }
+        .sidebar-credits .lbl { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+        .sidebar-credits .val { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem; line-height: 1; margin-top: 2px; color: #fff; }
+
+        .sidebar-user {
+            padding: 10px 12px 14px; border-top: 1px solid var(--side-border);
+        }
+        .sidebar-user .user-trigger {
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            padding: 10px; border-radius: 12px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--side-border);
+            color: var(--side-ink); text-decoration: none; cursor: pointer;
+        }
+        .sidebar-user .user-trigger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .sidebar-user .user-trigger::after { display: none; }
+        .sidebar-user .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff; display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.92rem; flex: 0 0 34px;
+        }
+        .sidebar-user .user-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .sidebar-user .user-meta .name {
+            font-size: 0.9rem; font-weight: 600; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-user .user-meta .role { font-size: 0.74rem; color: var(--side-ink-mute); }
+        .sidebar-user .user-trigger > i.bi-three-dots-vertical { color: var(--side-ink-mute); margin-left: auto; }
+        .sidebar-user .dropdown-menu {
+            background: #fff; color: var(--bs-body-color);
+            border: 0; box-shadow: 0 18px 40px rgba(15,23,42,0.18);
+            border-radius: 12px; padding: 6px; min-width: 220px;
+        }
+        .sidebar-user .dropdown-header { color: #475569; font-size: 0.74rem; padding: 8px 10px 4px; }
+        .sidebar-user .dropdown-item { border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+        .sidebar-user .dropdown-item i { width: 1.1rem; margin-right: 8px; color: #475569; }
+
+        /* Mobile top bar (only visible < lg) */
+        .mobile-topbar {
+            display: none;
+            position: fixed; left: 0; right: 0; top: 0; height: var(--topbar-h);
+            background: var(--side-bg-2); color: #fff;
+            align-items: center; justify-content: space-between;
+            padding: 0 12px; z-index: 1030;
+            border-bottom: 1px solid var(--side-border);
+        }
+        .mobile-topbar .navbar-brand {
+            color: #fff; font-family: 'Sora', 'Inter', sans-serif; font-weight: 700;
+            font-size: 1rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin: 0;
+        }
+        .mobile-topbar .navbar-brand img { height: 26px; width: auto; }
+        .mobile-topbar .icon-btn {
+            background: transparent; border: 0; color: #fff;
+            width: 40px; height: 40px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer;
+        }
+        .mobile-topbar .icon-btn:hover { background: rgba(255,255,255,0.08); }
+
+        /* Backdrop on mobile when sidebar open */
+        .sidebar-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(2,6,23,0.55);
+            z-index: 1035;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .sidebar-backdrop.open { opacity: 1; visibility: visible; }
+
+        /* Main content offset already handled by body padding-left */
+        html, body { min-height: 100%; }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        .app-main {
+            flex: 1 0 auto;
+            display: flex; flex-direction: column;
+            width: 100%; min-width: 0;
+        }
+        .app-main > .container-fluid { flex: 1 0 auto; }
+        .app-footer {
+            flex-shrink: 0;
+            margin-top: auto;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 18px 0 22px;
+        }
+        .app-footer .footer-inner {
+            text-align: center;
+            color: #64748b;
+        }
+        .app-footer a { color: #475569; text-decoration: none; }
+        .app-footer a:hover { color: #1e293b; text-decoration: underline; }
+        .app-footer .footer-social { margin-bottom: 8px; }
+        .app-footer .footer-social a { margin: 0 8px; display: inline-flex; }
+        .app-footer .footer-social i { font-size: 1.15rem; color: #64748b; transition: color 0.15s ease; }
+        .app-footer .footer-social a:hover i { color: #6366f1; }
+
+        @media (max-width: 991.98px) {
+            body { padding-left: 0; padding-top: var(--topbar-h); }
+            .mobile-topbar { display: flex; }
+            .app-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                width: 280px;
+            }
+            .app-sidebar.open { transform: translateX(0); box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+        }
+
+        /* Driver.js Tour Custom Styles */
+        .oshani-tour-popover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+        }
+        
+        .oshani-tour-popover .driver-popover-title {
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 1.2rem !important;
+        }
+        
+        .oshani-tour-popover .driver-popover-description {
+            color: rgba(255, 255, 255, 0.95) !important;
+            font-size: 1rem !important;
+            line-height: 1.5 !important;
+        }
+        
+        .oshani-tour-popover .driver-popover-footer button {
+            background: rgba(255,255,255,0.2) !important;
+            color: white !important;
+            border: 1px solid rgba(255,255,255,0.3) !important;
+            border-radius: 6px !important;
+            padding: 8px 16px !important;
+            font-weight: 500 !important;
+        }
+        
+        .oshani-tour-popover .driver-popover-footer button:hover {
+            background: rgba(255,255,255,0.3) !important;
+        }
+        
+        .oshani-tour-popover .driver-popover-progress-text {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        
+        .driver-active-element {
+            border: 3px solid #667eea !important;
+            border-radius: 8px !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+{% load humanize %}
+<body{% block body_class %}{% endblock %}>
+    <!-- Mobile top bar (visible < lg) -->
+    <header class="mobile-topbar" role="banner">
+        <button type="button" class="icon-btn sidebar-toggle" aria-label="Open menu" aria-controls="appSidebar" aria-expanded="false">
+            <i class="bi bi-list"></i>
+        </button>
+        <a class="navbar-brand" href="{% url 'chat_home' %}">
+            <img src="{% static 'images/logo.svg' %}" alt="Oshani Logo" width="40" height="40" />
+            <span>Oshaani</span>
+        </a>
+        {% if user.is_authenticated %}
+        <a class="icon-btn" href="{% url 'user_profile' %}" aria-label="Profile">
+            <i class="bi bi-person-circle"></i>
+        </a>
+        {% else %}
+        <span class="icon-btn" aria-hidden="true"><i class="bi bi-circle"></i></span>
+        {% endif %}
+    </header>
+
+    <!-- Backdrop for mobile sidebar -->
+    <div class="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Left sidebar -->
+    <aside class="app-sidebar" id="appSidebar" aria-label="Main navigation">
+        <div class="sidebar-brand">
+            <a class="navbar-brand" href="{% url 'chat_home' %}">
+                <img src="{% static 'images/logo.svg' %}" alt="Oshani Logo" width="40" height="40" />
+                <span>Oshaani</span>
+            </a>
+            <button type="button" class="sidebar-close d-lg-none" aria-label="Close menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-section-label">Workspace</div>
+        <nav class="sidebar-nav" aria-label="Primary">
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'chat_home' or request.resolver_match.url_name == 'agent_chat' %}active{% endif %}" href="{% url 'chat_home' %}">
+                <i class="bi bi-chat-dots"></i><span>Chat</span>
+            </a>
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'agents_list' %}active{% endif %}" href="{% url 'agents_list' %}">
+                <i class="bi bi-robot"></i><span>My Agents</span>
+            </a>
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'public_agents_list' %}active{% endif %}" href="{% url 'public_agents_list' %}">
+                <i class="bi bi-globe"></i><span>Public Agents</span>
+            </a>
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'analytics_dashboard' %}active{% endif %}" href="{% url 'analytics_dashboard' %}">
+                <i class="bi bi-bar-chart-line"></i><span>Analytics</span>
+            </a>
+
+            <div class="sidebar-section-label">Resources</div>
+            <a class="sidebar-link" href="https://oshaani.com/blog/">
+                <i class="bi bi-journal-text"></i><span>Blog</span>
+            </a>
+            <a class="sidebar-link" href="https://oshaani.com/sop/">
+                <i class="bi bi-book"></i><span>Documentation</span>
+            </a>
+
+            {% if user.is_staff %}
+            <div class="sidebar-section-label">Admin</div>
+            <a class="sidebar-link {% if request.path|slice:':7' == '/admin/' %}active{% endif %}" href="{% url 'admin:index' %}">
+                <i class="bi bi-shield-lock"></i><span>Admin Console</span>
+            </a>
+            {% endif %}
+        </nav>
+
+
+        {% if user.is_authenticated %}
+        <div class="sidebar-user dropup">
+            <a class="user-trigger dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="user-avatar" aria-hidden="true">{{ user.username|slice:":1"|upper }}</span>
+                <span class="user-meta">
+                    <span class="name">{{ user.username }}</span>
+                    <span class="role">View profile</span>
+                </span>
+                <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li>
+                    <h6 class="dropdown-header">
+                        <i class="bi bi-person"></i> {{ user.username }}
+                    </h6>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'user_profile' %}">
+                    <i class="bi bi-person-gear"></i> Profile &amp; API Keys
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form method="post" action="{% url 'logout' %}" style="display: block;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item" style="border: none; background: none; width: 100%; text-align: left;">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        {% else %}
+        <div class="sidebar-user">
+            <a class="user-trigger" href="{% url 'login' %}">
+                <span class="user-avatar" aria-hidden="true"><i class="bi bi-person"></i></span>
+                <span class="user-meta">
+                    <span class="name">Sign in</span>
+                    <span class="role">Get started free</span>
+                </span>
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            </a>
+        </div>
+        {% endif %}
+    </aside>
+
+    <main class="app-main">
+        <div class="container-fluid mt-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+        <footer class="app-footer">
+            <div class="container">
+                <div class="footer-inner">
+                    {% if social_links %}
+                    <div class="footer-social">
+                        {% for link in social_links %}
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.name }}" title="{{ link.name }}">
+                            <i class="bi {{ link.icon_class }}"></i>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <small>
+                        © 2026 Oshaani AI Agents · 
+                        <a href="{% url 'privacy_policy' %}">Privacy</a> · 
+                        <a href="{% url 'terms_conditions' %}">Terms</a>
+                    </small>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        (function () {
+            var sidebar = document.getElementById('appSidebar');
+            var backdrop = document.querySelector('.sidebar-backdrop');
+            function open() {
+                if (!sidebar) return;
+                sidebar.classList.add('open');
+                backdrop && backdrop.classList.add('open');
+                document.querySelectorAll('.sidebar-toggle').forEach(function (b) { b.setAttribute('aria-expanded', 'true'); });
+            }
+            function close() {
+                if (!sidebar) return;
+                sidebar.classList.remove('open');
+                backdrop && backdrop.classList.remove('open');
+                document.querySelectorAll('.sidebar-toggle').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+            }
+            document.querySelectorAll('.sidebar-toggle').forEach(function (b) { b.addEventListener('click', open); });
+            document.querySelectorAll('.sidebar-close').forEach(function (b) { b.addEventListener('click', close); });
+            backdrop && backdrop.addEventListener('click', close);
+            window.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+            sidebar && sidebar.querySelectorAll('.sidebar-link').forEach(function (a) {
+                a.addEventListener('click', function () { if (window.innerWidth < 992) close(); });
+            });
+        })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Driver.js for onboarding tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Onboarding Tour Script -->
+    {% if user.is_authenticated %}
+    <script>
+        // Check if user needs to see the tour
+        {% if user.profile %}
+        const showTour = {{ user.profile.onboarding_tour_completed|yesno:"false,true"|default:"true" }};
+        {% else %}
+        const showTour = true; // Show tour if profile doesn't exist yet
+        {% endif %}
+        const currentPage = '{{ request.resolver_match.url_name|default:"" }}';
+        
+        // Tour configuration
+        const tourSteps = {
+            'agents_list': [
+                {
+                    element: '.navbar-brand',
+                    popover: {
+                        title: '👋 Welcome to Oshaani AI Agents!',
+                        description: 'This is your AI agent management dashboard. Let\'s take a quick tour to help you get started!',
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '[data-tour="create-agent-btn"]',
+                    popover: {
+                        title: '🤖 Create New Agent',
+                        description: 'Click here to create a new AI agent. You can customize your agent with different AI models, instructions, and training data.',
+                        side: 'bottom',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '.btn-group[role="group"]',
+                    popover: {
+                        title: '📊 Filter Your Agents',
+                        description: 'Use these filters to view agents by their status: Draft, Training, Testing, or Published.',
+                        side: 'bottom',
+                        align: 'center'
+                    }
+                },
+                {
+                    element: 'a[href*="public-agents"]',
+                    popover: {
+                        title: '🌐 Public Agents',
+                        description: 'Explore agents shared by the community. You can use public agents or get inspired by them!',
+                        side: 'bottom',
+                        align: 'center'
+                    }
+                },
+                {
+                    element: '#userDropdown',
+                    popover: {
+                        title: '👤 Your Profile',
+                        description: 'Access your profile settings, API keys, and logout from here.',
+                        side: 'bottom',
+                        align: 'end'
+                    }
+                }
+            ],
+            'agent_create': [
+                {
+                    element: '[data-tour="agent-name-field"]',
+                    popover: {
+                        title: 'Step 1: Name Your Agent',
+                        description: 'Give your agent a descriptive name that explains what it does.',
+                        side: 'right',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '[data-tour="agent-model-field"]',
+                    popover: {
+                        title: 'Step 2: Select AI Model',
+                        description: 'Choose the AI model that best fits your agent\'s needs. Different models have different capabilities.',
+                        side: 'right',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '[data-tour="agent-instruction-field"]',
+                    popover: {
+                        title: 'Step 3: System Instructions',
+                        description: 'Write clear instructions on how your agent should behave and what tasks it should perform.',
+                        side: 'right',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '[data-tour="create-agent-submit"]',
+                    popover: {
+                        title: 'Step 4: Create Agent',
+                        description: 'Once you\'ve filled in the details, click "Create Agent" to proceed.',
+                        side: 'top',
+                        align: 'center'
+                    }
+                }
+            ],
+            'agent_detail': [
+                {
+                    element: '[data-tour="train-agent-btn"]',
+                    popover: {
+                        title: 'Step 5: Train Your Agent',
+                        description: 'Add training data to help your agent learn and provide better responses. Click "Start Training" to continue.',
+                        side: 'left',
+                        align: 'start'
+                    }
+                }
+            ],
+            'agent_train': [
+                {
+                    element: '#upload-form, form[enctype="multipart/form-data"]',
+                    popover: {
+                        title: 'Step 6: Upload Training Data',
+                        description: 'Upload files or add text data to train your agent. This helps it understand context and provide accurate responses.',
+                        side: 'right',
+                        align: 'start'
+                    }
+                },
+                {
+                    element: '[data-tour="test-agent-btn"]',
+                    popover: {
+                        title: 'Step 7: Test Your Agent',
+                        description: 'After training, test your agent to see how it performs. Click "Test Agent" to continue.',
+                        side: 'top',
+                        align: 'center'
+                    }
+                }
+            ],
+            'agent_test': [
+                {
+                    element: '.chat-container, .chat-input-area, #message-input, input[type="text"][placeholder*="message" i]',
+                    popover: {
+                        title: 'Step 8: Test Your Agent',
+                        description: 'Try chatting with your agent to see how it responds. Make sure it behaves as expected.',
+                        side: 'top',
+                        align: 'center'
+                    }
+                },
+                {
+                    element: 'a[href*="detail"], .btn:contains("Back"), a[href*="agent_detail"]',
+                    popover: {
+                        title: 'Step 9: Ready to Publish?',
+                        description: 'If your agent is working well, go back to the agent detail page to publish it.',
+                        side: 'bottom',
+                        align: 'center'
+                    }
+                }
+            ],
+            'agent_publish': [
+                {
+                    element: '[data-tour="publish-submit-btn"]',
+                    popover: {
+                        title: 'Step 10: Publish Your Agent! 🎉',
+                        description: 'Congratulations! You\'re ready to publish. Click "Publish Agent" to make it available via API and share it with others.',
+                        side: 'top',
+                        align: 'center'
+                    }
+                }
+            ]
+        };
+        
+        // Function to mark tour as completed
+        function markTourCompleted() {
+            fetch('/api/auth/complete-onboarding-tour/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'same-origin'
+            }).catch(err => console.log('Tour completion tracking failed:', err));
+        }
+        
+        // Initialize tour if needed
+        if (showTour && tourSteps[currentPage] && tourSteps[currentPage].length > 0) {
+            // Wait for page to load
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    // Filter tour steps to only include elements that exist
+                    const validSteps = tourSteps[currentPage].filter(step => {
+                        if (step.element) {
+                            const element = document.querySelector(step.element);
+                            return element !== null;
+                        }
+                        return false;
+                    });
+                    
+                    if (validSteps.length === 0) {
+                        // No valid steps found, mark tour as completed
+                        markTourCompleted();
+                        return;
+                    }
+                    
+                    // Driver.js v1.3+ API
+                    const driverObj = window.driver.js.driver({
+                        animate: true,
+                        allowClose: true,
+                        overlayOpacity: 0.75,
+                        stagePadding: 10,
+                        stageRadius: 5,
+                        smoothScroll: true,
+                        showProgress: true,
+                        allowKeyboardControl: true,
+                        disableActiveInteraction: false,
+                        showButtons: ['next', 'previous', 'close'],
+                        nextBtnText: 'Next →',
+                        prevBtnText: '← Previous',
+                        doneBtnText: 'Finish Tour',
+                        popoverClass: 'oshani-tour-popover',
+                        onDestroyStarted: () => {
+                            // Mark tour as completed when closed or finished
+                            markTourCompleted();
+                            driverObj.destroy();
+                        },
+                        steps: validSteps
+                    });
+                    
+                    // Start the tour
+                    driverObj.drive();
+                    
+                    // Store driver object globally for restart button
+                    window.oshaniTourDriver = driverObj;
+                    window.oshaniTourSteps = validSteps;
+                }, 800); // Increased delay to ensure all elements are loaded
+            });
+        }
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Function to start tour manually
+        function startTour() {
+            if (!tourSteps[currentPage] || tourSteps[currentPage].length === 0) {
+                alert('No tour available for this page.');
+                return;
+            }
+            
+            // Filter tour steps to only include elements that exist
+            const validSteps = tourSteps[currentPage].filter(step => {
+                if (step.element) {
+                    const element = document.querySelector(step.element);
+                    return element !== null;
+                }
+                return false;
+            });
+            
+            if (validSteps.length === 0) {
+                alert('Tour elements not found on this page.');
+                return;
+            }
+            
+            // Driver.js v1.3+ API
+            const driverObj = window.driver.js.driver({
+                animate: true,
+                allowClose: true,
+                overlayOpacity: 0.75,
+                stagePadding: 10,
+                stageRadius: 5,
+                smoothScroll: true,
+                showProgress: true,
+                allowKeyboardControl: true,
+                disableActiveInteraction: false,
+                showButtons: ['next', 'previous', 'close'],
+                nextBtnText: 'Next →',
+                prevBtnText: '← Previous',
+                doneBtnText: 'Finish Tour',
+                popoverClass: 'oshani-tour-popover',
+                steps: validSteps
+            });
+            
+            driverObj.drive();
+        }
+        
+        // Add click handler for restart tour buttons (using class for multiple buttons)
+        document.addEventListener('DOMContentLoaded', function() {
+            const restartBtns = document.querySelectorAll('.restart-tour-btn');
+            restartBtns.forEach(btn => {
+                btn.addEventListener('click', startTour);
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
+

@@ -1,0 +1,2784 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Operating Procedures - AI Agents Platform</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/bootstrap-icons.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --ink: #0f172a;
+            --ink-soft: #334155;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --brand-1: #6366f1;
+            --brand-2: #8b5cf6;
+            --brand-3: #06b6d4;
+            --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            --info: #2563eb;
+            --warn: #d97706;
+            --ok: #059669;
+            --danger: #dc2626;
+            --code-bg: #0f172a;
+            --code-fg: #e2e8f0;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--ink);
+            background:
+                radial-gradient(900px 420px at 110% -10%, rgba(139, 92, 246, 0.08), transparent 60%),
+                radial-gradient(800px 400px at -10% 0%, rgba(6, 182, 212, 0.08), transparent 60%),
+                var(--bg);
+            min-height: 100vh;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .display-font { font-family: 'Sora', 'Inter', sans-serif; letter-spacing: -0.02em; }
+        a { color: var(--brand-1); text-decoration: none; }
+        a:hover { color: #4f46e5; text-decoration: underline; }
+
+        /* Top bar */
+        .sop-topbar {
+            position: sticky; top: 0; z-index: 40;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(160%) blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .sop-topbar-inner {
+            max-width: 1320px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 24px; gap: 12px;
+        }
+        .sop-topbar .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            color: var(--ink); font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.05rem;
+            text-decoration: none;
+        }
+        .sop-topbar .brand-mark {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--grad); color: #fff; font-weight: 800; font-size: 0.85rem;
+            box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+        }
+        .sop-topbar .crumb { color: var(--muted); font-size: 0.92rem; }
+        .sop-topbar .topbar-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            border-radius: 999px; padding: 8px 14px;
+            font-weight: 600; font-size: 0.88rem;
+            border: 1px solid var(--border); background: #fff; color: var(--ink);
+            text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+        .btn-pill:hover { border-color: var(--border-strong); color: var(--ink); transform: translateY(-1px); text-decoration: none; }
+        .btn-pill.primary {
+            background: var(--ink); color: #fff; border-color: var(--ink);
+            box-shadow: 0 6px 16px rgba(15,23,42,0.22);
+        }
+        .btn-pill.primary:hover { background: #1e293b; color: #fff; box-shadow: 0 10px 22px rgba(15,23,42,0.28); }
+
+        /* Hero */
+        .sop-hero {
+            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            color: #fff;
+        }
+        .sop-hero::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(700px 360px at 15% 20%, rgba(99,102,241,0.35), transparent 60%),
+                radial-gradient(620px 340px at 85% 80%, rgba(6,182,212,0.25), transparent 60%);
+            pointer-events: none;
+        }
+        .sop-hero-inner {
+            position: relative; max-width: 1320px; margin: 0 auto; padding: 56px 24px 64px;
+        }
+        .sop-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 5px 12px; border-radius: 999px;
+            background: rgba(255,255,255,0.08); color: #c7d2fe;
+            font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+            border: 1px solid rgba(255,255,255,0.12);
+            margin-bottom: 14px;
+        }
+        .sop-hero h1 {
+            font-family: 'Sora', sans-serif; font-weight: 800;
+            font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; letter-spacing: -0.02em;
+            margin: 0 0 10px;
+        }
+        .sop-hero h1 .grad {
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5f3fc 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .sop-hero p.lede { color: #cbd5e1; font-size: 1.05rem; max-width: 720px; margin: 0 0 18px; }
+        .sop-hero .meta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 22px; }
+        .version-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.1); color: #fff;
+            padding: 5px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+        .meta-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: #cbd5e1; font-size: 0.82rem;
+            padding: 5px 12px; border-radius: 999px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .meta-pill i { color: #a5f3fc; }
+        .sop-hero .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-grad {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--grad); color: #fff; border: 0; padding: 12px 20px;
+            border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+            box-shadow: 0 12px 28px rgba(99,102,241,0.4);
+            text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 16px 32px rgba(99,102,241,0.5); color: #fff; text-decoration: none; }
+        .btn-outline-light-2 {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.25);
+            padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+            text-decoration: none; transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .btn-outline-light-2:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); color: #fff; text-decoration: none; }
+
+        /* Layout shell */
+        .sop-shell { max-width: 1320px; margin: 0 auto; padding: 32px 24px 80px; }
+        .sop-container { background: transparent; box-shadow: none; padding: 0; border-radius: 0; max-width: none; margin: 0; }
+
+        .sop-layout {
+            display: grid; grid-template-columns: 260px minmax(0, 1fr);
+            gap: 36px; align-items: start;
+        }
+
+        /* Sidebar TOC */
+        .toc-sidebar {
+            position: sticky; top: 80px;
+            max-height: calc(100vh - 96px);
+            overflow-y: auto;
+            padding: 4px 4px 4px 0;
+        }
+        .toc-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+        }
+        .toc-card h4 {
+            font-family: 'Sora', sans-serif;
+            font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--muted); margin: 0 0 10px;
+        }
+        .toc-card ul { list-style: none; padding: 0; margin: 0; }
+        .toc-card li { padding: 0; }
+        .toc-card a {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 10px; border-radius: 8px;
+            color: var(--ink-soft); font-size: 0.88rem; font-weight: 500;
+            text-decoration: none; line-height: 1.4;
+            border-left: 2px solid transparent;
+        }
+        .toc-card a:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+        .toc-card a.active {
+            background: rgba(99,102,241,0.08); color: #4338ca;
+            border-left-color: var(--brand-1);
+        }
+        .toc-card a .num {
+            color: var(--muted); font-size: 0.78rem; min-width: 22px; text-align: right; font-variant-numeric: tabular-nums;
+        }
+        .toc-card a.active .num { color: var(--brand-1); }
+
+        /* Content card */
+        .sop-content {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 36px;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 12px 28px rgba(15,23,42,0.04);
+        }
+        .sop-content h2, .sop-content h3, .sop-content h4, .sop-content h5 {
+            font-family: 'Sora', 'Inter', sans-serif;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+        }
+        .sop-content h2 { font-size: 1.65rem; }
+        .sop-content h3 { font-size: 1.25rem; margin-top: 1.6rem; }
+        .sop-content h4 { font-size: 1.05rem; margin-top: 1.2rem; color: var(--ink-soft); }
+        .sop-content p { color: var(--ink-soft); }
+        .sop-content ul, .sop-content ol { color: var(--ink-soft); }
+        .sop-content strong { color: var(--ink); }
+
+        /* Section */
+        .section {
+            margin-bottom: 56px; scroll-margin-top: 96px;
+        }
+        .section-title {
+            font-family: 'Sora', sans-serif; font-weight: 700;
+            color: var(--ink); font-size: 1.65rem; line-height: 1.2;
+            margin: 0 0 16px; padding: 0 0 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i { color: var(--brand-1); }
+
+        /* Table of contents (legacy in-page block) */
+        .table-of-contents {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 22px; border-radius: 14px; margin-bottom: 28px;
+        }
+        .table-of-contents h4 {
+            font-family: 'Sora', sans-serif; color: var(--ink);
+            font-size: 1rem; margin: 0 0 12px;
+        }
+        .table-of-contents ul {
+            list-style: none; padding: 0; margin: 0;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px;
+        }
+        .table-of-contents li { padding: 0; }
+        .table-of-contents a {
+            display: block; padding: 7px 10px; border-radius: 8px;
+            color: var(--ink-soft); text-decoration: none; font-weight: 500; font-size: 0.92rem;
+        }
+        .table-of-contents a:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+
+        /* Diagrams */
+        .diagram-container {
+            background: var(--surface-2); border-radius: 14px;
+            padding: 24px; margin: 18px 0;
+            border: 1px solid var(--border);
+        }
+        .flow-box {
+            background: #fff; border: 1px solid var(--border);
+            border-left: 3px solid var(--brand-1);
+            border-radius: 10px;
+            padding: 12px 16px; margin: 8px;
+            text-align: center; font-weight: 600;
+            color: var(--ink);
+            box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .flow-box:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(15,23,42,0.08); }
+        .flow-arrow { text-align: center; font-size: 1.4rem; color: var(--brand-2); margin: 4px 0; }
+        .flow-diagram { display: flex; flex-direction: column; align-items: center; }
+        .flow-row {
+            display: flex; justify-content: center; align-items: center; flex-wrap: wrap; width: 100%;
+        }
+
+        .component-box {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0891b2 100%);
+            color: #fff; border-radius: 14px;
+            padding: 20px; margin: 12px;
+            box-shadow: 0 14px 30px rgba(79,70,229,0.25);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .component-box h5 {
+            margin: 0 0 12px; font-family: 'Sora', sans-serif; font-weight: 700;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .component-box ul { list-style: none; padding: 0; margin: 0; }
+        .component-box li {
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.16);
+            font-size: 0.92rem; color: rgba(255,255,255,0.92);
+        }
+        .component-box li:last-child { border-bottom: none; }
+        .component-box li::before { content: "▸"; margin-right: 8px; color: rgba(255,255,255,0.7); }
+
+        .architecture-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px; margin: 18px 0;
+        }
+
+        /* Callouts */
+        .info-box, .warning-box, .success-box {
+            padding: 14px 16px 14px 18px; margin: 16px 0;
+            border-radius: 12px; border: 1px solid var(--border); position: relative;
+            background: var(--surface-2);
+        }
+        .info-box { background: #eff6ff; border-color: #dbeafe; border-left: 4px solid var(--info); }
+        .warning-box { background: #fffbeb; border-color: #fef3c7; border-left: 4px solid var(--warn); }
+        .success-box { background: #ecfdf5; border-color: #d1fae5; border-left: 4px solid var(--ok); }
+        .info-box strong, .warning-box strong, .success-box strong {
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .info-box strong { color: #1d4ed8; }
+        .warning-box strong { color: #b45309; }
+        .success-box strong { color: #047857; }
+
+        /* Code */
+        code {
+            background: #f1f5f9; padding: 2px 6px; border-radius: 6px;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.88em; color: #be185d; border: 1px solid #e2e8f0;
+        }
+        pre {
+            background: var(--code-bg) !important; color: var(--code-fg) !important;
+            padding: 18px 20px !important; border-radius: 12px !important;
+            overflow-x: auto; font-size: 0.86rem;
+            line-height: 1.6; position: relative;
+            border: 1px solid #1f2937;
+            box-shadow: 0 14px 30px rgba(15,23,42,0.18);
+            margin: 14px 0;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        pre code {
+            background: transparent !important; color: inherit !important; padding: 0 !important;
+            border: 0 !important; border-radius: 0 !important; font-size: inherit;
+            font-family: inherit;
+        }
+        .info-box pre, .warning-box pre, .success-box pre {
+            background: var(--code-bg) !important; color: var(--code-fg) !important;
+        }
+        .copy-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255,255,255,0.06); color: #cbd5e1;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            padding: 4px 10px; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+            font-family: inherit;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .copy-btn.copied { background: var(--ok); color: #fff; border-color: var(--ok); }
+
+        /* Tables */
+        table.table {
+            border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            background: #fff; margin: 18px 0;
+        }
+        table.table thead th {
+            background: var(--surface-2); color: var(--ink);
+            border-bottom: 1px solid var(--border); font-weight: 600;
+        }
+        table.table tbody td { vertical-align: middle; }
+
+        /* Buttons inside content (Bootstrap overrides) */
+        .sop-content .btn-success {
+            background: var(--ok); border-color: var(--ok);
+        }
+        .sop-content .btn-success:hover { background: #047857; border-color: #047857; }
+        .sop-content .btn-primary {
+            background: var(--ink); border-color: var(--ink);
+        }
+        .sop-content .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+        .sop-content .btn-outline-primary {
+            color: var(--brand-1); border-color: var(--brand-1);
+        }
+        .sop-content .btn-outline-primary:hover {
+            background: var(--brand-1); border-color: var(--brand-1); color: #fff;
+        }
+
+        /* Anchor heading hover link */
+        .section-title { position: relative; }
+        .section-title .anchor-link {
+            opacity: 0; transition: opacity 0.15s ease;
+            margin-left: 6px; font-size: 0.9rem; color: var(--muted); text-decoration: none;
+        }
+        .section-title:hover .anchor-link { opacity: 1; }
+
+        /* Floating back-to-top */
+        .to-top {
+            position: fixed; bottom: 24px; right: 24px; z-index: 60;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--ink); color: #fff; border: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 12px 28px rgba(15,23,42,0.3);
+            opacity: 0; transform: translateY(8px); pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .to-top.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        /* Mobile TOC toggle */
+        .mobile-toc-toggle { display: none; }
+
+        @media (max-width: 991px) {
+            .sop-layout { grid-template-columns: 1fr; gap: 18px; }
+            .toc-sidebar {
+                position: static; top: auto; max-height: none; overflow: visible;
+                padding: 0;
+            }
+            .mobile-toc-toggle {
+                display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+                width: 100%; padding: 12px 16px; border-radius: 12px;
+                background: #fff; color: var(--ink); border: 1px solid var(--border);
+                font-weight: 600; cursor: pointer;
+            }
+            .toc-card { display: none; margin-top: 10px; }
+            .toc-card.open { display: block; }
+            .sop-content { padding: 24px 18px; }
+            .sop-hero-inner { padding: 40px 20px 48px; }
+            .sop-topbar .crumb { display: none; }
+            .table-of-contents ul { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            .sop-topbar, .toc-sidebar, .to-top, .sop-hero .actions, .mobile-toc-toggle { display: none !important; }
+            body { background: #fff; }
+            .sop-content { box-shadow: none; border: 0; padding: 0; }
+            .component-box { background: #f1f5f9 !important; color: var(--ink) !important; box-shadow: none; }
+            .component-box li { color: var(--ink-soft) !important; border-color: var(--border) !important; }
+            pre { background: #f8fafc; color: var(--ink); box-shadow: none; border-color: var(--border); }
+        }
+    </style>
+</head>
+<body>
+    <header class="sop-topbar" role="banner">
+        <div class="sop-topbar-inner">
+            <a href="{% url 'home' %}" class="brand" aria-label="Oshaani home">
+                <span class="brand-mark">O</span>
+                <span>Oshaani</span>
+                <span class="crumb"> · Docs / SOP</span>
+            </a>
+            <div class="topbar-actions">
+                <a href="{% url 'agents_list' %}" class="btn-pill" aria-label="Back to dashboard">
+                    <i class="bi bi-grid-1x2"></i> Dashboard
+                </a>
+                <a href="{% url 'download_sop_pdf' %}" class="btn-pill primary" aria-label="Download SOP as PDF">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section class="sop-hero" aria-label="SOP overview">
+        <div class="sop-hero-inner">
+            <span class="sop-eyebrow"><i class="bi bi-book"></i> Documentation</span>
+            <h1 class="display-font">
+                Standard Operating <span class="grad">Procedures</span>
+            </h1>
+            <p class="lede">The complete operations guide for the Oshaani AI Agents Platform—tools, APIs, RAG, MCP, deployment, licensing, and the full ecosystem.</p>
+            <div class="meta-row">
+                <span class="version-badge"><i class="bi bi-tag-fill"></i> Version 2.5</span>
+                <span class="meta-pill"><i class="bi bi-clock-history"></i> Updated 2026</span>
+                <span class="meta-pill"><i class="bi bi-list-ol"></i> 15 sections</span>
+                <span class="meta-pill"><i class="bi bi-shield-check"></i> Production guide</span>
+            </div>
+            <div class="actions">
+                <a href="{% url 'download_sop_pdf' %}" class="btn-grad">
+                    <i class="bi bi-file-earmark-pdf"></i> Download as PDF
+                </a>
+                <a href="#overview" class="btn-outline-light-2">
+                    <i class="bi bi-arrow-down-circle"></i> Start reading
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="sop-shell">
+        <div class="sop-container">
+            <div class="sop-layout">
+                <aside class="toc-sidebar" aria-label="On this page">
+                    <button type="button" class="mobile-toc-toggle" id="mobile-toc-toggle" aria-expanded="false" aria-controls="toc-card">
+                        <i class="bi bi-list-ul"></i> On this page <i class="bi bi-chevron-down" style="margin-left:auto;"></i>
+                    </button>
+                    <nav class="toc-card" id="toc-card">
+                        <h4>On this page</h4>
+                        <ul>
+                            <li><a href="#overview" data-toc><span class="num">01</span><span>System Overview</span></a></li>
+                            <li><a href="#components" data-toc><span class="num">02</span><span>Core Components</span></a></li>
+                            <li><a href="#authentication" data-toc><span class="num">03</span><span>Authentication &amp; Authorization</span></a></li>
+                            <li><a href="#tools" data-toc><span class="num">04</span><span>Tools &amp; Feature Enabling</span></a></li>
+                            <li><a href="#api-usage" data-toc><span class="num">05</span><span>API Usage Guide</span></a></li>
+                            <li><a href="#agent-webhooks" data-toc><span class="num">05·</span><span>Agent Webhooks</span></a></li>
+                            <li><a href="#file-management" data-toc><span class="num">06</span><span>File Upload &amp; Download</span></a></li>
+                            <li><a href="#async-processing" data-toc><span class="num">07</span><span>Async with Celery</span></a></li>
+                            <li><a href="#rag" data-toc><span class="num">08</span><span>RAG</span></a></li>
+                            <li><a href="#mcp" data-toc><span class="num">09</span><span>MCP Integration</span></a></li>
+                            <li><a href="#deployment" data-toc><span class="num">10</span><span>Deployment &amp; Ops</span></a></li>
+                            <li><a href="#connectors" data-toc><span class="num">11</span><span>Connectors &amp; OAuth</span></a></li>
+                            <li><a href="#agent-sharing" data-toc><span class="num">12</span><span>Agent Sharing</span></a></li>
+                            <li><a href="#license" data-toc><span class="num">13</span><span>Open Source License</span></a></li>
+                            <li><a href="#ecosystem" data-toc><span class="num">14</span><span>Oshaani Ecosystem</span></a></li>
+                            <li><a href="#contact-demo" data-toc><span class="num">15</span><span>Contact &amp; Demo</span></a></li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <main class="sop-content" role="main">
+
+            <!-- Section 1: Overview -->
+            <div class="section" id="overview">
+                <h2 class="section-title"><i class="bi bi-info-circle"></i> 1. System Overview</h2>
+                <p>The AI Agents Platform is a comprehensive system for creating, managing, and deploying AI agents with advanced capabilities including tool calling, MCP integration, and RAG-based knowledge retrieval.</p>
+                
+                <div class="info-box">
+                    <strong><i class="bi bi-lightbulb"></i> Key Features:</strong>
+                    <ul>
+                        <li>Multi-agent management with user-scoped access</li>
+                        <li>Tool execution system with 16+ built-in tools (including video &amp; speech)</li>
+                        <li>Video generation: text_to_video, image_to_video, combine_video_audio</li>
+                        <li>Text-to-speech (AWS Polly, synchronous) for narration and demo videos</li>
+                        <li>Conversation context passed to tools—previous conversation and current query used to fill tool parameters (e.g. text_prompt, url)</li>
+                        <li>MCP (Model Context Protocol) server integration</li>
+                        <li>RAG-based knowledge retrieval from training data</li>
+                        <li>Conversation memory and context management (streaming and non-streaming)</li>
+                        <li>API key authentication (user-level and agent-level)</li>
+                        <li>REST API: /api/v1/chat and /api/v1/query for external agent access</li>
+                        <li>Real-time agent testing and monitoring</li>
+                        <li>Immediate conversation_id return for context preservation</li>
+                        <li>Agent webhooks (<code>POST /api/webhook/agent/</code>) for automation (Zapier, n8n, cron, multi-agent pipelines)</li>
+                        <li>UTF8MB4 database support for emoji and special characters</li>
+                        <li>URL resolver normalizes URLs (adds https:// when scheme is missing)</li>
+                        <li>Social platform integration (social.oshaani.com)</li>
+                        <li>Footer social links configurable in Django Admin (Social Links model)</li>
+                        <li>Public share URLs for published agents</li>
+                        <li>Email-based agent sharing with expiration</li>
+                        <li>Welcome email system for new users</li>
+                        <li>Tutorial button on chat page; video tutorial on intro page</li>
+                        <li>Open-source non-commercial license for self-hosted deployments</li>
+                    </ul>
+                </div>
+                
+                <div class="success-box">
+                    <strong><i class="bi bi-rocket"></i> Oshaani Ecosystem:</strong>
+                    <p>The Oshaani platform is part of a growing ecosystem of AI-powered solutions:</p>
+                    <ul>
+                        <li><strong>AI Agents Platform (oshaani.com):</strong> Create, train, and deploy AI agents</li>
+                        <li><strong>Oshaani Social (social.oshaani.com):</strong> Connect, share, and collaborate with AI agents in a social environment</li>
+                        <li><strong>Developer Tools:</strong> Advanced APIs, SDKs, and developer resources (coming soon)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 2: Components -->
+            <div class="section" id="components">
+                <h2 class="section-title"><i class="bi bi-puzzle"></i> 2. Core Components</h2>
+                
+                <h4>3.1 Agent Model</h4>
+                <p>The <code>Agent</code> model represents an AI agent with the following attributes:</p>
+                <ul>
+                    <li><strong>Status:</strong> draft → training → testing → published</li>
+                    <li><strong>Configuration:</strong> JSON field storing agent settings, enabled/disabled tools, RAG config</li>
+                    <li><strong>Model:</strong> Reference to AIModel (Bedrock or Ollama)</li>
+                    <li><strong>User:</strong> Owner of the agent (for user-scoped access)</li>
+                    <li><strong>API Keys:</strong> Agent-level API keys for authentication</li>
+                </ul>
+
+                <h4>3.2 AgentLoop</h4>
+                <p>The <code>AgentLoop</code> class implements the core agent execution logic:</p>
+                <ul>
+                    <li>Manages conversation context and memory</li>
+                    <li>Handles tool calling iterations (max 10 iterations)</li>
+                    <li>Integrates with LLM providers (Bedrock/Ollama)</li>
+                    <li>Retrieves relevant context via RAG</li>
+                    <li>Processes tool results and generates final responses</li>
+                </ul>
+
+                <h4>3.3 ToolExecutor</h4>
+                <p>The <code>ToolExecutor</code> manages all available tools:</p>
+                <ul>
+                    <li><strong>Default Tools:</strong> web_search, url_resolver, code_executor, transcription, text_to_image, text_to_video, image_to_video, text_to_speech, combine_video_audio, svg_diagram, ocr, summarization, question_answering, translation, read_file, write_file</li>
+                    <li><strong>Custom Tools:</strong> User-defined HTTP-based tools</li>
+                    <li><strong>MCP Tools:</strong> Tools from connected MCP servers</li>
+                    <li>Filters tools based on agent configuration (enabled/disabled)</li>
+                    <li>When video tools are enabled, url_resolver, text_to_speech, and combine_video_audio are auto-enabled for the video-with-sound flow</li>
+                </ul>
+
+                <h4>3.4 MCP Integration</h4>
+                <p>MCP (Model Context Protocol) integration allows agents to use external tools:</p>
+                <ul>
+                    <li>HTTP and STDIO transport support</li>
+                    <li>Automatic tool discovery and registration</li>
+                    <li>User API key authentication</li>
+                    <li>Tool prefixing to avoid conflicts</li>
+                </ul>
+            </div>
+
+            <!-- Section 3: Authentication -->
+            <div class="section" id="authentication">
+                <h2 class="section-title"><i class="bi bi-shield-lock"></i> 3. Authentication & Authorization</h2>
+                
+                <h4>5.1 Authentication Methods</h4>
+                <ul>
+                    <li><strong>User API Keys:</strong> From UserProfile or UserAPIKey models (for MCP and API access)</li>
+                    <li><strong>Agent API Keys:</strong> From Agent model (for agent-specific API access)</li>
+                    <li><strong>Session Authentication:</strong> For web dashboard access</li>
+                </ul>
+
+                <h4>5.2 Authorization</h4>
+                <ul>
+                    <li>Users can only access their own agents</li>
+                    <li>All data queries are scoped to the authenticated user</li>
+                    <li>MCP servers use user API keys for authentication</li>
+                </ul>
+
+                <div class="warning-box">
+                    <strong>Security Best Practices:</strong>
+                    <ul>
+                        <li>API keys are hashed using SHA-256</li>
+                        <li>Keys are shown only once when generated</li>
+                        <li>Last used timestamps are tracked</li>
+                        <li>Keys can be revoked at any time</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 4: Tools Configuration -->
+            <div class="section" id="tools">
+                <h2 class="section-title"><i class="bi bi-tools"></i> 4. Tools Configuration & Feature Enabling</h2>
+                
+                <h4>4.1 Available Tools</h4>
+                <p>Agents have access to multiple types of tools:</p>
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5>✅ Built-in Tools (16+ tools)</h5>
+                        <ul>
+                            <li><strong>read_file</strong> - Read files from storage</li>
+                            <li><strong>write_file</strong> - Write files to storage</li>
+                            <li><strong>web_search</strong> - Search the web</li>
+                            <li><strong>url_resolver</strong> - Resolve and fetch URLs (auto-adds https:// if missing)</li>
+                            <li><strong>code_executor</strong> - Execute Python code</li>
+                            <li><strong>transcription</strong> - Transcribe audio (AWS Transcribe)</li>
+                            <li><strong>text_to_image</strong> - Generate images (AWS Bedrock)</li>
+                            <li><strong>text_to_video</strong> - Generate video from text (Bedrock Luma/Nova)</li>
+                            <li><strong>image_to_video</strong> - Generate video from image</li>
+                            <li><strong>text_to_speech</strong> - Generate speech from text (AWS Polly, synchronous)</li>
+                            <li><strong>combine_video_audio</strong> - Mux video + audio for demo videos with sound</li>
+                            <li><strong>svg_diagram</strong> - Generate SVG diagrams for buildings/architecture</li>
+                            <li><strong>ocr</strong> - Extract text from images/PDFs (AWS Textract)</li>
+                            <li><strong>summarization</strong> - Summarize content (AWS Bedrock)</li>
+                            <li><strong>question_answering</strong> - Answer questions (AWS Bedrock)</li>
+                            <li><strong>translation</strong> - Translate text (AWS Translate)</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>✅ Custom Tools</h5>
+                        <ul>
+                            <li>User-defined HTTP-based tools</li>
+                            <li>Up to 10 custom tools per agent</li>
+                            <li>Configurable endpoints and methods</li>
+                            <li>Custom authentication headers</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>✅ MCP Tools</h5>
+                        <ul>
+                            <li>Tools from MCP servers</li>
+                            <li>Automatically discovered</li>
+                            <li>Prefixed with server name</li>
+                            <li>Dynamic tool registration</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>4.2 Enabling and Disabling Tools</h4>
+                <p>You can control which tools are available to your agent by enabling or disabling them. This allows you to customize agent capabilities based on your needs.</p>
+
+                <h5>4.2.1 Via Dashboard (Recommended)</h5>
+                <div class="info-box">
+                    <strong>Steps to Enable/Disable Tools:</strong>
+                    <ol>
+                        <li>Navigate to your agent's training page: <code>/dashboard/{agent_id}/train/</code></li>
+                        <li>Scroll to the "Tools Configuration" section</li>
+                        <li>You'll see three categories:
+                            <ul>
+                                <li><strong>Default Tools</strong> - Built-in system tools</li>
+                                <li><strong>Custom Tools</strong> - Your custom HTTP-based tools</li>
+                                <li><strong>MCP Tools</strong> - Tools from connected MCP servers</li>
+                            </ul>
+                        </li>
+                        <li>Toggle tools on/off using the checkboxes</li>
+                        <li>Click "Save Tool Configuration" to apply changes</li>
+                    </ol>
+                </div>
+
+                <h5>4.2.2 Via API</h5>
+                <p>Update agent configuration to enable/disable tools:</p>
+                <div class="info-box">
+                    <strong>Enable Specific Tools:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>PATCH /api/agents/{agent_id}/
+Authorization: Bearer YOUR_USER_TOKEN
+Content-Type: application/json
+
+{
+  "configuration": {
+    "enabled_tools": ["web_search", "url_resolver", "code_executor"],
+    "disabled_tools": []
+  }
+}</code></pre>
+                </div>
+
+                <div class="info-box">
+                    <strong>Disable Specific Tools:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>PATCH /api/agents/{agent_id}/
+Authorization: Bearer YOUR_USER_TOKEN
+Content-Type: application/json
+
+{
+  "configuration": {
+    "disabled_tools": ["text_to_image", "transcription"]
+  }
+}</code></pre>
+                </div>
+
+                <h5>4.2.3 Tool Configuration Logic</h5>
+                <div class="warning-box">
+                    <strong>How Tool Filtering Works:</strong>
+                    <ul>
+                        <li><strong>If <code>enabled_tools</code> is empty:</strong> All tools are available (except those in <code>disabled_tools</code>)</li>
+                        <li><strong>If <code>enabled_tools</code> has items:</strong> Only tools listed in <code>enabled_tools</code> are available</li>
+                        <li><strong>If a tool is in <code>disabled_tools</code>:</strong> It's always disabled (unless also in <code>enabled_tools</code>)</li>
+                        <li><strong>Priority:</strong> <code>enabled_tools</code> takes precedence over <code>disabled_tools</code></li>
+                    </ul>
+                </div>
+
+                <h5>4.2.4 Example Configurations</h5>
+                <div class="success-box">
+                    <strong>Example 1: Enable Only Web Search and URL Resolver</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "enabled_tools": ["web_search", "url_resolver"]
+}</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>Example 2: Disable Image Generation Tools</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "disabled_tools": ["text_to_image"]
+}</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>Example 3: Enable All Tools Except Code Execution</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "disabled_tools": ["code_executor"]
+}</code></pre>
+                </div>
+
+                <h4>4.3 Feature Enabling</h4>
+                <p>Beyond tools, you can enable/disable various features for your agent:</p>
+                
+                <h5>4.3.1 RAG (Retrieval-Augmented Generation)</h5>
+                <div class="info-box">
+                    <strong>Enable RAG:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "configuration": {
+    "use_rag": true,
+    "rag_top_k": 5,
+    "rag_threshold": 0.7
+  }
+}</code></pre>
+                    <ul>
+                        <li><code>use_rag</code>: Enable/disable RAG feature</li>
+                        <li><code>rag_top_k</code>: Number of relevant chunks to retrieve (default: 5)</li>
+                        <li><code>rag_threshold</code>: Similarity threshold for retrieval (default: 0.7)</li>
+                    </ul>
+                </div>
+
+                <h5>4.3.2 Tool Calling</h5>
+                <div class="info-box">
+                    <strong>Enable/Disable Tool Calling:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "configuration": {
+    "tools_enabled": true,
+    "max_tool_iterations": 10
+  }
+}</code></pre>
+                    <ul>
+                        <li><code>tools_enabled</code>: Enable/disable tool calling capability</li>
+                        <li><code>max_tool_iterations</code>: Maximum tool call iterations (default: 10)</li>
+                    </ul>
+                </div>
+
+                <h5>4.3.3 Conversation Memory</h5>
+                <div class="info-box">
+                    <strong>Configure Memory:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "configuration": {
+    "use_memory": true,
+    "max_history_messages": 50
+  }
+}</code></pre>
+                    <ul>
+                        <li><code>use_memory</code>: Enable conversation memory</li>
+                        <li><code>max_history_messages</code>: Maximum messages to keep in context</li>
+                    </ul>
+                </div>
+
+                <h4>4.4 Checking Tool Status</h4>
+                <div class="info-box">
+                    <strong>View Enabled Tools:</strong><br>
+                    <ul>
+                        <li><strong>Via Dashboard:</strong> Go to agent training page → Tools Configuration section</li>
+                        <li><strong>Via API:</strong> <code>GET /api/agents/{agent_id}/</code> → Check <code>configuration.enabled_tools</code> and <code>configuration.disabled_tools</code></li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Important Notes:</strong>
+                    <ul>
+                        <li>Tool configuration changes take effect immediately for new requests</li>
+                        <li>Published agents may need to be republished to apply configuration changes</li>
+                        <li>Disabled tools won't appear in tool schemas sent to the LLM</li>
+                        <li>Custom tools and MCP tools follow the same enable/disable rules</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 5: API Usage -->
+            <div class="section" id="api-usage">
+                <h2 class="section-title"><i class="bi bi-code-slash"></i> 5. API Usage Guide</h2>
+                
+                <h4>5.1 API Types Overview</h4>
+                <p>The platform provides multiple API types to suit different use cases:</p>
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5><i class="bi bi-server"></i> REST API</h5>
+                        <ul>
+                            <li>Standard REST endpoints</li>
+                            <li>Django REST Framework</li>
+                            <li>Full CRUD operations</li>
+                            <li>Session or API key auth</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5><i class="bi bi-lightning"></i> REST API v1</h5>
+                        <ul>
+                            <li>Simple chat/query endpoints</li>
+                            <li>Agent API key auth</li>
+                            <li>Streamlined interface</li>
+                            <li>Quick integration</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5><i class="bi bi-plug"></i> MCP API</h5>
+                        <ul>
+                            <li>Model Context Protocol</li>
+                            <li>Tool discovery</li>
+                            <li>Server management</li>
+                            <li>User API key auth</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>5.2 REST API Endpoints</h4>
+                <p>The REST API provides comprehensive access to all platform features.</p>
+
+                <h5>5.2.1 Agent Management</h5>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>/api/agents/</code><br>
+                    <strong>Authentication:</strong> User API Key or Session<br><br>
+                    <strong>Endpoints:</strong>
+                    <ul>
+                        <li><code>GET /api/agents/</code> - List all user's agents</li>
+                        <li><code>POST /api/agents/</code> - Create new agent</li>
+                        <li><code>GET /api/agents/{id}/</code> - Get agent details</li>
+                        <li><code>PATCH /api/agents/{id}/</code> - Update agent</li>
+                        <li><code>DELETE /api/agents/{id}/</code> - Delete agent</li>
+                        <li><code>POST /api/agents/{id}/publish/</code> - Publish agent</li>
+                        <li><code>POST /api/agents/{id}/unpublish/</code> - Unpublish agent</li>
+                    </ul>
+                </div>
+
+                <h5>5.2.2 Agent Interaction (Requires Agent API Key)</h5>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>/api/agents/{id}/</code><br>
+                    <strong>Authentication:</strong> Agent API Key<br><br>
+                    <strong>Endpoints:</strong>
+                    <ul>
+                        <li><code>POST /api/agents/{id}/chat/</code> - Chat with agent</li>
+                        <li><code>POST /api/agents/{id}/query/</code> - Query agent</li>
+                        <li><code>POST /api/agents/{id}/invoke/</code> - Invoke agent action</li>
+                        <li><code>GET /api/agents/{id}/status/</code> - Get agent status</li>
+                        <li><code>GET /api/agents/{id}/history/</code> - Get interaction history</li>
+                    </ul>
+                </div>
+
+                <h5>5.2.3 Example: Create Agent via REST API</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/agents/
+Authorization: Bearer YOUR_USER_API_KEY
+Content-Type: application/json
+
+{
+  "name": "Customer Support Bot",
+  "description": "Helps customers with common questions",
+  "model_id": 1,
+  "agent_type": "quick_bot",
+  "configuration": {
+    "system_prompt": "You are a helpful customer support assistant.",
+    "enabled_tools": ["web_search", "url_resolver"],
+    "use_rag": true
+  }
+}</code></pre>
+                </div>
+
+                <h5>5.2.4 Example: Chat with Agent via REST API</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/agents/{agent_id}/chat/
+Authorization: ApiKey YOUR_AGENT_API_KEY
+Content-Type: application/json
+
+{
+  "message": "What is the weather today?",
+  "conversation_id": "optional-conversation-id"
+}</code></pre>
+                    <strong>Response:</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "response": "I'll search for today's weather information...",
+  "tool_calls": [
+    {
+      "tool_name": "web_search",
+      "parameters": {"query": "weather today"},
+      "result": "..."
+    }
+  ],
+  "conversation_id": "conv-123",
+  "iterations": 2
+}</code></pre>
+                </div>
+
+                <h4>5.3 REST API v1 Endpoints</h4>
+                <p>Simplified API endpoints for quick integration.</p>
+
+                <h5>5.3.1 Simple Endpoints</h5>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>/api/v1/</code><br>
+                    <strong>Authentication:</strong> Agent API Key<br><br>
+                    <strong>Endpoints:</strong>
+                    <ul>
+                        <li><code>POST /api/v1/chat</code> - Simple chat endpoint</li>
+                        <li><code>POST /api/v1/query</code> - Simple query endpoint</li>
+                        <li><code>GET /api/v1/agents</code> - List accessible agents</li>
+                        <li><code>GET /api/v1/agents/{id}</code> - Get agent info</li>
+                    </ul>
+                </div>
+
+                <h5>5.3.2 Example: REST API v1 Chat</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/v1/chat
+Authorization: ApiKey YOUR_AGENT_API_KEY
+Content-Type: application/json
+
+{
+  "message": "Hello, how can you help me?"
+}</code></pre>
+                    <strong>Response:</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "response": "Hello! I can help you with...",
+  "tool_calls": [],
+  "iterations": 1,
+  "conversation_id": "conv-abc123"
+}</code></pre>
+                </div>
+
+                <h5>5.3.3 REST API Endpoints</h5>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>/api/</code><br>
+                    <strong>Authentication:</strong> Agent API Key<br><br>
+                    <strong>Endpoints:</strong>
+                    <ul>
+                        <li><code>POST /api/create_conversation</code> - Create new conversation</li>
+                        <li><code>POST /api/continue_conversation</code> - Continue existing conversation</li>
+                        <li><code>POST /api/webhook/agent/</code> - Agent webhook (see <a href="#agent-webhooks">§5.3.5 Agent Webhooks</a>)</li>
+                        <li><code>GET /api/get_answer</code> - Get answer by request_id</li>
+                        <li><code>POST /api/find_conversation</code> - Find conversation details</li>
+                        <li><code>PUT /api/upload_file</code> - Upload files</li>
+                        <li><code>GET /api/download_file</code> - Download files</li>
+                        <li><code>POST /api/create_upload_url</code> - Create upload URL</li>
+                        <li><code>POST /api/get_download_url</code> - Get download URL</li>
+                    </ul>
+                </div>
+
+                <h5>5.3.4 Example: Create Conversation</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/create_conversation
+Authorization: ApiKey YOUR_AGENT_API_KEY
+Content-Type: application/json
+
+{
+  "message": "What is machine learning?"
+}</code></pre>
+                    <strong>Response (Async):</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "request_id": "req-550e8400-e29b-41d4-a716",
+  "conversation_id": "conv-550e8400-e29b-41d4-a716",
+  "status": "pending",
+  "message": "Request queued for processing. Use /api/get_answer with request_id to get results. Use conversation_id to continue the conversation."
+}</code></pre>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Key Points:</strong>
+                        <ul>
+                            <li><code>conversation_id</code> is returned immediately - use it to continue the conversation</li>
+                            <li><code>request_id</code> is used to poll for the initial response</li>
+                            <li>You can use <code>conversation_id</code> with <code>/api/continue_conversation</code> to maintain chat context</li>
+                        </ul>
+                    </div>
+                    <strong>Poll for Results:</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>GET /api/get_answer?request_id=req-550e8400-e29b-41d4-a716
+Authorization: ApiKey YOUR_AGENT_API_KEY</code></pre>
+                    <strong>Continue Conversation:</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>POST /api/continue_conversation
+Authorization: ApiKey YOUR_AGENT_API_KEY
+Content-Type: application/json
+
+{
+  "conversation_id": "conv-550e8400-e29b-41d4-a716",
+  "message": "Tell me more about that"
+}</code></pre>
+                </div>
+
+                <h4 id="agent-webhooks">5.3.5 Agent Webhooks</h4>
+                <p>Agent webhooks let external systems trigger a published agent asynchronously. Each inbound HTTP request queues a Celery job and returns immediately with <code>request_id</code> and <code>conversation_id</code>. Use webhooks for Zapier, n8n, Make, cron jobs, internal backends, and multi-step pipelines that call several agents in sequence.</p>
+
+                <h5>5.3.5.1 When to use a webhook vs other APIs</h5>
+                <div class="info-box">
+                    <table class="table table-sm table-bordered mb-0" style="background: #fff;">
+                        <thead>
+                            <tr><th>Need</th><th>Endpoint</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sync reply in one HTTP round-trip</td>
+                                <td><code>POST /api/v1/chat</code> or <code>POST /api/agents/{id}/chat/</code></td>
+                                <td>Blocks until the agent finishes (tool loop included).</td>
+                            </tr>
+                            <tr>
+                                <td>Async chat without structured caller payload</td>
+                                <td><code>POST /api/create_conversation</code></td>
+                                <td>Same Celery + poll flow; user message is plain text only.</td>
+                            </tr>
+                            <tr>
+                                <td>Async job from automation with JSON event data</td>
+                                <td><code>POST /api/webhook/agent/</code></td>
+                                <td>Supports <code>payload</code> (sent to the model) and <code>metadata</code> (echoed only).</td>
+                            </tr>
+                            <tr>
+                                <td>Follow-up in an existing thread</td>
+                                <td><code>POST /api/continue_conversation</code></td>
+                                <td>Pass <code>conversation_id</code> from webhook or create_conversation response.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h5>5.3.5.2 Production endpoint (<code>POST /api/webhook/agent/</code>)</h5>
+                <div class="info-box">
+                    <strong>URL:</strong> <code>POST /api/webhook/agent/</code> (Django name: <code>agent-webhook</code>)<br><br>
+                    <strong>Authentication:</strong> Agent API key only (same as other agent-scoped REST calls).<br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>Authorization: ApiKey YOUR_AGENT_API_KEY</code></pre>
+                    <p class="mb-1 mt-2">Alternative header:</p>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;"><code>X-API-Key: YOUR_AGENT_API_KEY</code></pre>
+                    <br>
+                    <strong>Requirements:</strong>
+                    <ul class="mb-0">
+                        <li>The agent must be <strong>published</strong>. Draft, training, and testing agents reject agent API key calls.</li>
+                        <li>Every successful POST starts a <strong>new</strong> conversation. Webhook calls do not continue each other automatically. To send a follow-up in the same thread, use <code>POST /api/continue_conversation</code> with the <code>conversation_id</code> returned in the webhook response.</li>
+                        <li>Processing is asynchronous. See <a href="#async-processing">§7 Async Processing with Celery</a> for worker architecture and status values.</li>
+                    </ul>
+                </div>
+
+                <h5>5.3.5.3 Request body</h5>
+                <div class="info-box">
+                    <strong>JSON fields</strong>
+                    <ul>
+                        <li><strong>At least one</strong> of <code>message</code>, <code>text</code>, or <code>payload</code> is required.</li>
+                        <li><code>message</code> or <code>text</code>: natural-language instruction (either key; if both are set, <code>message</code> wins).</li>
+                        <li><code>payload</code>: optional JSON object. Appended to the composed user message under a <code>[Webhook payload]</code> section so tools and RAG see structured caller data (ticket ids, CRM fields, webhook event bodies, etc.).</li>
+                        <li><code>metadata</code>: optional JSON object. <strong>Not</strong> sent to the model; echoed back in the HTTP <code>202</code> response for correlation (<code>trace_id</code>, upstream job id, Zapier run id, etc.).</li>
+                    </ul>
+                    <strong>Message composition:</strong> The worker receives a single user message built as: primary text (<code>message</code> or <code>text</code>) + optional <code>[Webhook payload]</code> block with pretty-printed JSON.
+                </div>
+
+                <h5>5.3.5.4 Example: enqueue and poll</h5>
+                <div class="info-box">
+                    <strong>Enqueue</strong>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/webhook/agent/
+Authorization: ApiKey YOUR_AGENT_API_KEY
+Content-Type: application/json
+
+{
+  "message": "Summarize this inbound event for the team.",
+  "payload": {
+    "event": "ticket.created",
+    "ticket_id": "TKT-4412",
+    "priority": "high"
+  },
+  "metadata": {
+    "trace_id": "run-2026-04-27-001",
+    "source": "zendesk"
+  }
+}</code></pre>
+                    <strong>Response (<code>202 Accepted</code>):</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "conversation_id": "660e8400-e29b-41d4-a716-446655440001",
+  "agent_id": 123,
+  "status": "pending",
+  "metadata": {
+    "trace_id": "run-2026-04-27-001",
+    "source": "zendesk"
+  },
+  "message": "Queued. Poll GET /api/get_answer with request_id for the result."
+}</code></pre>
+                    <strong>Poll:</strong>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>GET /api/get_answer?request_id=550e8400-e29b-41d4-a716-446655440000
+Authorization: ApiKey YOUR_AGENT_API_KEY</code></pre>
+                </div>
+
+                <h5>5.3.5.5 Poll responses (<code>GET /api/get_answer</code>)</h5>
+                <div class="info-box">
+                    <ul>
+                        <li><code>202</code> + <code>status: pending</code> or <code>processing</code> — keep polling (recommended interval: 1–2s, with backoff).</li>
+                        <li><code>200</code> + <code>status: completed</code> — includes <code>answer</code>, <code>tool_calls</code>, <code>iterations</code>, <code>conversation_id</code>, <code>created_at</code>.</li>
+                        <li><code>500</code> + <code>status: failed</code> — includes <code>error</code> (agent loop or tool failure).</li>
+                        <li><code>404</code> — unknown <code>request_id</code> for this agent.</li>
+                        <li><code>403</code> — missing/invalid API key or agent not published.</li>
+                    </ul>
+                    <strong>Legacy:</strong> <code>GET /api/get_answer?conversation_id=...</code> returns the latest agent message for that conversation (no <code>request_id</code>).
+                </div>
+
+                <h5>5.3.5.6 Python example (webhook + poll)</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>import time
+import requests
+
+BASE = "https://your-domain.com/api"
+HEADERS = {
+    "Authorization": "ApiKey YOUR_AGENT_API_KEY",
+    "Content-Type": "application/json",
+}
+
+enqueue = requests.post(
+    f"{BASE}/webhook/agent/",
+    headers=HEADERS,
+    json={
+        "message": "Triage this support ticket.",
+        "payload": {"ticket_id": "TKT-99", "subject": "Billing issue"},
+        "metadata": {"trace_id": "zapier-run-42"},
+    },
+    timeout=30,
+)
+enqueue.raise_for_status()
+body = enqueue.json()
+request_id = body["request_id"]
+conversation_id = body["conversation_id"]
+
+while True:
+    poll = requests.get(
+        f"{BASE}/get_answer",
+        headers=HEADERS,
+        params={"request_id": request_id},
+        timeout=30,
+    )
+    data = poll.json()
+    status = data.get("status")
+    if status in ("pending", "processing"):
+        time.sleep(1.5)
+        continue
+    if status == "completed":
+        print(data["answer"])
+        break
+    raise RuntimeError(data.get("error") or data)</code></pre>
+                </div>
+
+                <h5>5.3.5.7 Automation and multi-agent pipelines</h5>
+                <p>The platform does not include a built-in supervisor graph. Chain agents in your automation layer by calling one webhook (or <code>/api/v1/chat</code>) per specialist agent and passing prior outputs in the next <code>message</code> or <code>payload</code>.</p>
+                <div class="diagram-container">
+                    <div class="flow-diagram">
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e3f2fd;">
+                                <strong>Trigger</strong><br>
+                                <small>Zapier · n8n · cron · queue</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #fff3e0;">
+                                <strong>POST /api/webhook/agent/</strong><br>
+                                <small>Agent A (e.g. triage)</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓ poll get_answer</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #f3e5f5;">
+                                <strong>POST /api/webhook/agent/</strong><br>
+                                <small>Agent B — payload includes A's answer</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e8f5e9;">
+                                <strong>Downstream action</strong><br>
+                                <small>Slack · email · CRM update</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="success-box">
+                    <strong>In-app alternative:</strong> A single orchestrator agent can call specialist agents via <strong>custom HTTP tools</strong> pointing at each agent's <code>/api/v1/chat</code> (see §4 Custom Tools). Webhooks are better when the caller is outside the agent loop (SaaS automation, scheduled jobs).
+                </div>
+
+                <h5>5.3.5.8 Dashboard testing (no API key required)</h5>
+                <div class="info-box">
+                    <strong>UI:</strong> <strong>Agent → Test</strong> (<code>/dashboard/&lt;slug&gt;/test/#webhook-section</code>) — Webhook test card and link from Chat (<strong>Webhook</strong> button).<br><br>
+                    <strong>Dashboard endpoint:</strong> <code>POST /dashboard/&lt;slug&gt;/test/webhook/</code> — same JSON body as production; uses your login session. Allowed agent statuses: <strong>testing</strong> or <strong>published</strong>.<br>
+                    <strong>Poll (dashboard):</strong> <code>GET /dashboard/&lt;slug&gt;/test/webhook/?request_id=...</code> — same session; no agent API key.<br><br>
+                    <strong>Production path from the UI:</strong> Paste the agent API key in the test card to hit <code>POST /api/webhook/agent/</code> and <code>GET /api/get_answer</code> (requires <strong>published</strong> agent).<br>
+                    Webhook runs can appear in the Live chat panel on the Test page for quick visual confirmation.
+                </div>
+
+                <h4>5.4 MCP API Endpoints</h4>
+                <p>API endpoints for managing MCP servers and discovering tools.</p>
+
+                <h5>5.4.1 MCP Server Management</h5>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>/api/mcp-servers/</code><br>
+                    <strong>Authentication:</strong> User API Key or Session<br><br>
+                    <strong>Endpoints:</strong>
+                    <ul>
+                        <li><code>GET /api/mcp-servers/</code> - List MCP servers</li>
+                        <li><code>POST /api/mcp-servers/</code> - Create MCP server</li>
+                        <li><code>GET /api/mcp-servers/{id}/</code> - Get server details</li>
+                        <li><code>PUT /api/mcp-servers/{id}/</code> - Update server</li>
+                        <li><code>DELETE /api/mcp-servers/{id}/</code> - Delete server</li>
+                        <li><code>POST /api/mcp-servers/{id}/test_connection/</code> - Test connection</li>
+                        <li><code>GET /api/mcp-servers/list_tools/?agent_id={id}</code> - List available tools</li>
+                    </ul>
+                </div>
+
+                <h5>5.4.2 Example: Create MCP Server</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /api/mcp-servers/
+Authorization: Bearer YOUR_USER_API_KEY
+Content-Type: application/json
+
+{
+  "agent": 1,
+  "name": "filesystem",
+  "description": "Local filesystem access",
+  "transport_type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+  "auto_connect": true
+}</code></pre>
+                </div>
+
+                <h4>5.5 Authentication Methods</h4>
+                
+                <h5>5.5.1 User API Key Authentication</h5>
+                <div class="info-box">
+                    <strong>Use Case:</strong> Managing agents, accessing user resources<br>
+                    <strong>Header Format:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>Authorization: Bearer YOUR_USER_API_KEY</code></pre>
+                    <strong>Where to Get:</strong> User Profile → API Keys section
+                </div>
+
+                <h5>5.5.2 Agent API Key Authentication</h5>
+                <div class="info-box">
+                    <strong>Use Case:</strong> Interacting with specific agents<br>
+                    <strong>Header Format:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>Authorization: ApiKey YOUR_AGENT_API_KEY</code></pre>
+                    <strong>Alternative:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>X-API-Key: YOUR_AGENT_API_KEY</code></pre>
+                    <strong>Where to Get:</strong> Agent Detail Page → API Access section (only for published agents)
+                </div>
+
+                <h5>5.5.3 Session Authentication</h5>
+                <div class="info-box">
+                    <strong>Use Case:</strong> Web dashboard access<br>
+                    <strong>Method:</strong> Django session cookies (automatic in browser)<br>
+                    <strong>Note:</strong> Only works for web requests, not API clients
+                </div>
+
+                <h4>5.6 API Response Formats</h4>
+                
+                <h5>5.6.1 Success Response</h5>
+                <div class="success-box">
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "success": true,
+  "data": { ... },
+  "message": "Operation completed successfully"
+}</code></pre>
+                </div>
+
+                <h5>5.6.2 Error Response</h5>
+                <div class="warning-box">
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "error": "Error message here",
+  "detail": "Additional error details"
+}</code></pre>
+                </div>
+
+                <h5>5.6.3 Async Response</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "request_id": "req-550e8400-e29b-41d4-a716",
+  "conversation_id": "conv-550e8400-e29b-41d4-a716",
+  "status": "pending",
+  "message": "Request queued for processing. Use /api/get_answer with request_id to get results. Use conversation_id to continue the conversation."
+}</code></pre>
+                    <p style="margin-top: 10px;"><strong>Note:</strong> The <code>conversation_id</code> is now returned immediately when creating a conversation, allowing you to maintain chat context across multiple API calls.</p>
+                </div>
+
+                <h4>5.7 Complete API Examples</h4>
+                
+                <h5>5.7.1 Python Example: Full Agent Workflow</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>import requests
+
+# Configuration
+BASE_URL = "https://your-domain.com/api"
+AGENT_API_KEY = "your-agent-api-key"
+
+# Chat with agent
+response = requests.post(
+    f"{BASE_URL}/v1/chat",
+    headers={
+        "Authorization": f"ApiKey {AGENT_API_KEY}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "message": "What is artificial intelligence?"
+    }
+)
+
+result = response.json()
+print(f"Response: {result['response']}")
+print(f"Tool calls: {result.get('tool_calls', [])}")</code></pre>
+                </div>
+
+                <h5>5.7.2 JavaScript Example: Async Conversation</h5>
+                <div class="info-box">
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>const API_KEY = "your-agent-api-key";
+const BASE_URL = "https://your-domain.com/api";
+
+// Create conversation (async)
+const createResponse = await fetch(`${BASE_URL}/create_conversation`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `ApiKey ${API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    message: "Hello, agent!"
+  })
+});
+
+const { request_id, conversation_id } = await createResponse.json();
+
+// Store conversation_id for maintaining context
+console.log('Conversation ID:', conversation_id);
+
+// Poll for results
+const pollAnswer = async () => {
+  const response = await fetch(
+    `${BASE_URL}/get_answer?request_id=${request_id}`,
+    {
+      headers: { 'Authorization': `ApiKey ${API_KEY}` }
+    }
+  );
+  return response.json();
+};
+
+// Poll until completed
+let result = await pollAnswer();
+while (result.status === 'pending' || result.status === 'processing') {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  result = await pollAnswer();
+}
+
+console.log('Final response:', result.response);
+
+// Continue the conversation using conversation_id
+const continueResponse = await fetch(`${BASE_URL}/continue_conversation`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `ApiKey ${API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    conversation_id: conversation_id,
+    message: "Tell me more about that"
+  })
+});
+
+const continueResult = await continueResponse.json();
+console.log('Continued conversation response:', continueResult);</code></pre>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Benefits of conversation_id:</strong>
+                        <ul>
+                            <li>Maintains chat context across multiple API calls</li>
+                            <li>Available immediately after creating a conversation</li>
+                            <li>Enables multi-turn conversations with context preservation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h5>5.7.3 cURL Example: Multiple API Types</h5>
+                <div class="info-box">
+                    <strong>REST API:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>curl -X POST https://your-domain.com/api/agents/1/chat/ \
+  -H "Authorization: ApiKey YOUR_AGENT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}'</code></pre>
+                    
+                    <strong>REST API v1:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>curl -X POST https://your-domain.com/api/v1/chat \
+  -H "Authorization: ApiKey YOUR_AGENT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}'</code></pre>
+                    
+                    <strong>MCP API:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>curl -X GET https://your-domain.com/api/mcp-servers/list_tools/?agent_id=1 \
+  -H "Authorization: Bearer YOUR_USER_API_KEY"</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>API Best Practices:</strong>
+                    <ul>
+                        <li>Always use HTTPS in production</li>
+                        <li>Store API keys securely (environment variables, secrets manager)</li>
+                        <li>Handle errors gracefully with retry logic</li>
+                        <li>Use appropriate API type for your use case</li>
+                        <li>Monitor API usage and rate limits</li>
+                        <li>Keep API keys rotated regularly</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 6: File Management -->
+            <div class="section" id="file-management">
+                <h2 class="section-title"><i class="bi bi-file-earmark-arrow-up"></i> 6. File Upload and Download</h2>
+                
+                <h4>6.1 File Upload</h4>
+                <div class="info-box">
+                    <strong>Endpoint:</strong> <code>PUT /api/upload_file</code><br>
+                    <strong>Authentication:</strong> Agent API Key<br>
+                    <strong>Max File Size:</strong> 100MB<br>
+                    <strong>Supported Formats:</strong> All file types (PDF, images, text, etc.)
+                </div>
+                
+                <h4>6.2 File Download</h4>
+                <div class="info-box">
+                    <strong>Endpoint:</strong> <code>GET /api/download_file?file_id=&lt;file_id&gt;</code><br>
+                    <strong>Purpose:</strong> Get download URL for uploaded or generated files<br>
+                    <strong>Authentication:</strong> Agent API Key
+                </div>
+
+                <h4>6.3 Generated Files</h4>
+                <p>Files generated by tools (e.g., images from <code>text_to_image</code>) are automatically registered and accessible via the download_file endpoint. The <code>file_id</code> is included in tool call results.</p>
+                
+                <div class="success-box">
+                    <strong>Tools that generate files:</strong>
+                    <ul>
+                        <li><code>text_to_image</code> - Generates images (returns <code>file_id</code>)</li>
+                        <li><code>ocr</code> - May extract images from PDFs (returns <code>file_id</code> if applicable)</li>
+                        <li><code>transcription</code> - May save audio files (returns <code>file_id</code> if applicable)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 7: Async Processing -->
+            <div class="section" id="async-processing">
+                <h2 class="section-title"><i class="bi bi-arrow-repeat"></i> 7. Async Processing with Celery</h2>
+                
+                <h4>7.1 Overview</h4>
+                <p>The agent API uses asynchronous processing with Celery and Redis for non-blocking request handling. <code>POST /api/create_conversation</code>, <code>POST /api/continue_conversation</code>, and <code>POST /api/webhook/agent/</code> all queue work the same way: the HTTP handler returns immediately with <code>request_id</code> and <code>conversation_id</code>; poll <code>GET /api/get_answer?request_id=...</code> for the result. For webhook-specific fields (<code>payload</code>, <code>metadata</code>) and automation patterns, see <a href="#agent-webhooks">§5.3.5 Agent Webhooks</a>.</p>
+                
+                <h4>7.2 Architecture</h4>
+                <div class="diagram-container">
+                    <div class="flow-diagram">
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e3f2fd;">
+                                <strong>Client Request</strong><br>
+                                <small>create_conversation · continue_conversation · webhook/agent</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #fff3e0;">
+                                <strong>Create AgentRequest</strong><br>
+                                <small>Status: pending</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #f3e5f5;">
+                                <strong>Queue Celery Task</strong><br>
+                                <small>→ Redis</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e8f5e9;">
+                                <strong>Return request_id & conversation_id</strong><br>
+                                <small>HTTP 202</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e0f2f1;">
+                                <strong>Celery Worker</strong><br>
+                                <small>Processes task</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #c8e6c9;">
+                                <strong>Update Status</strong><br>
+                                <small>completed/failed</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>7.3 Request Status</h4>
+                <ul>
+                    <li><strong>pending</strong> - Request queued, waiting for worker</li>
+                    <li><strong>processing</strong> - Worker is processing the request</li>
+                    <li><strong>completed</strong> - Request completed successfully</li>
+                    <li><strong>failed</strong> - Request failed (check <code>error_message</code>)</li>
+                </ul>
+
+                <h4>7.3.1 Conversation ID in Async Responses</h4>
+                <div class="info-box">
+                    <strong>Important:</strong> When creating a conversation via <code>/api/create_conversation</code>, the response includes both:
+                    <ul>
+                        <li><code>request_id</code> - Used to poll for the initial response via <code>/api/get_answer</code></li>
+                        <li><code>conversation_id</code> - Returned immediately, used to continue the conversation via <code>/api/continue_conversation</code></li>
+                    </ul>
+                    <p style="margin-top: 10px;">The <code>conversation_id</code> is available immediately, allowing you to start a new conversation thread while the initial request is still being processed asynchronously.</p>
+                </div>
+
+                <h4>7.4 Setup Requirements</h4>
+                <div class="info-box">
+                    <strong>Required Services:</strong>
+                    <ul>
+                        <li>Redis server (message broker)</li>
+                        <li>Celery worker process</li>
+                        <li>Django application server</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Monitoring:</strong>
+                    <ul>
+                        <li>Check Celery worker status: <code>ps aux | grep celery</code></li>
+                        <li>Check Redis connection: <code>redis-cli ping</code></li>
+                        <li>Monitor queue length: <code>redis-cli LLEN celery</code></li>
+                        <li>View requests in Django Admin → Agent Requests</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 8: RAG -->
+            <div class="section" id="rag">
+                <h2 class="section-title"><i class="bi bi-search"></i> 8. RAG (Retrieval Augmented Generation)</h2>
+                
+                <h4>9.1 Overview</h4>
+                <p>RAG enables agents to retrieve relevant information from training data using semantic search, improving response accuracy and relevance.</p>
+
+                <h4>9.2 Features</h4>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>Automatic Chunking:</strong> Training data is automatically chunked into smaller pieces</li>
+                        <li><strong>Embedding Generation:</strong> Uses AWS Bedrock Titan Embeddings or Ollama embeddings</li>
+                        <li><strong>Semantic Search:</strong> Retrieves only relevant chunks based on query similarity</li>
+                        <li><strong>Vector Store Backends:</strong> Supports both in-memory and Qdrant vector databases</li>
+                    </ul>
+                </div>
+
+                <h4>9.3 Vector Store Configuration</h4>
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5>In-Memory (Default)</h5>
+                        <ul>
+                            <li>Fast but data is lost on server restart</li>
+                            <li>Suitable for development and testing</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>Qdrant (Production)</h5>
+                        <ul>
+                            <li>Persistent vector database</li>
+                            <li>Better scalability</li>
+                            <li>Setup: <code>docker run -p 6333:6333 qdrant/qdrant</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>9.4 Using RAG</h4>
+                <ol>
+                    <li><strong>Index Training Data:</strong> <code>POST /api/agents/{id}/index_rag/</code></li>
+                    <li><strong>Check RAG Status:</strong> <code>GET /api/agents/{id}/rag_status/</code></li>
+                    <li><strong>Enable/Disable RAG:</strong> Set <code>use_rag: true/false</code> in agent configuration</li>
+                </ol>
+
+                <div class="success-box">
+                    <strong>RAG Notifications:</strong>
+                    <ul>
+                        <li>Success notification sent when indexing completes with chunk count</li>
+                        <li>Failure notification sent if indexing fails with error details</li>
+                        <li>Optional email notifications (configure <code>SEND_RAG_NOTIFICATIONS=true</code>)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 9: MCP -->
+            <div class="section" id="mcp">
+                <h2 class="section-title"><i class="bi bi-plug"></i> 9. MCP Integration</h2>
+                
+                <h4>10.1 Overview</h4>
+                <p>Agents can be enhanced with MCP servers to access additional tools and capabilities beyond the built-in tools.</p>
+
+                <h4>10.2 Supported Transports</h4>
+                <ul>
+                    <li><strong>STDIO:</strong> Run MCP servers as subprocesses (e.g., <code>npx -y @modelcontextprotocol/server-filesystem</code>)</li>
+                    <li><strong>HTTP/SSE:</strong> Connect to remote MCP servers (coming soon)</li>
+                </ul>
+
+                <h4>10.3 Adding MCP Servers</h4>
+                <div class="info-box">
+                    <strong>Step 1: Create MCP Server Configuration</strong><br>
+                    <code>POST /api/mcp-servers/</code><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;">
+{
+  "agent": 1,
+  "name": "filesystem",
+  "description": "Local filesystem access",
+  "transport_type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+  "auto_connect": true
+}</pre>
+                </div>
+
+                <div class="info-box">
+                    <strong>Step 2: Test Connection</strong><br>
+                    <code>POST /api/mcp-servers/{id}/test_connection/</code>
+                </div>
+
+                <div class="info-box">
+                    <strong>Step 3: List Available Tools</strong><br>
+                    <code>GET /api/mcp-servers/list_tools/?agent_id=1</code>
+                </div>
+
+                <h4>10.4 MCP Tools</h4>
+                <div class="success-box">
+                    <ul>
+                        <li>Tools are automatically discovered from connected MCP servers</li>
+                        <li>Tool names are prefixed with server name (e.g., <code>mcp_filesystem_read_file</code>)</li>
+                        <li>Tools are integrated into the agent's tool system</li>
+                        <li>MCP tools work alongside built-in tools seamlessly</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 10: Deployment -->
+            <div class="section" id="deployment">
+                <h2 class="section-title"><i class="bi bi-cloud-upload"></i> 10. Deployment & Operations</h2>
+                
+                <h4>11.1 System Requirements</h4>
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5>Core Services</h5>
+                        <ul>
+                            <li>Python 3.9+</li>
+                            <li>MySQL database</li>
+                            <li>Redis (for Celery & caching)</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>Optional Services</h5>
+                        <ul>
+                            <li>Qdrant (for vector storage)</li>
+                            <li>AWS Bedrock access</li>
+                            <li>Ollama (local LLM)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>11.2 Key Services</h4>
+                <ul>
+                    <li><strong>Django Application:</strong> Main web server and API</li>
+                    <li><strong>Celery Workers:</strong> Background task processing for async requests</li>
+                    <li><strong>Redis:</strong> Message broker for Celery and response caching</li>
+                    <li><strong>Qdrant Server:</strong> Vector database for RAG (optional)</li>
+                </ul>
+
+                <h4>11.3 Database Models</h4>
+                <div class="info-box">
+                    <strong>Key Models:</strong>
+                    <ul>
+                        <li><code>Agent</code> - Agent configuration and status</li>
+                        <li><code>Conversation</code> - Conversation threads</li>
+                        <li><code>ConversationMessage</code> - Individual messages</li>
+                        <li><code>AgentRequest</code> - Async request tracking</li>
+                        <li><code>ConversationFile</code> - Uploaded/generated files</li>
+                        <li><code>TrainingData</code> - Agent training data</li>
+                        <li><code>MCPServer</code> - MCP server configurations</li>
+                        <li><code>ToolCall</code> - Tool execution tracking</li>
+                    </ul>
+                </div>
+
+                <h4>11.3.1 Database Character Encoding</h4>
+                <div class="success-box">
+                    <strong>UTF8MB4 Support:</strong>
+                    <ul>
+                        <li>All text fields use UTF8MB4 encoding to support emojis and 4-byte UTF-8 characters</li>
+                        <li>Database and Django settings are configured for UTF8MB4 by default</li>
+                        <li>Migration <code>0020_fix_toolcall_utf8mb4</code> ensures <code>ToolCall.result_content</code> and <code>ToolCall.error</code> columns support emojis</li>
+                        <li>This enables proper storage of tool results containing emoji characters (e.g., ✅, 📄, 🔗)</li>
+                    </ul>
+                </div>
+
+                <h4>11.4 Caching</h4>
+                <div class="success-box">
+                    <strong>Redis-based Caching:</strong>
+                    <ul>
+                        <li>Agent responses are cached for identical queries</li>
+                        <li>Cache key includes: agent_id, query, system_prompt, model_id, training_data_hash</li>
+                        <li>Cache is automatically invalidated when training data or configuration changes</li>
+                        <li>Cache is used for new conversations (0 messages), skipped for ongoing conversations</li>
+                    </ul>
+                </div>
+
+                <h4>11.5 Security</h4>
+                <div class="warning-box">
+                    <strong>Security Features:</strong>
+                    <ul>
+                        <li><strong>API Keys:</strong> Hashed using SHA-256 before storage</li>
+                        <li><strong>Authentication:</strong> Agent API keys are tightly bound to specific agents</li>
+                        <li><strong>Permissions:</strong> Agents can only access their own conversations and files</li>
+                        <li><strong>HTTPS:</strong> Required in production environments</li>
+                    </ul>
+                </div>
+
+                <div class="success-box">
+                    <strong>Monitoring & Logging:</strong>
+                    <ul>
+                        <li>All components use Python logging</li>
+                        <li>Tool execution is logged with results</li>
+                        <li>Agent conversations are stored in database</li>
+                        <li>Error tracking for debugging</li>
+                        <li>Request status visible in Django Admin</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 11: Connectors -->
+            <div class="section" id="connectors">
+                <h2 class="section-title"><i class="bi bi-link-45deg"></i> 11. Connectors & OAuth Callback URLs</h2>
+                
+                <h4>12.1 Overview</h4>
+                <p>The platform supports integration with multiple external services through OAuth 2.0 connectors. Each connector requires a callback URL to be registered with the OAuth provider.</p>
+
+                <div class="info-box">
+                    <strong>Supported Connector Types:</strong>
+                    <ul>
+                        <li><strong>JIRA</strong> - Atlassian JIRA Cloud (OAuth 2.0 3LO)</li>
+                        <li><strong>Confluence</strong> - Atlassian Confluence (OAuth 2.0 3LO)</li>
+                        <li><strong>GitLab</strong> - GitLab repositories (OAuth 2.0)</li>
+                        <li><strong>GitHub</strong> - GitHub repositories (OAuth 2.0)</li>
+                        <li><strong>Google</strong> - Google Workspace (Drive, Docs, Sheets, Gmail) (OAuth 2.0)</li>
+                        <li><strong>Microsoft</strong> - Microsoft 365 (OneDrive, SharePoint, Outlook, Teams) (OAuth 2.0)</li>
+                        <li><strong>Slack</strong> - Slack workspace (OAuth 2.0) - <em>Coming soon</em></li>
+                    </ul>
+                </div>
+
+                <h4>12.2 Callback URL Format</h4>
+                <p>All connectors use the same callback URL pattern:</p>
+                <div class="info-box">
+                    <strong>Callback URL Pattern:</strong><br>
+                    <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code>
+                    <ul>
+                        <li><strong>Replace <code>{connector_id}</code></strong> with the actual connector ID after creating the connector</li>
+                        <li>The callback URL is provided in the API response when creating a connector</li>
+                        <li>The URL must match <strong>EXACTLY</strong> (including protocol, domain, path, and trailing slash)</li>
+                    </ul>
+                </div>
+
+                <h4>12.3 Getting Callback URLs</h4>
+                <p>Callback URLs are automatically generated when you create a connector. You can get the callback URL in two ways:</p>
+                <ol>
+                    <li><strong>When Creating a Connector:</strong> The API response includes the <code>callback_url</code> field</li>
+                    <li><strong>When Initiating OAuth:</strong> The <code>POST /api/connectors/{connector_id}/oauth/initiate/</code> endpoint returns the callback URL</li>
+                </ol>
+
+                <h4>12.4 Connector-Specific Callback URL Registration</h4>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> JIRA Connector</h5>
+                    <p><strong>OAuth Provider:</strong> Atlassian Developer Console</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0 (3-Legged OAuth / 3LO)</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to <a href="https://developer.atlassian.com/console/myapps/" target="_blank">Atlassian Developer Console</a></li>
+                        <li>Click <strong>Create</strong> → <strong>New app</strong></li>
+                        <li>Choose <strong>OAuth 2.0 (3LO)</strong> integration type</li>
+                        <li>Fill in app details (name, logo, description)</li>
+                        <li>Navigate to <strong>APIS AND FEATURES</strong> → <strong>OAuth 2.0 (3LO)</strong></li>
+                        <li>Add <strong>Authorization callback URL</strong>: <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                        <li>Add <strong>Jira platform REST API</strong> under <strong>APIS AND FEATURES</strong></li>
+                        <li>Configure required scopes:
+                            <ul>
+                                <li><code>read:jira-work</code> - Read JIRA issues and work items</li>
+                                <li><code>read:jira-user</code> - Read user information</li>
+                                <li><code>offline_access</code> - Required for refresh tokens</li>
+                            </ul>
+                        </li>
+                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                    </ol>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>This connector is designed for <strong>JIRA Cloud</strong> (atlassian.net domains)</li>
+                        <li>JIRA Server/Data Center requires OAuth 1.0a, which is not currently supported</li>
+                        <li>Each connector requires its own callback URL - add multiple URLs for different connectors</li>
+                        <li>The callback URL must match <strong>EXACTLY</strong> (including protocol, domain, path, and trailing slash)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Confluence Connector</h5>
+                    <p><strong>OAuth Provider:</strong> Atlassian Developer Console</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0 (3-Legged OAuth / 3LO)</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to <a href="https://developer.atlassian.com/console/myapps/" target="_blank">Atlassian Developer Console</a></li>
+                        <li>Click <strong>Create</strong> → <strong>New app</strong></li>
+                        <li>Choose <strong>OAuth 2.0 (3LO)</strong> integration type</li>
+                        <li>Fill in app details (name, logo, description)</li>
+                        <li>Navigate to <strong>APIS AND FEATURES</strong> → <strong>OAuth 2.0 (3LO)</strong></li>
+                        <li>Add <strong>Authorization callback URL</strong>: <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                        <li>Add <strong>Confluence REST API</strong> under <strong>APIS AND FEATURES</strong></li>
+                        <li>Configure required scopes:
+                            <ul>
+                                <li><code>read:confluence-content.all</code> - Read all Confluence content</li>
+                                <li><code>read:confluence-space.summary</code> - Read space information</li>
+                                <li><code>offline_access</code> - Required for refresh tokens</li>
+                            </ul>
+                        </li>
+                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                    </ol>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>This connector is designed for <strong>Confluence Cloud</strong> (atlassian.net domains)</li>
+                        <li>Each connector requires its own callback URL</li>
+                        <li>The callback URL must match <strong>EXACTLY</strong> (including protocol, domain, path, and trailing slash)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> GitLab Connector</h5>
+                    <p><strong>OAuth Provider:</strong> GitLab Application Settings</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to your GitLab instance (e.g., <code>https://gitlab.com</code> or your self-hosted instance)</li>
+                        <li>Navigate to <strong>User Settings</strong> → <strong>Applications</strong> (for user-level apps)</li>
+                        <li>Or go to <strong>Admin Area</strong> → <strong>Applications</strong> (for instance-wide apps)</li>
+                        <li>Click <strong>Add new application</strong></li>
+                        <li>Fill in the application details:</li>
+                        <ul>
+                            <li><strong>Name:</strong> Your application name</li>
+                            <li><strong>Redirect URI:</strong> <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                            <li><strong>Scopes:</strong> Select the following scopes:
+                                <ul>
+                                    <li><code>read_api</code> - Read API data</li>
+                                    <li><code>read_repository</code> - Read repository contents</li>
+                                    <li><code>read_user</code> - Read user information (optional)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <li>Click <strong>Save application</strong></li>
+                        <li>Copy the <strong>Application ID</strong> (Client ID) and <strong>Secret</strong> (Client Secret)</li>
+                    </ol>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>Works with both GitLab.com and self-hosted GitLab instances</li>
+                        <li>For self-hosted instances, use your instance URL as the base URL</li>
+                        <li>Each connector requires its own callback URL</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> GitHub Connector</h5>
+                    <p><strong>OAuth Provider:</strong> GitHub Developer Settings</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to <a href="https://github.com/settings/developers" target="_blank">GitHub Developer Settings</a></li>
+                        <li>Click <strong>New OAuth App</strong> (or <strong>OAuth Apps</strong> → <strong>New OAuth App</strong>)</li>
+                        <li>Fill in the application details:</li>
+                        <ul>
+                            <li><strong>Application name:</strong> Your application name</li>
+                            <li><strong>Homepage URL:</strong> Your application homepage (e.g., <code>https://your-domain.com</code>)</li>
+                            <li><strong>Authorization callback URL:</strong> <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                        </ul>
+                        <li>Click <strong>Register application</strong></li>
+                        <li>Copy the <strong>Client ID</strong> and click <strong>Generate a new client secret</strong></li>
+                        <li>Save the <strong>Client Secret</strong> immediately (it's only shown once)</li>
+                    </ol>
+                    <p><strong>OAuth Scopes:</strong> The connector automatically requests the following scopes:</p>
+                    <ul>
+                        <li><code>repo</code> - Full control of private repositories (if accessing private repos)</li>
+                        <li><code>read:org</code> - Read org and team membership (if accessing organization repos)</li>
+                    </ul>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>For <strong>GitHub Enterprise Server</strong>, use your instance's OAuth app settings (usually at <code>https://your-ghe-instance.com/settings/developers</code>)</li>
+                        <li>Each connector requires its own callback URL</li>
+                        <li>The callback URL must match <strong>EXACTLY</strong> (including protocol, domain, path, and trailing slash)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Google Connector</h5>
+                    <p><strong>OAuth Provider:</strong> Google Cloud Console</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                        <li>Select your project or create a new one</li>
+                        <li>Enable the required APIs:
+                            <ul>
+                                <li>Navigate to <strong>APIs & Services</strong> → <strong>Library</strong></li>
+                                <li>Enable <strong>Google Drive API</strong> (for Drive access)</li>
+                                <li>Enable <strong>Google Docs API</strong> (for Google Docs)</li>
+                                <li>Enable <strong>Google Sheets API</strong> (for Google Sheets)</li>
+                                <li>Enable <strong>Gmail API</strong> (for Gmail access, if needed)</li>
+                            </ul>
+                        </li>
+                        <li>Navigate to <strong>APIs & Services</strong> → <strong>Credentials</strong></li>
+                        <li>Click <strong>Create Credentials</strong> → <strong>OAuth client ID</strong></li>
+                        <li>If prompted, configure the OAuth consent screen first:
+                            <ul>
+                                <li>Select <strong>External</strong> or <strong>Internal</strong> user type</li>
+                                <li>Fill in app information (name, support email, developer contact)</li>
+                                <li>Add scopes: <code>https://www.googleapis.com/auth/drive.readonly</code>, <code>https://www.googleapis.com/auth/documents.readonly</code>, etc.</li>
+                            </ul>
+                        </li>
+                        <li>Select <strong>Web application</strong> as application type</li>
+                        <li>Add <strong>Authorized redirect URIs</strong>: <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                        <li>Click <strong>Create</strong></li>
+                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                    </ol>
+                    <p><strong>OAuth Scopes:</strong> The connector uses the following scopes:</p>
+                    <ul>
+                        <li><code>https://www.googleapis.com/auth/drive.readonly</code> - Read Google Drive files</li>
+                        <li><code>https://www.googleapis.com/auth/documents.readonly</code> - Read Google Docs</li>
+                        <li><code>https://www.googleapis.com/auth/spreadsheets.readonly</code> - Read Google Sheets</li>
+                        <li><code>https://www.googleapis.com/auth/gmail.readonly</code> - Read Gmail messages (if enabled)</li>
+                    </ul>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>Each connector requires its own callback URL</li>
+                        <li>The OAuth consent screen must be configured before creating OAuth credentials</li>
+                        <li>For production use, you may need to verify your app with Google</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Microsoft Connector</h5>
+                    <p><strong>OAuth Provider:</strong> Azure Portal (Azure Active Directory)</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0 (Microsoft Identity Platform)</p>
+                    <p><strong>Registration Steps:</strong></p>
+                    <ol>
+                        <li>Go to <a href="https://portal.azure.com/" target="_blank">Azure Portal</a></li>
+                        <li>Navigate to <strong>Azure Active Directory</strong> → <strong>App registrations</strong></li>
+                        <li>Click <strong>New registration</strong></li>
+                        <li>Fill in the application details:</li>
+                        <ul>
+                            <li><strong>Name:</strong> Your application name</li>
+                            <li><strong>Supported account types:</strong> Select appropriate option:
+                                <ul>
+                                    <li><strong>Accounts in this organizational directory only</strong> - Single tenant</li>
+                                    <li><strong>Accounts in any organizational directory</strong> - Multi-tenant</li>
+                                    <li><strong>Accounts in any organizational directory and personal Microsoft accounts</strong> - Multi-tenant + personal</li>
+                                </ul>
+                            </li>
+                            <li><strong>Redirect URI:</strong> Select <strong>Web</strong> and enter <code>https://your-domain.com/api/connectors/{connector_id}/oauth/callback/</code></li>
+                        </ul>
+                        <li>Click <strong>Register</strong></li>
+                        <li>Copy the <strong>Application (client) ID</strong> from the Overview page</li>
+                        <li>Create a <strong>Client secret</strong>:
+                            <ul>
+                                <li>Go to <strong>Certificates & secrets</strong></li>
+                                <li>Click <strong>New client secret</strong></li>
+                                <li>Add description and select expiration</li>
+                                <li>Click <strong>Add</strong> and <strong>copy the secret value immediately</strong> (it's only shown once)</li>
+                            </ul>
+                        </li>
+                        <li>Configure API permissions:
+                            <ul>
+                                <li>Go to <strong>API permissions</strong></li>
+                                <li>Click <strong>Add a permission</strong></li>
+                                <li>Select <strong>Microsoft Graph</strong></li>
+                                <li>Select <strong>Delegated permissions</strong></li>
+                                <li>Add the following permissions:
+                                    <ul>
+                                        <li><code>Files.Read</code> - Read files in OneDrive</li>
+                                        <li><code>Sites.Read.All</code> - Read items in SharePoint</li>
+                                        <li><code>Mail.Read</code> - Read mail in Outlook</li>
+                                        <li><code>ChannelMessage.Read.All</code> - Read Teams messages (if needed)</li>
+                                        <li><code>offline_access</code> - Required for refresh tokens</li>
+                                    </ul>
+                                </li>
+                                <li>Click <strong>Add permissions</strong></li>
+                                <li>Click <strong>Grant admin consent</strong> if you have admin rights (recommended)</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p><strong>OAuth Scopes:</strong> The connector uses Microsoft Graph API with the following scopes:</p>
+                    <ul>
+                        <li><code>Files.Read</code> - Read OneDrive files</li>
+                        <li><code>Sites.Read.All</code> - Read SharePoint sites and documents</li>
+                        <li><code>Mail.Read</code> - Read Outlook mail</li>
+                        <li><code>ChannelMessage.Read.All</code> - Read Teams channel messages</li>
+                        <li><code>offline_access</code> - Required for refresh tokens</li>
+                    </ul>
+                    <p><strong>Important Notes:</strong></p>
+                    <ul>
+                        <li>Each connector requires its own callback URL</li>
+                        <li>Admin consent may be required for organization-wide access</li>
+                        <li>The callback URL must match <strong>EXACTLY</strong> (including protocol, domain, path, and trailing slash)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Slack Connector</h5>
+                    <p><strong>Status:</strong> <em>Coming Soon</em> - OAuth implementation in progress</p>
+                    <p><strong>OAuth Provider:</strong> Slack API</p>
+                    <p><strong>OAuth Type:</strong> OAuth 2.0</p>
+                    <p><strong>Note:</strong> The Slack connector is defined in the system but OAuth integration is not yet implemented. Check back for updates.</p>
+                </div>
+
+                <h4>12.5 Common Callback URL Issues</h4>
+                <div class="warning-box">
+                    <strong>Common Errors and Solutions:</strong>
+                    <ul>
+                        <li><strong>"Invalid callback URL" or "Redirect URI mismatch"</strong>
+                            <ul>
+                                <li>Ensure the callback URL matches exactly (including <code>https://</code>, domain, path, and trailing <code>/</code>)</li>
+                                <li>Check for typos in the URL</li>
+                                <li>Verify the connector ID is correct</li>
+                            </ul>
+                        </li>
+                        <li><strong>"The app's callback URL is invalid" (Atlassian)</strong>
+                            <ul>
+                                <li>Get the exact callback URL from the API response when creating the connector</li>
+                                <li>Copy the URL exactly as shown (including trailing slash)</li>
+                                <li>Ensure you're registering it in the correct OAuth app</li>
+                            </ul>
+                        </li>
+                        <li><strong>Multiple Connectors</strong>
+                            <ul>
+                                <li>Each connector has a unique callback URL based on its ID</li>
+                                <li>You must register each callback URL separately with the OAuth provider</li>
+                                <li>Some providers support wildcard patterns, but exact URLs are recommended</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <h4>12.6 Example Callback URLs</h4>
+                <div class="info-box">
+                    <strong>Example Callback URLs (replace with your actual domain and connector IDs):</strong>
+                    <ul>
+                        <li><code>https://example.com/api/connectors/1/oauth/callback/</code> (JIRA connector #1)</li>
+                        <li><code>https://example.com/api/connectors/2/oauth/callback/</code> (GitHub connector #2)</li>
+                        <li><code>https://example.com/api/connectors/3/oauth/callback/</code> (Google connector #3)</li>
+                        <li><code>https://example.com/api/connectors/4/oauth/callback/</code> (Microsoft connector #4)</li>
+                    </ul>
+                </div>
+
+                <h4>12.7 API Endpoints</h4>
+                <div class="info-box">
+                    <strong>Key Endpoints:</strong>
+                    <ul>
+                        <li><strong>Create Connector:</strong> <code>POST /api/connectors/</code> (returns callback_url)</li>
+                        <li><strong>Initiate OAuth:</strong> <code>POST /api/connectors/{connector_id}/oauth/initiate/</code> (returns callback_url)</li>
+                        <li><strong>OAuth Callback:</strong> <code>GET /api/connectors/{connector_id}/oauth/callback/</code> (handled automatically)</li>
+                    </ul>
+                </div>
+
+                <div class="success-box">
+                    <strong>Best Practices:</strong>
+                    <ul>
+                        <li>Always get the callback URL from the API response when creating a connector</li>
+                        <li>Register the callback URL in your OAuth provider before initiating the OAuth flow</li>
+                        <li>Use HTTPS in production environments</li>
+                        <li>Keep track of which callback URLs are registered for which connectors</li>
+                        <li>Test the OAuth flow after registering the callback URL</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 12: Agent Sharing -->
+            <div class="section" id="agent-sharing">
+                <h2 class="section-title"><i class="bi bi-share"></i> 12. Agent Sharing & Public URLs</h2>
+                
+                <h4>12.1 Overview</h4>
+                <p>Published agents can be shared with others through two methods: email-based sharing and public share URLs. Both methods allow users to access and use your agents without requiring direct access to your account.</p>
+                
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5>📧 Email-Based Sharing</h5>
+                        <ul>
+                            <li>Share with specific users via email</li>
+                            <li>Requires recipient to accept invitation</li>
+                            <li>Optional expiration dates</li>
+                            <li>Track acceptance status</li>
+                            <li>Can revoke access anytime</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>🔗 Public Share URLs</h5>
+                        <ul>
+                            <li>Generate shareable link</li>
+                            <li>Anyone with URL can access</li>
+                            <li>No email required</li>
+                            <li>Track access count</li>
+                            <li>Can deactivate anytime</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>12.2 Email-Based Sharing</h4>
+                <div class="info-box">
+                    <strong>How It Works:</strong>
+                    <ol>
+                        <li>Navigate to your published agent's detail page</li>
+                        <li>Click "Share Agent (Email)" button</li>
+                        <li>Enter recipient's email address</li>
+                        <li>Optionally add a message and set expiration</li>
+                        <li>An email with a unique share link is sent to the recipient</li>
+                        <li>Recipient clicks the link and accepts the share</li>
+                        <li>They can now access and use your agent</li>
+                    </ol>
+                </div>
+
+                <h5>12.2.1 API Endpoints</h5>
+                <div class="info-box">
+                    <strong>Share Agent:</strong><br>
+                    <code>POST /dashboard/{agent_id}/share/</code><br>
+                    <strong>Parameters:</strong>
+                    <ul>
+                        <li><code>email</code> - Recipient's email address (required)</li>
+                        <li><code>message</code> - Optional message to include</li>
+                        <li><code>expires_days</code> - Optional expiration in days</li>
+                    </ul>
+                </div>
+
+                <h5>12.2.2 Managing Shares</h5>
+                <div class="info-box">
+                    <strong>Available Actions:</strong>
+                    <ul>
+                        <li><strong>Resend Email:</strong> Resend share invitation email</li>
+                        <li><strong>Withdraw Share:</strong> Remove pending invitations</li>
+                        <li><strong>Revoke Access:</strong> Remove access from accepted shares</li>
+                    </ul>
+                </div>
+
+                <h4>12.3 Public Share URLs</h4>
+                <div class="info-box">
+                    <strong>How It Works:</strong>
+                    <ol>
+                        <li>Navigate to your published agent's detail page</li>
+                        <li>Click "Public Share URL" button</li>
+                        <li>Optionally set expiration date</li>
+                        <li>Copy the generated share URL</li>
+                        <li>Share the URL with anyone (via email, social media, website, etc.)</li>
+                        <li>Anyone with the URL can access your agent (after login/registration)</li>
+                    </ol>
+                </div>
+
+                <h5>12.3.1 Generating Public Share URLs</h5>
+                <div class="info-box">
+                    <strong>Via Dashboard:</strong><br>
+                    <ol>
+                        <li>Go to agent detail page: <code>/dashboard/{agent_id}/</code></li>
+                        <li>Click "Public Share URL" button</li>
+                        <li>Set optional expiration (in days)</li>
+                        <li>Click "Generate Share URL"</li>
+                        <li>Copy the generated URL</li>
+                    </ol>
+                    
+                    <strong>Via API:</strong><br>
+                    <code>POST /dashboard/{agent_id}/public-share/</code><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "expires_days": 30  // Optional: expiration in days
+}</code></pre>
+                </div>
+
+                <h5>12.3.2 Public Share URL Format</h5>
+                <div class="info-box">
+                    <strong>URL Pattern:</strong><br>
+                    <code>https://your-domain.com/dashboard/public/{token}/</code><br><br>
+                    <strong>Features:</strong>
+                    <ul>
+                        <li>Unique token for each share</li>
+                        <li>Accessible by anyone with the URL</li>
+                        <li>Requires user login/registration to use</li>
+                        <li>Automatically redirects to agent chat after authentication</li>
+                    </ul>
+                </div>
+
+                <h5>12.3.3 Managing Public Shares</h5>
+                <div class="info-box">
+                    <strong>View Active Share:</strong><br>
+                    <ul>
+                        <li>Active public share URL is displayed on agent detail page</li>
+                        <li>Shows access count and last accessed time</li>
+                        <li>Shows expiration date if set</li>
+                    </ul>
+                    
+                    <strong>Deactivate Share:</strong><br>
+                    <ul>
+                        <li>Click "Deactivate" button on agent detail page</li>
+                        <li>Or use API: <code>POST /dashboard/{agent_id}/public-share/deactivate/</code></li>
+                        <li>Deactivated URLs no longer grant access</li>
+                    </ul>
+                </div>
+
+                <h4>12.4 Access Control</h4>
+                <div class="warning-box">
+                    <strong>Important Security Notes:</strong>
+                    <ul>
+                        <li>Only <strong>published</strong> agents can be shared</li>
+                        <li>Shared users can <strong>use</strong> the agent but cannot modify it</li>
+                        <li>Agent owner retains full control and can revoke access anytime</li>
+                        <li>Public share URLs can be deactivated instantly</li>
+                        <li>Expired shares automatically lose access</li>
+                        <li>Usage is tracked and billed to the agent owner</li>
+                    </ul>
+                </div>
+
+                <h4>12.5 Use Cases</h4>
+                <div class="success-box">
+                    <strong>Email-Based Sharing:</strong>
+                    <ul>
+                        <li>Sharing with specific team members</li>
+                        <li>Client access to custom agents</li>
+                        <li>Controlled access with expiration</li>
+                        <li>Tracking who has accepted shares</li>
+                    </ul>
+                    
+                    <strong>Public Share URLs:</strong>
+                    <ul>
+                        <li>Sharing on social media</li>
+                        <li>Embedding in websites or blogs</li>
+                        <li>Demo links for potential clients</li>
+                        <li>Public showcase of agent capabilities</li>
+                        <li>Community sharing and collaboration</li>
+                    </ul>
+                </div>
+
+                <h4>12.6 API Examples</h4>
+                <div class="info-box">
+                    <strong>Generate Public Share URL:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>POST /dashboard/{agent_id}/public-share/
+Authorization: Session or User API Key
+Content-Type: application/json
+
+{
+  "expires_days": 30
+}</code></pre>
+                    
+                    <strong>Response:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 10px;"><code>{
+  "success": true,
+  "share_url": "https://your-domain.com/dashboard/public/{token}/",
+  "expires_at": "2024-02-15T00:00:00Z"
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- Section 13: Open Source License -->
+            <div class="section" id="license">
+                <h2 class="section-title"><i class="bi bi-code-square"></i> 13. Open Source License</h2>
+                
+                <h4>13.1 Overview</h4>
+                <p>Oshaani is distributed as open source software under a <strong>non-commercial license</strong>. You may use, modify, and distribute it for personal, educational, and research purposes.</p>
+                
+                <div class="info-box">
+                    <strong>Permitted uses:</strong>
+                    <ul>
+                        <li>Personal projects and experimentation</li>
+                        <li>Education and academic research</li>
+                        <li>Non-profit and community deployments</li>
+                        <li>Self-hosted installations on your own infrastructure</li>
+                    </ul>
+                </div>
+
+                <h4>13.2 Commercial Use</h4>
+                <div class="warning-box">
+                    <strong>Commercial use is not permitted</strong> under the default license, including:
+                    <ul>
+                        <li>Offering the platform as a paid SaaS or hosted service</li>
+                        <li>Selling or sublicensing the software or derivative works</li>
+                        <li>Using the software in revenue-generating products without a commercial license</li>
+                    </ul>
+                    <p>See the full <a href="{% url 'license' %}">license page</a> for terms.</p>
+                </div>
+
+                <h4>13.3 Self-Hosted Deployment</h4>
+                <div class="success-box">
+                    <strong>Self-hosted operators:</strong>
+                    <ul>
+                        <li>Provide your own AWS credentials for Bedrock (optional)</li>
+                        <li>Run Ollama locally or connect to your own instance</li>
+                        <li>No payment gateway or subscription setup is required</li>
+                        <li>Usage analytics are available in the dashboard for monitoring</li>
+                    </ul>
+                </div>
+
+                <h4>13.4 Usage Analytics</h4>
+                <div class="info-box">
+                    <strong>Analytics Dashboard:</strong>
+                    <ul>
+                        <li>Click "Analytics" in the navigation</li>
+                        <li>View message, tool, and API usage statistics</li>
+                        <li>Track usage trends over time</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 14: Oshaani Ecosystem -->
+            <div class="section" id="ecosystem">
+                <h2 class="section-title"><i class="bi bi-globe"></i> 14. Oshaani Ecosystem & Products</h2>
+                
+                <h4>14.1 Overview</h4>
+                <p>The Oshaani platform is part of a growing ecosystem of AI-powered solutions designed to help developers, businesses, and creators build, deploy, and share intelligent AI agents.</p>
+                
+                <div class="architecture-grid">
+                    <div class="component-box">
+                        <h5>🌐 Oshaani Social</h5>
+                        <ul>
+                            <li><strong>URL:</strong> social.oshaani.com</li>
+                            <li>Social platform for AI agents</li>
+                            <li>Connect and collaborate</li>
+                            <li>Share AI creations</li>
+                            <li>Discover innovative agents</li>
+                            <li>Build communities</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>🤖 AI Agents Platform</h5>
+                        <ul>
+                            <li><strong>URL:</strong> oshaani.com</li>
+                            <li>Create AI agents</li>
+                            <li>Train and deploy</li>
+                            <li>100+ AI models</li>
+                            <li>RAG capabilities</li>
+                            <li>Custom tools & MCP</li>
+                        </ul>
+                    </div>
+                    <div class="component-box">
+                        <h5>🔧 Developer Tools</h5>
+                        <ul>
+                            <li><strong>Status:</strong> Coming Soon</li>
+                            <li>Advanced APIs</li>
+                            <li>SDKs & libraries</li>
+                            <li>Developer resources</li>
+                            <li>Integration guides</li>
+                            <li>Code examples</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>14.2 Oshaani Social Platform</h4>
+                <div class="info-box">
+                    <strong>What is Oshaani Social?</strong>
+                    <p>Oshaani Social (social.oshaani.com) is a dedicated social platform where users can:</p>
+                    <ul>
+                        <li><strong>Share AI Agents:</strong> Publish your created agents and showcase them to the community</li>
+                        <li><strong>Discover Agents:</strong> Browse and discover innovative AI agents created by others</li>
+                        <li><strong>Build Communities:</strong> Connect with other developers and AI enthusiasts</li>
+                        <li><strong>Collaborate:</strong> Work together on AI projects and share knowledge</li>
+                        <li><strong>Get Feedback:</strong> Receive community feedback on your AI creations</li>
+                        <li><strong>Learn:</strong> Access tutorials, best practices, and use cases</li>
+                    </ul>
+                </div>
+
+                <div class="success-box">
+                    <strong>Integration with AI Agents Platform:</strong>
+                    <ul>
+                        <li>Agents created on oshaani.com can be shared to social.oshaani.com</li>
+                        <li>Social platform provides additional visibility and community engagement</li>
+                        <li>Seamless workflow between creation and sharing</li>
+                        <li>Community-driven improvements and feedback</li>
+                    </ul>
+                </div>
+
+                <h4>14.3 Platform Workflow</h4>
+                <div class="diagram-container">
+                    <div class="flow-diagram">
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e3f2fd;">
+                                <strong>Create Agent</strong><br>
+                                <small>oshaani.com</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #fff3e0;">
+                                <strong>Train & Configure</strong><br>
+                                <small>Add knowledge, tools, MCP</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #f3e5f5;">
+                                <strong>Test & Deploy</strong><br>
+                                <small>Publish with API keys</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e8f5e9;">
+                                <strong>Share to Social</strong><br>
+                                <small>social.oshaani.com</small>
+                            </div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-row">
+                            <div class="flow-box" style="background: #e0f2f1;">
+                                <strong>Community Engagement</strong><br>
+                                <small>Feedback & collaboration</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>14.4 Benefits of the Ecosystem</h4>
+                <div class="info-box">
+                    <strong>For Developers:</strong>
+                    <ul>
+                        <li>Complete toolchain from creation to deployment to sharing</li>
+                        <li>Community support and knowledge sharing</li>
+                        <li>Access to pre-built agents and templates</li>
+                        <li>Learning resources and best practices</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <strong>For Businesses:</strong>
+                    <ul>
+                        <li>Professional AI agent creation platform</li>
+                        <li>Scalable deployment options</li>
+                        <li>Enterprise-grade security and reliability</li>
+                        <li>Integration with existing tools and workflows</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <strong>For Creators:</strong>
+                    <ul>
+                        <li>Showcase your AI creations</li>
+                        <li>Build a following and reputation</li>
+                        <li>Community sharing and collaboration</li>
+                        <li>Collaboration with other creators</li>
+                    </ul>
+                </div>
+
+                <h4>14.5 Accessing the Platforms</h4>
+                <div class="success-box">
+                    <strong>Platform URLs:</strong>
+                    <ul>
+                        <li><strong>AI Agents Platform:</strong> <a href="https://oshaani.com" target="_blank" rel="noopener">https://oshaani.com</a></li>
+                        <li><strong>Oshaani Social:</strong> <a href="https://social.oshaani.com" target="_blank" rel="noopener">https://social.oshaani.com</a></li>
+                        <li><strong>Documentation:</strong> Available in the platform dashboard</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Note:</strong>
+                    <ul>
+                        <li>Both platforms share the same authentication system</li>
+                        <li>Your account works across all Oshaani platforms</li>
+                        <li>Agents created on one platform can be accessed from others</li>
+                        <li>API keys and credentials are platform-specific</li>
+                    </ul>
+                </div>
+
+                <h4>14.6 Future Roadmap</h4>
+                <div class="info-box">
+                    <strong>Upcoming Features:</strong>
+                    <ul>
+                        <li><strong>Developer Tools:</strong> Advanced APIs, SDKs, and developer resources</li>
+                        <li><strong>Marketplace:</strong> Discover and share AI agents and templates</li>
+                        <li><strong>Analytics Dashboard:</strong> Enhanced analytics across platforms</li>
+                        <li><strong>Mobile Apps:</strong> iOS and Android applications</li>
+                        <li><strong>Enterprise Features:</strong> Advanced security, SSO, and team management</li>
+                        <li><strong>Team Sharing:</strong> Share agents with entire teams or organizations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 15: Contact Form & Demo Booking -->
+            <div class="section" id="contact-demo">
+                <h2 class="section-title"><i class="bi bi-envelope"></i> 15. Contact Form & Demo Booking</h2>
+                
+                <h4>15.1 Overview</h4>
+                <p>The Oshaani platform includes a contact form and demo booking system that allows visitors to:</p>
+                <ul>
+                    <li>Submit general inquiries through a contact form</li>
+                    <li>Book personalized demos with preferred date and time</li>
+                    <li>Receive automated email confirmations</li>
+                </ul>
+
+                <h4>15.2 Features</h4>
+                <div class="info-box">
+                    <strong><i class="bi bi-check-circle"></i> Contact Form Features:</strong>
+                    <ul>
+                        <li><strong>Contact Form:</strong> General inquiry form for questions and support requests</li>
+                        <li><strong>Demo Booking:</strong> Dedicated form for scheduling personalized product demos</li>
+                        <li><strong>Email Notifications:</strong> All submissions are sent to support@oshaani.com</li>
+                        <li><strong>Form Validation:</strong> Client-side and server-side validation for data integrity</li>
+                        <li><strong>Responsive Design:</strong> Mobile-friendly modal interface</li>
+                        <li><strong>Success Feedback:</strong> Visual confirmation after successful submission</li>
+                    </ul>
+                </div>
+
+                <h4>15.3 Form Fields</h4>
+                <div class="diagram-container">
+                    <h5>Contact Form Fields:</h5>
+                    <ul>
+                        <li><strong>Name:</strong> Required - Full name of the contact</li>
+                        <li><strong>Email:</strong> Required - Email address for follow-up</li>
+                        <li><strong>Company:</strong> Optional - Company or organization name</li>
+                        <li><strong>Phone:</strong> Optional - Contact phone number</li>
+                        <li><strong>Message:</strong> Required - Inquiry or message content</li>
+                    </ul>
+
+                    <h5 class="mt-4">Demo Booking Additional Fields:</h5>
+                    <ul>
+                        <li><strong>Preferred Date:</strong> Optional - Preferred demo date (date picker)</li>
+                        <li><strong>Preferred Time:</strong> Optional - Preferred demo time (dropdown: 9 AM - 5 PM)</li>
+                        <li><strong>Use Case:</strong> Required - Description of intended use case</li>
+                    </ul>
+                </div>
+
+                <h4>15.4 API Endpoint</h4>
+                <div class="code-block">
+                    <strong>Endpoint:</strong> <code>POST /api/contact/</code><br>
+                    <strong>Content-Type:</strong> <code>application/json</code><br>
+                    <strong>CSRF:</strong> Exempt (public endpoint)
+                </div>
+
+                <h5>Request Body:</h5>
+                <pre><code>{
+  "form_type": "contact" | "demo",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "company": "Example Corp",
+  "phone": "+1 (555) 123-4567",
+  "message": "I'm interested in learning more about...",
+  "demoDate": "2024-01-15",  // Optional, for demo form
+  "demoTime": "14:00"         // Optional, for demo form
+}</code></pre>
+
+                <h5>Response:</h5>
+                <pre><code>{
+  "success": true,
+  "message": "Thank you! Your message has been sent successfully."
+}</code></pre>
+
+                <h4>15.5 Email Configuration</h4>
+                <div class="info-box">
+                    <strong><i class="bi bi-gear"></i> Email Settings:</strong>
+                    <ul>
+                        <li><strong>Recipient:</strong> <code>support@oshaani.com</code> (configurable via <code>CONTACT_FORM_EMAIL</code> setting)</li>
+                        <li><strong>Sender:</strong> <code>support@oshaani.com</code> (from <code>DEFAULT_FROM_EMAIL</code> setting)</li>
+                        <li><strong>Email Backend:</strong> SMTP with AWS SES fallback</li>
+                        <li><strong>Email Format:</strong> HTML with plain text fallback</li>
+                    </ul>
+                </div>
+
+                <h4>15.6 Frontend Implementation</h4>
+                <div class="diagram-container">
+                    <h5>React Components:</h5>
+                    <ul>
+                        <li><strong>ContactForm.jsx:</strong> Reusable form component for both contact and demo forms</li>
+                        <li><strong>ContactForm.css:</strong> Styled modal with responsive design</li>
+                        <li><strong>Integration:</strong> Integrated into Intro.jsx homepage component</li>
+                    </ul>
+
+                    <h5 class="mt-4">User Flow:</h5>
+                    <ol>
+                        <li>User clicks "Book a Demo" or "Contact Us" button on homepage</li>
+                        <li>Modal form opens with appropriate form type</li>
+                        <li>User fills in required fields</li>
+                        <li>Form validates and submits to <code>/api/contact/</code></li>
+                        <li>Success message displayed, form closes after 2 seconds</li>
+                        <li>Email sent to support@oshaani.com with form details</li>
+                    </ol>
+                </div>
+
+                <h4>15.7 Email Template</h4>
+                <div class="info-box">
+                    <strong><i class="bi bi-envelope-paper"></i> Email Content:</strong>
+                    <ul>
+                        <li><strong>Subject:</strong> "Demo Request from [Name]" or "Contact Form Submission from [Name]"</li>
+                        <li><strong>Format:</strong> HTML email with styled template</li>
+                        <li><strong>Content:</strong> All form fields formatted in a professional layout</li>
+                        <li><strong>Footer:</strong> Includes source information (Oshaani website contact form)</li>
+                    </ul>
+                </div>
+
+                <h4>15.8 Error Handling</h4>
+                <div class="warning-box">
+                    <strong><i class="bi bi-exclamation-triangle"></i> Error Scenarios:</strong>
+                    <ul>
+                        <li><strong>Validation Errors:</strong> Returns 400 with error message for missing required fields</li>
+                        <li><strong>Email Send Failure:</strong> Returns 500 with user-friendly error message</li>
+                        <li><strong>Network Errors:</strong> Frontend displays error message, allows retry</li>
+                        <li><strong>Logging:</strong> All errors logged server-side for debugging</li>
+                    </ul>
+                </div>
+
+                <h4>15.9 Usage Examples</h4>
+                <div class="code-block">
+                    <h5>Adding Contact Form to a Page:</h5>
+                    <pre><code>import ContactForm from '../Contact/ContactForm'
+
+const MyComponent = () => {
+  const [showContact, setShowContact] = useState(false)
+  
+  return (
+    &lt;&gt;
+      &lt;button onClick={() => setShowContact(true)}&gt;
+        Contact Us
+      &lt;/button&gt;
+      &lt;ContactForm 
+        isOpen={showContact}
+        onClose={() => setShowContact(false)}
+        formType="contact"
+      /&gt;
+    &lt;/&gt;
+  )
+}</code></pre>
+                </div>
+
+                <h4>15.10 Configuration</h4>
+                <div class="info-box">
+                    <strong><i class="bi bi-sliders"></i> Settings:</strong>
+                    <ul>
+                        <li><code>CONTACT_FORM_EMAIL</code>: Recipient email (default: support@oshaani.com)</li>
+                        <li><code>DEFAULT_FROM_EMAIL</code>: Sender email (default: support@oshaani.com)</li>
+                        <li><code>EMAIL_HOST</code>: SMTP server hostname</li>
+                        <li><code>EMAIL_PORT</code>: SMTP server port</li>
+                        <li><code>EMAIL_HOST_USER</code>: SMTP username</li>
+                        <li><code>EMAIL_HOST_PASSWORD</code>: SMTP password</li>
+                        <li><code>AWS_ROLE_ARN</code>: AWS role for SES fallback (optional)</li>
+                    </ul>
+                </div>
+
+                <div class="success-box">
+                    <strong><i class="bi bi-check-circle"></i> Best Practices:</strong>
+                    <ul>
+                        <li>Always validate form data on both client and server side</li>
+                        <li>Provide clear error messages to users</li>
+                        <li>Log all form submissions for tracking and analytics</li>
+                        <li>Monitor email delivery success rates</li>
+                        <li>Respond to inquiries within 24-48 hours</li>
+                        <li>Follow up on demo requests promptly</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center mt-5 mb-3">
+                <a href="/dashboard/" class="btn btn-primary btn-lg">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="to-top" id="to-top" aria-label="Back to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function () {
+        var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc-card a[data-toc]'));
+        var sections = tocLinks
+            .map(function (a) { return document.querySelector(a.getAttribute('href')); })
+            .filter(Boolean);
+
+        function setActive(id) {
+            tocLinks.forEach(function (a) {
+                if (a.getAttribute('href') === '#' + id) a.classList.add('active');
+                else a.classList.remove('active');
+            });
+        }
+        if ('IntersectionObserver' in window && sections.length) {
+            var io = new IntersectionObserver(function (entries) {
+                var visible = entries.filter(function (e) { return e.isIntersecting; });
+                if (!visible.length) return;
+                visible.sort(function (a, b) { return a.target.offsetTop - b.target.offsetTop; });
+                setActive(visible[0].target.id);
+            }, { rootMargin: '-90px 0px -65% 0px', threshold: [0, 0.2, 0.6, 1] });
+            sections.forEach(function (s) { io.observe(s); });
+            if (sections[0]) setActive(sections[0].id);
+        }
+
+        document.querySelectorAll('.section-title').forEach(function (h) {
+            var section = h.closest('.section'); if (!section || !section.id) return;
+            var a = document.createElement('a');
+            a.href = '#' + section.id;
+            a.className = 'anchor-link';
+            a.setAttribute('aria-label', 'Link to this section');
+            a.innerHTML = '<i class="bi bi-link-45deg"></i>';
+            h.appendChild(a);
+        });
+
+        document.querySelectorAll('pre').forEach(function (pre) {
+            var btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 'copy-btn'; btn.textContent = 'Copy';
+            btn.addEventListener('click', function () {
+                var code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+                if (!navigator.clipboard) return;
+                navigator.clipboard.writeText(code).then(function () {
+                    btn.textContent = 'Copied'; btn.classList.add('copied');
+                    setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1400);
+                });
+            });
+            pre.appendChild(btn);
+        });
+
+        var toTop = document.getElementById('to-top');
+        if (toTop) {
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 480) toTop.classList.add('show');
+                else toTop.classList.remove('show');
+            }, { passive: true });
+            toTop.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        var mTog = document.getElementById('mobile-toc-toggle');
+        var mCard = document.getElementById('toc-card');
+        if (mTog && mCard) {
+            mTog.addEventListener('click', function () {
+                var open = mCard.classList.toggle('open');
+                mTog.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            mCard.addEventListener('click', function (e) {
+                if (e.target.tagName === 'A' || e.target.closest('a')) {
+                    if (window.matchMedia('(max-width: 991px)').matches) {
+                        mCard.classList.remove('open');
+                        mTog.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
+

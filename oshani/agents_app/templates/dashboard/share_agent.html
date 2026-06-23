@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block title %}Share {{ agent.name }} - AI Agents Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-share"></i> Share Agent: {{ agent.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Agent
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-envelope"></i> Share via Email</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required 
+                               placeholder="user@example.com">
+                        <div class="form-text">Enter the email address of the person you want to share this agent with.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message (Optional)</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" 
+                                  placeholder="Add a personal message..."></textarea>
+                        <div class="form-text">Optional message to include in the email.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expires_days" class="form-label">Expiration (Optional)</label>
+                        <input type="number" class="form-control" id="expires_days" name="expires_days" 
+                               min="1" max="365" placeholder="Number of days (leave empty for no expiration)">
+                        <div class="form-text">Share link will expire after this many days. Leave empty for no expiration.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Send Share Invitation
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        {% if agent.shares.all %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list"></i> Shared With</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Shared On</th>
+                                <th>Expires</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for share in agent.shares.all %}
+                            <tr>
+                                <td>{{ share.email }}</td>
+                                <td>
+                                    {% if share.is_accepted %}
+                                        <span class="badge bg-success">Accepted</span>
+                                    {% elif share.is_expired %}
+                                        <span class="badge bg-secondary">Expired</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ share.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if share.expires_at %}
+                                        {{ share.expires_at|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                                <td data-share-id="{{ share.id }}">
+                                    {% if share.is_expired %}
+                                        <span class="text-muted small">Expired</span>
+                                    {% elif share.is_accepted %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm withdraw-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    data-is-accepted="true"
+                                                    title="Revoke access">
+                                                <i class="bi bi-x-circle"></i> Revoke
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm resend-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    title="Resend email">
+                                                <i class="bi bi-envelope-arrow-repeat"></i> Resend
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm withdraw-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    data-is-accepted="false"
+                                                    title="Withdraw share">
+                                                <i class="bi bi-x-circle"></i> Withdraw
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Public Share Section -->
+        <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="mb-0"><i class="bi bi-globe"></i> Public Share</h5>
+            </div>
+            <div class="card-body">
+                {% if has_mcp_servers %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-shield-lock"></i> <strong>Not Available</strong>
+                        <p class="small mb-0 mt-1">This agent has MCP servers enabled and cannot be shared publicly due to private data security concerns.</p>
+                    </div>
+                {% elif public_share and public_share.is_active %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle"></i> Public sharing is <strong>active</strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Public Share URL</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" id="publicShareUrl" 
+                                   value="{{ request.scheme }}://{{ request.get_host }}{% url 'access_public_share' token=public_share.token %}" 
+                                   readonly>
+                            <button class="btn btn-primary" type="button" onclick="copyPublicShareUrl()">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-3">
+                        <p class="mb-1"><i class="bi bi-eye"></i> Views: {{ public_share.access_count }}</p>
+                        {% if public_share.expires_at %}
+                        <p class="mb-1"><i class="bi bi-calendar"></i> Expires: {{ public_share.expires_at|date:"M d, Y" }}</p>
+                        {% else %}
+                        <p class="mb-1"><i class="bi bi-infinity"></i> No expiration</p>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="deactivatePublicShare()">
+                        <i class="bi bi-x-circle"></i> Deactivate Public Share
+                    </button>
+                {% else %}
+                    <p class="text-muted small">Share your agent publicly with anyone via a unique link. They'll see it listed on the Public Agents page.</p>
+                    {% if agent.status == 'published' %}
+                    <a href="{% url 'generate_public_share_url' agent.slug %}" class="btn btn-primary w-100">
+                        <i class="bi bi-globe"></i> Generate Public Link
+                    </a>
+                    {% else %}
+                    <div class="alert alert-warning small mb-2">
+                        <i class="bi bi-exclamation-triangle"></i> Agent must be published first
+                    </div>
+                    <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-cloud-upload"></i> Publish Agent
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> About Sharing</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Email Share:</strong></p>
+                <ul class="small">
+                    <li>An email will be sent to the recipient</li>
+                    <li>They'll receive a unique link to access the agent</li>
+                    <li>If they don't have an account, they'll be prompted to create one</li>
+                    <li>Once accepted, they can view and use the agent</li>
+                </ul>
+                
+                <p><strong>Public Share:</strong></p>
+                <ul class="small">
+                    <li>Anyone with the link can access the agent</li>
+                    <li>Agent appears on the Public Agents page</li>
+                    <li>Great for marketing and showcasing your agent</li>
+                </ul>
+                
+                <p class="mb-0"><strong>Note:</strong> Recipients can use the agent but cannot modify its configuration or training data.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Helper function to get CSRF token (global scope)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Simple notification function (global scope)
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Copy public share URL to clipboard (global scope for onclick)
+function copyPublicShareUrl() {
+    const urlInput = document.getElementById('publicShareUrl');
+    urlInput.select();
+    document.execCommand('copy');
+    showNotification('Public share URL copied to clipboard!', 'success');
+}
+
+// Deactivate public share (global scope for onclick)
+function deactivatePublicShare() {
+    if (!confirm('Are you sure you want to deactivate public sharing? The link will no longer work.')) {
+        return;
+    }
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+    
+    fetch('{% url "deactivate_public_share" agent.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Public share deactivated successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.error || 'Failed to deactivate public share', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle resend share email
+    document.querySelectorAll('.resend-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            const shareEmail = this.dataset.shareEmail;
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
+            
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+            
+            fetch(`/dashboard/share/${shareId}/resend/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showNotification(data.message, 'success');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                } else {
+                    showNotification(data.error || 'Failed to resend email', 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while resending the email', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+        });
+    });
+    
+    // Handle withdraw share
+    document.querySelectorAll('.withdraw-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            const shareEmail = this.dataset.shareEmail;
+            const isAccepted = this.dataset.isAccepted === 'true';
+            
+            const confirmMessage = isAccepted 
+                ? `Are you sure you want to revoke access for ${shareEmail}? They will no longer be able to use this agent.`
+                : `Are you sure you want to withdraw the share invitation to ${shareEmail}?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            const btn = this;
+            const row = btn.closest('tr');
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Withdrawing...';
+            
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+            
+            fetch(`/dashboard/share/${shareId}/withdraw/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the row with animation
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // Check if table is empty
+                        const tbody = document.querySelector('table tbody');
+                        if (tbody && tbody.children.length === 0) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    }, 300);
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.error || 'Failed to withdraw share', 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while withdrawing the share', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+

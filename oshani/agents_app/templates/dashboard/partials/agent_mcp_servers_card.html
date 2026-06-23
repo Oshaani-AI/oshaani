@@ -1,0 +1,103 @@
+{% comment %}
+  MCP server list card only (no modals). Requires parent context: ret, agent, mcp_servers.
+  Optional: mcp_wrap_class, mcp_card_body_class
+{% endcomment %}
+<div class="card {% if mcp_wrap_class %}{{ mcp_wrap_class }}{% else %}mb-4{% endif %}">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0"><i class="bi bi-plug"></i> MCP Servers &amp; Tools</h5>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMcpServerModal">
+            <i class="bi bi-plus-circle"></i> Add Server
+        </button>
+    </div>
+    <div class="card-body {% if mcp_card_body_class %}{{ mcp_card_body_class }}{% endif %}">
+        {% if mcp_servers %}
+            {% for server in mcp_servers %}
+            <div class="card mb-3 {% if server.is_active %}border-success{% else %}border-secondary opacity-50{% endif %}">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="mb-0">
+                            <i class="bi bi-{% if server.is_active %}check-circle-fill text-success{% else %}x-circle text-secondary{% endif %}"></i>
+                            {{ server.name }}
+                        </h6>
+                        {% if server.description %}
+                        <small class="text-muted">{{ server.description }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-primary"
+                                onclick="editMcpServer({{ server.id }}, '{{ server.name|escapejs }}', '{{ server.description|escapejs }}', '{{ server.transport_type }}', '{{ server.command|escapejs }}', {{ server.args|safe }}, '{{ server.url|escapejs }}', {{ server.headers|safe }}, {{ server.auto_connect|lower }})"
+                                title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <a href="{% url 'mcp_server_toggle' agent.slug server.id %}?next_page={{ ret }}"
+                           class="btn btn-outline-{% if server.is_active %}warning{% else %}success{% endif %}"
+                           title="{% if server.is_active %}Disable{% else %}Enable{% endif %}">
+                            <i class="bi bi-{% if server.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                        </a>
+                        <a href="{% url 'mcp_server_delete' agent.slug server.id %}?next_page={{ ret }}"
+                           class="btn btn-outline-danger"
+                           onclick="return confirm('Are you sure you want to delete this MCP server?');"
+                           title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <strong>Transport:</strong> {{ server.transport_type_display }}<br>
+                            <strong>Auto-connect:</strong> {% if server.auto_connect %}Yes{% else %}No{% endif %}<br>
+                            <strong>Status:</strong>
+                            <span class="badge bg-{% if server.is_active %}success{% else %}secondary{% endif %}">
+                                {% if server.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </small>
+                    </div>
+
+                    {% if server.tools %}
+                    <div class="mt-2">
+                        <strong class="small">Available Tools ({{ server.tools|length }}):</strong>
+                        <div class="list-group list-group-flush mt-2">
+                            {% for tool in server.tools %}
+                            <div class="list-group-item px-0 py-2 border-0">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-gear-fill text-info me-2 mt-1"></i>
+                                    <div class="flex-grow-1">
+                                        <strong class="small">{{ tool.name }}</strong>
+                                        {% if tool.description %}
+                                        <p class="mb-0 small text-muted">{{ tool.description|truncatewords:10 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% elif server.is_active %}
+                    <p class="text-muted small mb-0">
+                        {% if server.is_connected %}
+                        No tools available from this server.
+                        {% else %}
+                        <span class="text-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Server not connected.
+                            {% if server.connection_error %}
+                                <br><small>{{ server.connection_error }}</small>
+                            {% else %}
+                                <br><small>Check configuration and ensure the MCP server command is correct.</small>
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-plug" style="font-size: 2rem;"></i>
+            <p class="mt-2 mb-0">No MCP servers configured</p>
+            <small>Click &quot;Add Server&quot; to configure an MCP server for this agent.</small>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,5 @@
+{% extends 'blog/list.html' %}
+
+{% block title %}{{ category.name }} - Blog{% endblock %}
+
+{% block meta_description %}{{ category.description|default:"Browse posts in "|add:category.name }}{% endblock %}

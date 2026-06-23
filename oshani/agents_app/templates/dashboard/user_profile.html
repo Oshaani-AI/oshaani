@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile - API Keys{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-person-circle"></i> User Profile & API Keys</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>User Information</h5>
+                        <p><strong>Username:</strong> {{ request.user.username }}</p>
+                        <p><strong>Email:</strong> {{ request.user.email|default:"Not set" }}</p>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <h5>API Key Management</h5>
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Understanding API Keys</h6>
+                            <p class="mb-2"><strong>User API Keys:</strong> Used for MCP operations, general API access, and accessing all your agents. Generate these below.</p>
+                            <p class="mb-0"><strong>Agent API Keys:</strong> Required for agent-specific chat operations. Each published agent has its own key. See your agent keys below.</p>
+                        </div>
+                        
+                        {% if new_api_key %}
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-key"></i> New API Key Generated!</h6>
+                                <p><strong>IMPORTANT:</strong> Save this key now. You will not be able to see it again.</p>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="api-key-display" 
+                                           value="{{ new_api_key }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </div>
+                                <small class="text-muted">Use this key in the Authorization header: <code>Authorization: ApiKey {{ new_api_key|slice:":20" }}...</code></small>
+                            </div>
+                        {% endif %}
+
+                        {% if api_keys %}
+                            <div class="mb-4">
+                                <h6><i class="bi bi-key-fill"></i> Active API Keys</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Preview</th>
+                                                <th>Created</th>
+                                                <th>Last Used</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for key in api_keys %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ key.name|default:"Unnamed Key" }}</strong>
+                                                        {% if key.id == new_api_key_id %}
+                                                            <span class="badge bg-success ms-2">New</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><code>{{ key.preview }}</code></td>
+                                                    <td>{{ key.created_at|date:"M d, Y H:i" }}</td>
+                                                    <td>
+                                                        {% if key.last_used %}
+                                                            {{ key.last_used|date:"M d, Y H:i" }}
+                                                        {% else %}
+                                                            <span class="text-muted">Never</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <form method="post" action="{% url 'revoke_api_key' %}" class="d-inline" 
+                                                              onsubmit="return confirm('Are you sure you want to revoke this API key? This action cannot be undone.');">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="key_id" value="{{ key.id }}">
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-x-circle"></i> Revoke
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% elif profile.api_key_preview %}
+                            <div class="alert alert-info mb-3">
+                                <h6><i class="bi bi-key-fill"></i> Legacy API Key</h6>
+                                <p><strong>Preview:</strong> <code>{{ profile.api_key_preview }}</code></p>
+                                <p class="text-muted"><small>This is a legacy API key. Consider creating a new named key for better management.</small></p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-3">
+                                <i class="bi bi-exclamation-triangle"></i> No API keys generated yet.
+                            </div>
+                        {% endif %}
+
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="bi bi-plus-circle"></i> Create New API Key</h6>
+                                <form method="post" action="{% url 'generate_api_key' %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="key_name" class="form-label">Key Name (Optional)</label>
+                                        <input type="text" class="form-control" id="key_name" name="key_name" 
+                                               placeholder="e.g., Production API, Development, Mobile App" maxlength="100">
+                                        <small class="form-text text-muted">Give your key a descriptive name to help identify its purpose.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-key"></i> Generate New API Key
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <h5><i class="bi bi-robot"></i> Agent API Keys</h5>
+                        <p class="text-muted">Agent keys are required for agent-specific chat operations. Each published agent has its own unique API key.</p>
+                        
+                        {% if published_agents %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Agent Name</th>
+                                            <th>API Key Preview</th>
+                                            <th>Status</th>
+                                            <th>Published</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for agent in published_agents %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ agent.name }}</strong>
+                                                    <br><small class="text-muted">{{ agent.description|truncatewords:10 }}</small>
+                                                </td>
+                                                <td>
+                                                    {% if agent.api_key %}
+                                                        <code>{{ agent.api_key_preview }}</code>
+                                                        <br><small class="text-muted">View full key on agent detail page</small>
+                                                    {% elif agent.api_key_hash %}
+                                                        <code>{{ agent.api_key_preview|default:"Key exists (hash only)" }}</code>
+                                                        <br><small class="text-warning">Full key not available. Regenerate to see it.</small>
+                                                    {% else %}
+                                                        <span class="text-muted">No key generated</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">Published</span>
+                                                </td>
+                                                <td>
+                                                    {% if agent.published_at %}
+                                                        {{ agent.published_at|date:"M d, Y" }}
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                    <form method="post" action="{% url 'regenerate_api_key' agent.slug %}" class="d-inline"
+                                                          onsubmit="return confirm('Rotate all API keys for {{ agent.name|escapejs }}? Every existing key will stop working.');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                            <i class="bi bi-arrow-clockwise"></i> Rotate keys
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> No published agents found. Publish an agent to get an agent API key.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <h5><i class="bi bi-share"></i> Social Media Publishing</h5>
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Configure Social Media OAuth</h6>
+                            <p class="mb-2">Connect your social media accounts to publish AI agents directly to your profiles. Configure your OAuth credentials below.</p>
+                            <p class="mb-0"><small>You'll need to create OAuth apps on each platform and get Client ID and Client Secret.</small></p>
+                        </div>
+                        
+                        <div class="row">
+                            {% for platform, connector in social_connectors.items %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-{% if platform == 'linkedin' %}linkedin{% elif platform == 'facebook' %}facebook{% elif platform == 'twitter' %}twitter{% elif platform == 'instagram' %}instagram{% endif %}"></i>
+                                            {{ platform|capfirst }}
+                                            {% if connector and connector.status == 'connected' %}
+                                            <span class="badge bg-success ms-2">Connected</span>
+                                            {% elif connector %}
+                                            <span class="badge bg-warning ms-2">{{ connector.get_status_display }}</span>
+                                            {% endif %}
+                                        </h6>
+                                        {% if connector %}
+                                        <form class="social-connector-form" data-platform="{{ platform }}" data-connector-id="{{ connector.id }}">
+                                            {% csrf_token %}
+                                            <div class="mb-2">
+                                                <label class="form-label small">Name</label>
+                                                <input type="text" class="form-control form-control-sm" name="name" value="{{ connector.name }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Client ID</label>
+                                                <input type="text" class="form-control form-control-sm" name="client_id" value="{{ connector.client_id }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Client Secret</label>
+                                                <input type="password" class="form-control form-control-sm" name="client_secret" placeholder="Enter to update (leave blank to keep current)" autocomplete="new-password">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Base URL</label>
+                                                <input type="url" class="form-control form-control-sm" name="base_url" value="{{ connector.base_url }}" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-primary w-100">Update</button>
+                                        </form>
+                                        {% else %}
+                                        <form class="social-connector-form" data-platform="{{ platform }}">
+                                            {% csrf_token %}
+                                            <div class="mb-2">
+                                                <label class="form-label small">Name</label>
+                                                <input type="text" class="form-control form-control-sm" name="name" value="{{ platform|capfirst }} Account" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Client ID</label>
+                                                <input type="text" class="form-control form-control-sm" name="client_id" placeholder="Your OAuth Client ID" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Client Secret</label>
+                                                <input type="password" class="form-control form-control-sm" name="client_secret" placeholder="Your OAuth Client Secret" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Base URL</label>
+                                                <input type="url" class="form-control form-control-sm" name="base_url" 
+                                                       value="{% if platform == 'linkedin' %}https://api.linkedin.com{% elif platform == 'facebook' %}https://graph.facebook.com{% elif platform == 'twitter' %}https://api.twitter.com{% elif platform == 'instagram' %}https://graph.facebook.com{% endif %}" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-success w-100">Create</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="bi bi-exclamation-triangle"></i> How to Get OAuth Credentials</h6>
+                            <ul class="mb-0 small">
+                                <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/developers/apps" target="_blank">Create an app</a> and get Client ID/Secret</li>
+                                <li><strong>Facebook:</strong> <a href="https://developers.facebook.com/apps" target="_blank">Create an app</a> and get App ID/Secret</li>
+                                <li><strong>Twitter:</strong> <a href="https://developer.twitter.com/en/portal/dashboard" target="_blank">Create an app</a> and get API Key/Secret</li>
+                                <li><strong>Instagram:</strong> Uses Facebook OAuth (same credentials as Facebook)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <h5>Usage Instructions</h5>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="bi bi-chat-dots"></i> Agent Chat (Requires Agent API Key)</h6>
+                                <p class="text-muted small">Use the agent's API key for chat operations with that specific agent.</p>
+                                <pre class="bg-dark text-light p-3 rounded"><code>curl -X POST http://localhost:8000/api/agents/7/chat/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: ApiKey AGENT_API_KEY" \
+  -d '{"message": "Hello"}'</code></pre>
+
+                                <h6 class="mt-3"><i class="bi bi-plug"></i> MCP Server (Requires User API Key)</h6>
+                                <p class="text-muted small">Use your user API key for MCP operations and general API access.</p>
+                                <pre class="bg-dark text-light p-3 rounded"><code>curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: ApiKey YOUR_USER_API_KEY" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</code></pre>
+
+                                <h6 class="mt-3"><i class="bi bi-code-slash"></i> Python Example - Agent Chat</h6>
+                                <pre class="bg-dark text-light p-3 rounded"><code>import requests
+
+# Use AGENT API KEY for agent chat
+headers = {
+    "Authorization": "ApiKey AGENT_API_KEY",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(
+    "http://localhost:8000/api/agents/7/chat/",
+    headers=headers,
+    json={"message": "Hello"}
+)</code></pre>
+
+                                <h6 class="mt-3"><i class="bi bi-code-slash"></i> Python Example - MCP Operations</h6>
+                                <pre class="bg-dark text-light p-3 rounded"><code>import requests
+
+# Use USER API KEY for MCP operations
+headers = {
+    "Authorization": "ApiKey YOUR_USER_API_KEY",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(
+    "http://localhost:8080/mcp",
+    headers=headers,
+    json={"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyApiKey() {
+    const apiKeyInput = document.getElementById('api-key-display');
+    apiKeyInput.select();
+    apiKeyInput.setSelectionRange(0, 99999); // For mobile devices
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-secondary');
+    
+    setTimeout(() => {
+        button.innerHTML = originalHTML;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// Handle social media connector forms
+document.querySelectorAll('.social-connector-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const connectorId = form.getAttribute('data-connector-id');
+        const platform = form.getAttribute('data-platform');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+        
+        const data = {
+            name: formData.get('name'),
+            base_url: formData.get('base_url'),
+            client_id: formData.get('client_id'),
+            client_secret: formData.get('client_secret') || null,
+        };
+        
+        // Add connector_type for create
+        if (!connectorId) {
+            data.connector_type = platform;
+        }
+        
+        const url = connectorId 
+            ? `/dashboard/connectors/ajax/${connectorId}/update/`
+            : '/dashboard/connectors/ajax/create/';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                submitBtn.innerHTML = '<i class="bi bi-check"></i> Saved!';
+                submitBtn.classList.remove('btn-primary', 'btn-success');
+                submitBtn.classList.add('btn-success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                alert('Error: ' + (data.error || 'Failed to save'));
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+

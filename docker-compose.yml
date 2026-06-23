@@ -1,0 +1,159 @@
+# MySQL app user: username and password are always the same (MYSQL_USER).
+x-mysql-credentials: &mysql-credentials
+  MYSQL_USER: &mysql-user ${MYSQL_USER:-oshani}
+  MYSQL_PASSWORD: *mysql-user
+
+x-app-database: &app-database
+  DB_NAME: ${DB_NAME:-oshani}
+  DB_USER: *mysql-user
+  DB_PASSWORD: *mysql-user
+  DB_HOST: mysql
+  DB_PORT: "3306"
+
+# Reach Ollama (and other services) running on the host machine from inside containers.
+x-docker-host-access: &docker-host-access
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      <<: *mysql-credentials
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-${MYSQL_USER:-oshani}}
+      MYSQL_DATABASE: ${DB_NAME:-oshani}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-${MYSQL_USER:-oshani}}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    # Qdrant image is minimal; rely on service start rather than an in-container probe.
+
+  web:
+    <<: *docker-host-access
+    build: .
+    image: oshaani:latest
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      <<: *app-database
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CHANNEL_REDIS_URL: redis://redis:6379/2
+      QDRANT_URL: http://qdrant:6333
+      WAIT_FOR_DB: "true"
+      RUN_MIGRATIONS: "true"
+      COLLECT_STATIC: "true"
+      CREATE_SUPERUSER: "true"
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-manoj.sahu}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-ffef0f0c5a59cba781df}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-manoj.sahu@localhost}
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  celery:
+    <<: *docker-host-access
+    build: .
+    image: oshaani:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *app-database
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CHANNEL_REDIS_URL: redis://redis:6379/2
+      QDRANT_URL: http://qdrant:6333
+      WAIT_FOR_DB: "true"
+      RUN_MIGRATIONS: "false"
+      COLLECT_STATIC: "false"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      web:
+        condition: service_started
+    command: ["celery", "-A", "oshani", "worker", "--loglevel=info"]
+
+  celery-beat:
+    <<: *docker-host-access
+    build: .
+    image: oshaani:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      <<: *app-database
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CHANNEL_REDIS_URL: redis://redis:6379/2
+      QDRANT_URL: http://qdrant:6333
+      WAIT_FOR_DB: "true"
+      RUN_MIGRATIONS: "false"
+      COLLECT_STATIC: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    command: ["celery", "-A", "oshani", "beat", "--loglevel=info"]
+
+volumes:
+  mysql_data:
+  redis_data:
+  qdrant_data:
+  media_data:
+  static_data:

@@ -1,0 +1,8 @@
+{% comment %}
+  MCP servers list + Add/Edit modals + JS. Requires: agent, mcp_servers (from get_mcp_servers_info_for_agent).
+  Optional: mcp_return_page ('detail' | 'test'), mcp_wrap_class, mcp_card_body_class
+{% endcomment %}
+{% with ret=mcp_return_page|default:'detail' %}
+{% include 'dashboard/partials/agent_mcp_servers_card.html' %}
+{% include 'dashboard/partials/agent_mcp_servers_modals.html' %}
+{% endwith %}

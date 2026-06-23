@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+
+# Django
+staticfiles/
+media/
+*.sqlite3
+
+# Git and IDE
+.git/
+.gitignore
+.cursor/
+.idea/
+.vscode/
+*.swp
+
+# Tests and local tooling
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Qdrant local storage (mount at runtime if needed)
+qdrant_storage/

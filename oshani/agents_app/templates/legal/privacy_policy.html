@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy - Oshaani AI Agents{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h1 class="h3 mb-0"><i class="bi bi-shield-check"></i> Privacy Policy</h1>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted"><strong>Last Updated:</strong> January 2026</p>
+                    
+                    <h2 class="h5 mt-4">1. Introduction</h2>
+                    <p>Welcome to Oshaani ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI Agents platform.</p>
+                    
+                    <h2 class="h5 mt-4">2. Information We Collect</h2>
+                    <h3 class="h6">2.1 Personal Information</h3>
+                    <ul>
+                        <li>Name and email address (when you create an account)</li>
+                        <li>Profile information (profile picture, mobile number - optional)</li>
+                        <li>Authentication data from third-party services (Google, LinkedIn)</li>
+                    </ul>
+                    
+                    <h3 class="h6">2.2 Usage Information</h3>
+                    <ul>
+                        <li>Chat conversations with AI agents</li>
+                        <li>Agent configurations and training data you provide</li>
+                        <li>API usage and access logs</li>
+                        <li>Device information and IP addresses</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">3. How We Use Your Information</h2>
+                    <ul>
+                        <li>To provide and maintain our AI Agents service</li>
+                        <li>To operate and improve the platform on your deployment</li>
+                        <li>To improve and personalize your experience</li>
+                        <li>To communicate with you about updates and support</li>
+                        <li>To ensure security and prevent fraud</li>
+                        <li>To comply with legal obligations</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">4. Data Storage and Security</h2>
+                    <p>We implement industry-standard security measures to protect your data:</p>
+                    <ul>
+                        <li>Encrypted data transmission (HTTPS/TLS)</li>
+                        <li>Secure cloud infrastructure (AWS)</li>
+                        <li>Regular security audits and updates</li>
+                        <li>Access controls and authentication</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">5. Third-Party Services</h2>
+                    <p>We use the following third-party services:</p>
+                    <ul>
+                        <li><strong>Amazon Web Services (AWS)</strong> - Cloud infrastructure and AI services (Bedrock)</li>
+                        <li><strong>Google OAuth</strong> - Authentication</li>
+                        <li><strong>LinkedIn OAuth</strong> - Authentication and social sharing</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">6. Your Rights</h2>
+                    <p>You have the right to:</p>
+                    <ul>
+                        <li>Access your personal data</li>
+                        <li>Correct inaccurate data</li>
+                        <li>Delete your account and data</li>
+                        <li>Export your data</li>
+                        <li>Opt-out of marketing communications</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">7. Data Retention</h2>
+                    <p>We retain your data for as long as your account is active or as needed to provide services. You can request deletion of your data at any time by contacting us.</p>
+                    
+                    <h2 class="h5 mt-4">8. Cookies</h2>
+                    <p>We use essential cookies for authentication and session management. These are necessary for the platform to function properly.</p>
+                    
+                    <h2 class="h5 mt-4">9. Children's Privacy</h2>
+                    <p>Our service is not intended for users under 13 years of age. We do not knowingly collect information from children.</p>
+                    
+                    <h2 class="h5 mt-4">10. Changes to This Policy</h2>
+                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.</p>
+                    
+                    <h2 class="h5 mt-4">11. Contact Us</h2>
+                    <p>If you have questions about this Privacy Policy, please contact us at:</p>
+                    <p><strong>Email:</strong> <a href="mailto:support@oshaani.com">support@oshaani.com</a></p>
+                    
+                    <hr class="my-4">
+                    <p class="text-center">
+                        <a href="{% url 'terms_conditions' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-file-text"></i> View Terms & Conditions
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+
+

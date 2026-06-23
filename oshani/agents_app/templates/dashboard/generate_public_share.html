@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Public Share URL - {{ agent.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-link-45deg"></i> Generate Public Share URL: {{ agent.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Agent
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        {% if existing_share and existing_share.is_valid %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> Active Public Share URL</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Share URL:</strong></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareUrl" 
+                               value="{{ request.scheme }}://{{ request.get_host }}{% url 'access_public_share' token=existing_share.token %}" 
+                               readonly>
+                        <button class="btn btn-primary" type="button" onclick="copyShareUrl()">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Access Count:</strong> {{ existing_share.access_count }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Last Accessed:</strong> 
+                        {% if existing_share.last_accessed_at %}
+                            {{ existing_share.last_accessed_at|date:"M d, Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Never</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if existing_share.expires_at %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    This share URL will expire on {{ existing_share.expires_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+                
+                <form method="post" action="{% url 'deactivate_public_share' agent.slug %}" id="deactivateForm">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger" onclick="deactivateShare()">
+                        <i class="bi bi-x-circle"></i> Deactivate Share URL
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-link-45deg"></i> 
+                    {% if existing_share and existing_share.is_valid %}
+                        Generate New Public Share URL
+                    {% else %}
+                        Generate Public Share URL
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="expires_days" class="form-label">Expiration (Optional)</label>
+                        <input type="number" class="form-control" id="expires_days" name="expires_days" 
+                               min="1" max="365" placeholder="Number of days (leave empty for no expiration)">
+                        <div class="form-text">Share URL will expire after this many days. Leave empty for no expiration.</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Note:</strong> Anyone with this URL will be able to access your agent. 
+                        Make sure to share it only with people you trust.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-link-45deg"></i> 
+                        {% if existing_share and existing_share.is_valid %}
+                            Generate New Share URL
+                        {% else %}
+                            Generate Share URL
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> About Public Share URLs</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>What is a public share URL?</strong></p>
+                <ul class="small">
+                    <li>A shareable link that anyone can use to access your agent</li>
+                    <li>No email required - just share the URL</li>
+                    <li>Perfect for sharing on social media, websites, or with large groups</li>
+                    <li>Users will need to log in (or create an account) to use the agent</li>
+                </ul>
+                
+                <p class="mb-0"><strong>Security:</strong></p>
+                <ul class="small">
+                    <li>You can deactivate the URL at any time</li>
+                    <li>Set an expiration date for automatic deactivation</li>
+                    <li>Track how many times the URL has been accessed</li>
+                    <li>Users can only use the agent, not modify it</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyShareUrl() {
+    const urlInput = document.getElementById('shareUrl');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(urlInput.value).then(function() {
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    }, function() {
+        // Fallback
+        try {
+            document.execCommand('copy');
+            alert('URL copied to clipboard!');
+        } catch (err) {
+            alert('Failed to copy URL. Please select and copy manually.');
+        }
+    });
+}
+
+function deactivateShare() {
+    if (!confirm('Are you sure you want to deactivate this public share URL? Anyone using this link will no longer be able to access the agent.')) {
+        return;
+    }
+    
+    const form = document.getElementById('deactivateForm');
+    const formData = new FormData(form);
+    const csrftoken = formData.get('csrfmiddlewaretoken');
+    
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to deactivate share URL');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deactivating the share URL');
+    });
+}
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+

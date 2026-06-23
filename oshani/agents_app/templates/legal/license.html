@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Open Source License - Oshaani AI Agents{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h1 class="h3 mb-0"><i class="bi bi-code-square"></i> Open Source License</h1>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted"><strong>Non-Commercial Open Source License</strong></p>
+
+                    <p>Copyright &copy; 2026 Oshaani Contributors</p>
+
+                    <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, merge, publish, and distribute the Software for <strong>non-commercial purposes only</strong>, subject to the following conditions:</p>
+
+                    <h2 class="h5 mt-4">1. Non-Commercial Use Only</h2>
+                    <p>You may use the Software only for personal, educational, research, or other non-commercial purposes. Commercial use is prohibited without a separate written license from the copyright holder(s).</p>
+                    <p>Commercial use includes, without limitation:</p>
+                    <ul>
+                        <li>Selling, licensing, or sublicensing the Software or derivative works</li>
+                        <li>Using the Software to provide paid services, SaaS, or hosted offerings</li>
+                        <li>Using the Software in connection with revenue-generating products or services</li>
+                        <li>Charging fees for access to deployments of the Software</li>
+                    </ul>
+
+                    <h2 class="h5 mt-4">2. Attribution</h2>
+                    <p>Redistributions of source code must retain this license notice and the copyright notice. Redistributions in binary form must reproduce these notices in documentation or other materials provided with the distribution.</p>
+
+                    <h2 class="h5 mt-4">3. Derivative Works</h2>
+                    <p>Modified versions must be distributed under the same non-commercial terms and must clearly indicate that changes were made.</p>
+
+                    <h2 class="h5 mt-4">4. No Warranty</h2>
+                    <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.</p>
+
+                    <h2 class="h5 mt-4">5. Fair Use</h2>
+                    <p>Nothing in this license is intended to restrict uses that qualify as fair use, fair dealing, or other applicable copyright exceptions or limitations under applicable law.</p>
+
+                    <hr class="my-4">
+                    <p class="text-center">
+                        <a href="{% url 'terms_conditions' %}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-file-text"></i> Terms &amp; Conditions
+                        </a>
+                        <a href="{% url 'privacy_policy' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-shield-check"></i> Privacy Policy
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

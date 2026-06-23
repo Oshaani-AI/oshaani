@@ -1,0 +1,1268 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ agent.name }} — Oshaani{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --bg: #f6f7fb;
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --ink: #0f172a;
+        --ink-soft: #334155;
+        --muted: #64748b;
+        --border: #e6e8ee;
+        --border-strong: #cbd5e1;
+        --brand-1: #6366f1;
+        --brand-2: #8b5cf6;
+        --brand-3: #06b6d4;
+        --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+        --ok: #059669;
+        --warn: #d97706;
+        --danger: #dc2626;
+        --info: #2563eb;
+    }
+
+    body.agent-detail-active {
+        font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background:
+            radial-gradient(900px 420px at 110% -10%, rgba(139,92,246,0.06), transparent 60%),
+            radial-gradient(800px 400px at -10% 0%, rgba(6,182,212,0.06), transparent 60%),
+            var(--bg);
+        -webkit-font-smoothing: antialiased;
+    }
+    .display-font { font-family: 'Sora', 'Inter', sans-serif; letter-spacing: -0.02em; }
+
+    /* Hero header */
+    .agent-hero {
+        background:
+            radial-gradient(700px 320px at 0% 0%, rgba(99,102,241,0.18), transparent 60%),
+            radial-gradient(600px 300px at 100% 100%, rgba(6,182,212,0.16), transparent 60%),
+            linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%);
+        color: #fff; border-radius: 22px;
+        padding: 26px 28px; margin-bottom: 22px;
+        box-shadow: 0 18px 40px rgba(15,23,42,0.18);
+        position: relative; overflow: hidden;
+    }
+    .agent-hero::after {
+        content: ''; position: absolute; right: -60px; top: -60px;
+        width: 240px; height: 240px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(139,92,246,0.45), transparent 70%);
+        pointer-events: none;
+    }
+    .agent-hero .crumb {
+        font-size: 0.82rem; color: #c7d2fe; margin: 0 0 8px;
+    }
+    .agent-hero .crumb a { color: #c7d2fe; text-decoration: none; }
+    .agent-hero .crumb a:hover { color: #fff; text-decoration: underline; }
+    .agent-hero .head-row {
+        display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; position: relative;
+    }
+    .agent-hero .agent-icon {
+        width: 56px; height: 56px; border-radius: 16px;
+        background: var(--grad); color: #fff;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; flex: 0 0 56px;
+        box-shadow: 0 14px 28px rgba(99,102,241,0.35);
+    }
+    .agent-hero h1 {
+        font-family: 'Sora', sans-serif; font-weight: 700;
+        font-size: 1.7rem; line-height: 1.15; margin: 0 0 6px; letter-spacing: -0.02em;
+    }
+    .agent-hero p.lede { color: #cbd5e1; font-size: 0.95rem; margin: 0 0 10px; max-width: 720px; }
+    .agent-hero .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .agent-hero .pill, .agent-hero .status-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.08); color: #fff;
+        border: 1px solid rgba(255,255,255,0.18);
+        font-size: 0.74rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; line-height: 1;
+    }
+    .agent-hero .status-badge.status-published { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.45); color: #6ee7b7; }
+    .agent-hero .status-badge.status-testing { background: rgba(217,119,6,0.18); border-color: rgba(217,119,6,0.45); color: #fcd34d; }
+    .agent-hero .status-badge.status-training { background: rgba(14,116,144,0.22); border-color: rgba(14,165,233,0.45); color: #67e8f9; }
+    .agent-hero .status-badge.status-draft { background: rgba(100,116,139,0.22); border-color: rgba(148,163,184,0.4); color: #cbd5e1; }
+
+    .agent-hero .actions {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-left: auto; align-items: center;
+    }
+    .btn-grad {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--grad); color: #fff !important; border: 0; padding: 10px 16px;
+        border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+        box-shadow: 0 12px 24px rgba(99,102,241,0.35);
+        text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(99,102,241,0.45); }
+    .btn-ghost-light {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.06); color: #fff !important; border: 1px solid rgba(255,255,255,0.18);
+        padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+        text-decoration: none; transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-ghost-light:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.35); }
+    .agent-hero .btn-success-2 {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--ok); color: #fff !important; border: 0; padding: 10px 16px;
+        border-radius: 10px; font-weight: 600; font-size: 0.9rem; text-decoration: none;
+        box-shadow: 0 10px 20px rgba(16,185,129,0.35);
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .agent-hero .btn-success-2:hover { background: #047857; transform: translateY(-1px); }
+
+    /* Override Bootstrap btn classes inside hero so they match dark theme */
+    .agent-hero .btn { border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 0.9rem; }
+    .agent-hero .btn-primary {
+        background: var(--ink); border-color: var(--ink); color: #fff;
+        box-shadow: 0 10px 22px rgba(15,23,42,0.4);
+    }
+    .agent-hero .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+    .agent-hero .btn-success { background: var(--ok); border-color: var(--ok); }
+    .agent-hero .btn-success:hover { background: #047857; border-color: #047857; }
+    .agent-hero .btn-outline-success {
+        background: transparent; border: 1px solid rgba(110, 231, 183, 0.55); color: #6ee7b7;
+    }
+    .agent-hero .btn-outline-success:hover { background: rgba(110, 231, 183, 0.12); color: #fff; }
+    .agent-hero .btn-outline-info {
+        background: transparent; border: 1px solid rgba(125, 211, 252, 0.55); color: #7dd3fc;
+    }
+    .agent-hero .btn-outline-info:hover { background: rgba(125, 211, 252, 0.12); color: #fff; }
+    .agent-hero .btn-outline-primary {
+        background: transparent; border: 1px solid rgba(199, 210, 254, 0.5); color: #c7d2fe;
+    }
+    .agent-hero .btn-outline-primary:hover { background: rgba(99,102,241,0.18); color: #fff; }
+    .agent-hero .btn-outline-secondary {
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: #fff;
+    }
+    .agent-hero .btn-outline-secondary:hover { background: rgba(255,255,255,0.12); }
+    .agent-hero .dropdown-menu { color: var(--ink); }
+
+    .agent-hero .alert {
+        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16); color: #e2e8f0;
+        border-radius: 12px;
+    }
+    .agent-hero .alert code {
+        background: rgba(15,23,42,0.55); color: #a5f3fc;
+        border: 1px solid rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px;
+    }
+    .agent-hero .alert strong { color: #fff; }
+
+    /* Cards */
+    .agent-detail-page .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+        overflow: hidden;
+        margin-bottom: 18px;
+    }
+    .agent-detail-page .card-header {
+        background: transparent; border-bottom: 1px solid var(--border);
+        padding: 14px 18px;
+    }
+    .agent-detail-page .card-header h5 {
+        font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem; margin: 0;
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .agent-detail-page .card-header h5 i { color: var(--brand-1); }
+    .agent-detail-page .card-body { padding: 18px; }
+
+    /* Override "border-success" + "bg-success" header for published card */
+    .agent-detail-page .card.border-success {
+        border-color: rgba(16,185,129,0.35) !important;
+        box-shadow: 0 8px 24px rgba(16,185,129,0.08);
+    }
+    .agent-detail-page .card.border-success .card-header.bg-success {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: #fff !important;
+        border-bottom: 0;
+    }
+    .agent-detail-page .card.border-success .card-header.bg-success h5 i { color: #fff; }
+
+    /* Definition list */
+    .agent-detail-page dl.row { margin: 0; }
+    .agent-detail-page dl.row dt {
+        font-family: 'Sora', sans-serif; font-weight: 600; color: var(--muted);
+        font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+        padding-top: 12px; padding-bottom: 6px;
+    }
+    .agent-detail-page dl.row dd {
+        padding-top: 10px; padding-bottom: 12px;
+        border-bottom: 1px dashed var(--border); color: var(--ink);
+    }
+    .agent-detail-page dl.row dd:last-of-type { border-bottom: none; }
+    .agent-detail-page dl.row dt:first-of-type, .agent-detail-page dl.row dd:first-of-type { padding-top: 0; }
+
+    /* Status badges (body) */
+    .agent-detail-page .status-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 11px; border-radius: 999px;
+        font-size: 0.78rem; font-weight: 600; line-height: 1; border: 1px solid transparent;
+    }
+    .agent-detail-page .status-badge::before {
+        content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+    }
+    .agent-detail-page .status-draft { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    .agent-detail-page .status-training { background: #ecfeff; color: #0e7490; border-color: #cffafe; }
+    .agent-detail-page .status-testing { background: #fffbeb; color: #b45309; border-color: #fef3c7; }
+    .agent-detail-page .status-published { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+
+    /* Generic Bootstrap badges within card body — make them softer */
+    .agent-detail-page .card .badge {
+        font-weight: 600; padding: 5px 10px; border-radius: 999px;
+    }
+    .agent-detail-page .card .badge.bg-secondary { background: var(--surface-2) !important; color: var(--ink-soft) !important; border: 1px solid var(--border); }
+    .agent-detail-page .card .badge.bg-info { background: #ecfeff !important; color: #0e7490 !important; border: 1px solid #cffafe; }
+    .agent-detail-page .card .badge.bg-primary { background: #eef2ff !important; color: #4338ca !important; border: 1px solid #e0e7ff; }
+    .agent-detail-page .card .badge.bg-success { background: #ecfdf5 !important; color: #047857 !important; border: 1px solid #a7f3d0; }
+    .agent-detail-page .card .badge.bg-danger { background: #fee2e2 !important; color: #991b1b !important; border: 1px solid #fecaca; }
+    .agent-detail-page .card .badge.bg-warning { background: #fffbeb !important; color: #b45309 !important; border: 1px solid #fef3c7; }
+
+    /* Inner alerts */
+    .agent-detail-page .alert {
+        border-radius: 12px; border: 1px solid var(--border);
+    }
+    .agent-detail-page .alert-info { background: #eff6ff; border-color: #dbeafe; color: #1e40af; }
+    .agent-detail-page .alert-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+    .agent-detail-page .alert-warning { background: #fffbeb; border-color: #fef3c7; color: #92400e; }
+    .agent-detail-page .alert-danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
+    /* Code blocks: API keys */
+    .agent-detail-page code {
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.86em;
+    }
+    .agent-detail-page .alert code {
+        display: block; padding: 10px 12px; border-radius: 10px;
+        background: #0f172a; color: #a5f3fc; border: 1px solid #1f2937;
+        font-weight: 500; word-break: break-all;
+    }
+
+    /* Inline code in regular text */
+    .agent-detail-page .card-body code:not(.alert code) {
+        background: #f1f5f9; color: #be185d; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border);
+    }
+
+    /* Action cards (status-aware) - the "Ready to..." / "Training in Progress" cards */
+    .agent-detail-page .card-body.text-center > h5 {
+        font-family: 'Sora', sans-serif; font-weight: 700;
+        color: var(--ink); font-size: 1.1rem;
+    }
+    .agent-detail-page .card-body.text-center > .text-muted {
+        color: var(--ink-soft) !important;
+    }
+
+    /* Make the buttons inside content cards pill-pretty */
+    .agent-detail-page .card-body .btn {
+        border-radius: 10px; font-weight: 600;
+    }
+    .agent-detail-page .card-body .btn-primary { background: var(--ink); border-color: var(--ink); }
+    .agent-detail-page .card-body .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+    .agent-detail-page .card-body .btn-success { background: var(--ok); border-color: var(--ok); }
+    .agent-detail-page .card-body .btn-success:hover { background: #047857; border-color: #047857; }
+    .agent-detail-page .card-body .btn-warning { background: var(--warn); border-color: var(--warn); color: #fff; }
+    .agent-detail-page .card-body .btn-warning:hover { background: #b45309; border-color: #b45309; color: #fff; }
+    .agent-detail-page .card-body .btn-info { background: #0e7490; border-color: #0e7490; color: #fff; }
+    .agent-detail-page .card-body .btn-info:hover { background: #155e75; border-color: #155e75; color: #fff; }
+    .agent-detail-page .card-body .btn-outline-success { color: var(--ok); border-color: rgba(16,185,129,0.4); }
+    .agent-detail-page .card-body .btn-outline-success:hover { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .agent-detail-page .card-body .btn-outline-primary { color: var(--ink); border-color: var(--border-strong); }
+    .agent-detail-page .card-body .btn-outline-primary:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .agent-detail-page .card-body .btn-outline-info { color: #0e7490; border-color: rgba(14,116,144,0.35); }
+    .agent-detail-page .card-body .btn-outline-info:hover { background: #0e7490; border-color: #0e7490; color: #fff; }
+    .agent-detail-page .card-body .btn-outline-warning { color: var(--warn); border-color: rgba(217,119,6,0.4); }
+    .agent-detail-page .card-body .btn-outline-warning:hover { background: var(--warn); border-color: var(--warn); color: #fff; }
+    .agent-detail-page .card-body .btn-outline-danger { color: var(--danger); border-color: rgba(220,38,38,0.35); }
+    .agent-detail-page .card-body .btn-outline-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+    /* Tables in detail */
+    .agent-detail-page .table {
+        background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+        margin-bottom: 0;
+    }
+    .agent-detail-page .table thead th {
+        background: var(--surface-2); color: var(--ink-soft);
+        font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.82rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .agent-detail-page .table tbody td { vertical-align: middle; border-color: var(--border); }
+    .agent-detail-page .table tbody tr:hover { background: var(--surface-2); }
+
+    /* Sidebar Quick Actions */
+    .agent-detail-page .list-group { border: 0; }
+    .agent-detail-page .list-group-item {
+        border: 0; border-bottom: 1px solid var(--border);
+        padding: 12px 18px; font-weight: 500; color: var(--ink-soft);
+        display: flex; align-items: center; gap: 8px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .agent-detail-page .list-group-item:last-child { border-bottom: 0; }
+    .agent-detail-page .list-group-item:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+    .agent-detail-page .list-group-item i { color: var(--brand-1); width: 18px; }
+    .agent-detail-page .list-group-item.text-danger i { color: var(--danger); }
+    .agent-detail-page .list-group-item-success {
+        background: #ecfdf5; color: #047857;
+    }
+    .agent-detail-page .list-group-item-success i { color: var(--ok); }
+    .agent-detail-page .list-group-item-success:hover { background: #d1fae5; color: #047857; }
+    .agent-detail-page .list-group-item-info {
+        background: #eff6ff; color: #1e40af;
+    }
+    .agent-detail-page .list-group-item-info i { color: var(--info); }
+
+    /* Stat tiles for shared usage */
+    .agent-detail-page .stat-tile {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 14px; padding: 16px; text-align: center;
+    }
+    .agent-detail-page .stat-tile h3 {
+        font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.6rem; line-height: 1.1;
+        background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .agent-detail-page .stat-tile small { color: var(--muted); font-weight: 500; }
+
+    /* Replace .bg-light p-3 rounded with our stat tile feel */
+    .agent-detail-page .bg-light.p-3.rounded {
+        background: var(--surface-2) !important; border: 1px solid var(--border); border-radius: 14px !important;
+    }
+    .agent-detail-page .bg-light.p-3.rounded h3 {
+        font-family: 'Sora', sans-serif; font-weight: 800;
+        background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .agent-detail-page .bg-light.p-3.rounded h3.text-success { background: linear-gradient(135deg, #059669 0%, #34d399 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .agent-detail-page .bg-light.p-3.rounded h3.text-info { background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Progress bar */
+    .agent-detail-page .progress {
+        border-radius: 999px; height: 22px; background: var(--surface-2);
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .agent-detail-page .progress-bar {
+        font-weight: 600; font-size: 0.78rem;
+    }
+    .agent-detail-page .progress-bar.bg-success { background: linear-gradient(90deg, #10b981, #34d399) !important; }
+    .agent-detail-page .progress-bar.bg-secondary { background: linear-gradient(90deg, #94a3b8, #cbd5e1) !important; color: var(--ink); }
+    .agent-detail-page .progress-bar.bg-danger { background: linear-gradient(90deg, #ef4444, #f87171) !important; }
+
+    /* Form controls */
+    .agent-detail-page .form-control, .agent-detail-page .form-select {
+        border-radius: 10px; border-color: var(--border);
+    }
+    .agent-detail-page .form-control:focus, .agent-detail-page .form-select:focus {
+        border-color: var(--brand-1); box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    /* Public share URL inline (inside hero alert) */
+    .agent-hero .alert .btn { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.18); }
+    .agent-hero .alert .btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+    /* Empty / no-feedback state */
+    .agent-detail-page .card .text-center.text-muted i.bi-star {
+        color: #cbd5e1; font-size: 2.5rem !important;
+    }
+
+    /* Dropdown menu inside hero */
+    .agent-hero .dropdown-menu {
+        border-radius: 12px; border: 1px solid var(--border);
+        box-shadow: 0 18px 40px rgba(15,23,42,0.18);
+        padding: 6px; background: #fff; color: var(--ink);
+    }
+    .agent-hero .dropdown-item {
+        border-radius: 8px; padding: 8px 10px; font-weight: 500; color: var(--ink-soft);
+    }
+    .agent-hero .dropdown-item:hover { background: var(--surface-2); color: var(--ink); }
+
+    /* Responsive */
+    @media (max-width: 767px) {
+        .agent-hero { padding: 22px 18px; border-radius: 18px; }
+        .agent-hero h1 { font-size: 1.35rem; }
+        .agent-hero .actions { width: 100%; }
+        .agent-detail-page .card-body { padding: 16px; }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.add('agent-detail-active');
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="agent-detail-page">
+<section class="agent-hero" aria-label="Agent header">
+    <p class="crumb">
+        <a href="{% url 'agents_list' %}"><i class="bi bi-arrow-left"></i> Dashboard</a>
+        <span style="opacity:0.5;"> / </span>
+        <span>{{ agent.name }}</span>
+    </p>
+    <div class="head-row">
+        <span class="agent-icon" aria-hidden="true"><i class="bi bi-robot"></i></span>
+        <div style="min-width:0; flex:1;">
+            <h1 class="display-font">{{ agent.name }}</h1>
+            {% if agent.description %}
+            <p class="lede">{{ agent.description }}</p>
+            {% endif %}
+            <div class="pills">
+                <span class="status-badge status-{{ agent.status }}">{{ agent.get_status_display }}</span>
+                <span class="pill"><i class="bi bi-tag"></i> {{ agent.get_agent_type_display }}</span>
+                {% if agent.model %}
+                <span class="pill"><i class="bi bi-cpu"></i> {{ agent.model.model_name }}</span>
+                {% endif %}
+                <span class="pill"><i class="bi bi-database"></i> {{ agent.training_data_count }} training items</span>
+                {% if agent.published_at %}
+                <span class="pill"><i class="bi bi-broadcast"></i> Published {{ agent.published_at|date:"M j, Y" }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="actions">
+        {% if agent.user == user %}
+        <div class="btn-group" role="group">
+        <a href="{% url 'agent_edit' agent.slug %}" class="btn btn-primary" data-tour="edit-agent-btn">
+            <i class="bi bi-pencil"></i> Edit Agent
+        </a>
+            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                <span class="visually-hidden">Toggle dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'agent_edit' agent.slug %}">
+                    <i class="bi bi-pencil"></i> Edit Details
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'update_agent_model' agent.slug %}">
+                    <i class="bi bi-cpu"></i> Change Model
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% if agent.status == 'published' %}
+                <li><a class="dropdown-item" href="{% url 'share_agent' agent.slug %}">
+                    <i class="bi bi-share"></i> Share Agent (Email)
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'generate_public_share_url' agent.slug %}">
+                    <i class="bi bi-link-45deg"></i> Generate Public Share URL
+                </a></li>
+                <li>
+                    <form method="post" action="{% url 'regenerate_api_key' agent.slug %}" class="m-0"
+                          onsubmit="return confirm('Rotate all API keys? Every existing key will stop working immediately.');">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-key"></i> Rotate all API keys
+                        </button>
+                    </form>
+                </li>
+                {% else %}
+                <li><span class="dropdown-item-text text-muted">
+                    <i class="bi bi-share"></i> Share Agent (Publish first)
+                </span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% if agent.status == 'testing' %}
+        <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-success mb-2">
+            <i class="bi bi-rocket-takeoff"></i> Publish Agent
+        </a>
+        {% elif agent.status == 'draft' or agent.status == 'training' %}
+        <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-outline-success mb-2">
+            <i class="bi bi-rocket-takeoff"></i> Publish Agent
+        </a>
+        {% endif %}
+        {% if agent.status == 'published' %}
+        <a href="{% url 'share_agent' agent.slug %}" class="btn btn-outline-primary mb-2">
+            <i class="bi bi-share"></i> Share Agent (Email)
+        </a>
+        <a href="{% url 'generate_public_share_url' agent.slug %}" class="btn btn-outline-info mb-2">
+            <i class="bi bi-link-45deg"></i> Public Share URL
+        </a>
+        <a href="{% url 'agent_chat' agent.slug %}" class="btn btn-success mb-2">
+            <i class="bi bi-chat-dots"></i> Chat with Agent
+        </a>
+        {% if public_share %}
+        <div class="mt-2">
+            <div class="alert alert-info mb-2">
+                <strong><i class="bi bi-link-45deg"></i> Public Share URL:</strong><br>
+                <small>
+                    <code id="publicShareUrl">{{ request.scheme }}://{{ request.get_host }}{% url 'access_public_share' token=public_share.token %}</code>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyPublicShareUrl()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </small>
+                <br>
+                <small class="text-muted">
+                    Access count: {{ public_share.access_count }}
+                    {% if public_share.expires_at %}
+                    | Expires: {{ public_share.expires_at|date:"M d, Y" }}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <button type="button" class="btn btn-outline-secondary mb-2" disabled title="Only published agents can be shared">
+            <i class="bi bi-share"></i> Share Agent (Publish first)
+        </button>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info mb-2">
+            <i class="bi bi-info-circle"></i> This agent was shared with you
+        </div>
+        {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Agent Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="status-badge status-{{ agent.status }}">{{ agent.get_status_display }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-3">Type</dt>
+                    <dd class="col-sm-9">{{ agent.get_agent_type_display }}</dd>
+                    
+                    <dt class="col-sm-3">LLM Model</dt>
+                    <dd class="col-sm-9">
+                        {% if agent.model %}
+                            <div class="d-flex align-items-center mb-2">
+                                <strong>{{ agent.model.model_name }}</strong>
+                                <span class="badge bg-info ms-2">{{ agent.model.get_provider_display }}</span>
+                            </div>
+                            {% if agent.model.description %}
+                                <small class="text-muted d-block mb-2">{{ agent.model.description|truncatewords:15 }}</small>
+                            {% endif %}
+                            {% if agent.model.use_cases %}
+                                <div class="mb-2">
+                                    <small class="text-muted d-block mb-1"><strong>Best Use Cases:</strong></small>
+                                    <ul class="list-unstyled mb-0 small">
+                                        {% for use_case in agent.model.use_cases|slice:":3" %}
+                                        <li class="text-muted">• {{ use_case }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">No model configured</span>
+                        {% endif %}
+                        
+                        {% if is_owner %}
+                        {% if agent.status == 'published' %}
+                        <div class="mt-2">
+                            <label class="form-label small mb-1">Change Model:</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm" id="model_id" name="model_id" disabled>
+                                    <option value="" selected>-- Model cannot be changed for published agents --</option>
+                                </select>
+                            </div>
+                            <small class="text-warning"><i class="bi bi-exclamation-triangle"></i> Model changes are not allowed for published agents. Please unpublish the agent first.</small>
+                        </div>
+                        {% else %}
+                        <form method="post" action="{% url 'agent_detail' agent.slug %}" id="model-update-form" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="update_model" value="1">
+                            <div class="mt-2">
+                                <label for="model_id" class="form-label small mb-1">Change Model:</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm" id="model_id" name="model_id" onchange="updateModel(this);">
+                                        <option value="">-- Select a model --</option>
+                                        {% for model in available_models %}
+                                        <option value="{{ model.id }}" 
+                                                data-provider="{{ model.provider }}"
+                                                {% if agent.model and agent.model.id == model.id %}selected{% endif %}>
+                                            {{ model.model_name }} ({{ model.get_provider_display }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span id="model-update-spinner" class="spinner-border spinner-border-sm d-none" role="status" style="width: 1rem; height: 1rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </div>
+                                <small class="text-muted">Select a model from the dropdown to update</small>
+                            </div>
+                        </form>
+                        {% endif %}
+                        {% else %}
+                        <div class="mt-2">
+                            <small class="text-muted"><i class="bi bi-info-circle"></i> Only the agent owner can modify the LLM model</small>
+                        </div>
+                        {% endif %}
+                    </dd>
+                    
+                    <dt class="col-sm-3">Training Data</dt>
+                    <dd class="col-sm-9">{{ agent.training_data_count }} items</dd>
+                    
+                    <dt class="col-sm-3">Created</dt>
+                    <dd class="col-sm-9">{{ agent.created_at|date:"M d, Y H:i" }}</dd>
+                    
+                    {% if agent.published_at %}
+                    <dt class="col-sm-3">Published</dt>
+                    <dd class="col-sm-9">{{ agent.published_at|date:"M d, Y H:i" }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+        
+        {% if agent.status == 'draft' %}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5>Ready to train your agent?</h5>
+                <p class="text-muted">Upload training data and start the training process</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="{% url 'agent_train' agent.slug %}" class="btn btn-primary" data-tour="train-agent-btn">
+                        <i class="bi bi-play-circle"></i> Start Training
+                    </a>
+                    <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-outline-success">
+                        <i class="bi bi-rocket-takeoff"></i> Publish Agent
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% elif agent.status == 'training' %}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5>Training in Progress</h5>
+                <p class="text-muted">Your agent is being trained. Check the training page for progress.</p>
+                <a href="{% url 'agent_train' agent.slug %}" class="btn btn-info">
+                    <i class="bi bi-hourglass-split"></i> View Training Status
+                </a>
+            </div>
+        </div>
+        {% elif agent.status == 'testing' %}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5>Ready for Testing & Publishing</h5>
+                <p class="text-muted">Test your agent and publish it when you're ready</p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="{% url 'agent_test' agent.slug %}" class="btn btn-warning" data-tour="test-agent-btn">
+                        <i class="bi bi-bug"></i> Test Agent
+                    </a>
+                    <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-success" data-tour="publish-agent-btn">
+                        <i class="bi bi-rocket-takeoff"></i> Publish Agent
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% elif agent.status == 'published' %}
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> Agent Published</h5>
+            </div>
+            <div class="card-body">
+                {% if has_unpublished_changes %}
+                <div class="alert alert-info mb-3">
+                    <strong><i class="bi bi-info-circle"></i> Unpublished Changes Detected</strong>
+                    <p class="mb-2">The following changes have been made since the last publication:</p>
+                    <ul class="mb-2">
+                        {% for change in change_summary %}
+                        <li>{{ change }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-info btn-sm" data-tour="publish-agent-btn">
+                        <i class="bi bi-arrow-repeat"></i> Republish with Changes
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if new_agent_api_key %}
+                <div class="alert alert-warning">
+                    <strong><i class="bi bi-exclamation-triangle"></i> IMPORTANT: Save this key now. You will not be able to see it again.</strong>
+                    <code class="d-block mt-2 p-2 bg-light" id="agent-api-key">{{ new_agent_api_key }}</code>
+                    <small class="text-muted">Use this key to authenticate API requests for this agent.</small>
+                </div>
+                {% endif %}
+
+                {% if is_owner and agent_api_keys %}
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">API keys</h6>
+                    <p class="small text-muted mb-2">You can use several keys at once (e.g. production and staging). Only a hash is stored; the full secret is shown once when you create or rotate a key.</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Label</th>
+                                    <th>Preview</th>
+                                    <th>Created</th>
+                                    <th>Last used</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for k in agent_api_keys %}
+                                <tr>
+                                    <td>{{ k.name|default:"—" }}</td>
+                                    <td><code>{{ k.preview|default:"—" }}</code></td>
+                                    <td>{{ k.created_at|date:"M j, Y" }}</td>
+                                    <td>{% if k.last_used %}{{ k.last_used|date:"M j, Y H:i" }}{% else %}<span class="text-muted">Never</span>{% endif %}</td>
+                                    <td class="text-end">
+                                        {% if k.api_key_hash %}
+                                        <form method="post" action="{% url 'revoke_agent_api_key' agent.slug k.id %}" class="d-inline" onsubmit="return confirm('Revoke this key? Clients using it will stop working immediately.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% elif is_owner and not new_agent_api_key and agent.api_key_hash %}
+                <div class="alert alert-info">
+                    <strong>API key:</strong>
+                    <code class="d-block mt-2 p-2 bg-light">{{ agent.api_key_preview|default:"Key exists (hash only)" }}</code>
+                    <small class="text-muted">Full key is not shown again. Add another key or rotate all keys to get a new secret.</small>
+                </div>
+                {% elif is_owner and not new_agent_api_key %}
+                <div class="alert alert-warning">
+                    <strong>No API key:</strong>
+                    <p class="mb-0">Add or rotate keys to use this agent via the API.</p>
+                </div>
+                {% elif not is_owner %}
+                <p class="text-muted small mb-0">This agent is published. Only the owner can view and manage API keys.</p>
+                {% endif %}
+
+                {% if is_owner %}
+                <div class="d-flex flex-wrap gap-2 align-items-end mb-2">
+                    <form method="post" action="{% url 'add_agent_api_key' agent.slug %}" class="d-flex flex-wrap gap-2 align-items-end">
+                        {% csrf_token %}
+                        <div>
+                            <label class="form-label small text-muted mb-0" for="new-agent-key-name">Optional label</label>
+                            <input type="text" class="form-control form-control-sm" id="new-agent-key-name" name="name" maxlength="100" placeholder="e.g. Staging">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary" {% if agent.status != 'published' %}disabled{% endif %}>
+                            <i class="bi bi-plus-lg"></i> Add API key
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2 flex-wrap">
+                    {% if is_owner %}
+                    <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-sm {% if has_unpublished_changes %}btn-info{% else %}btn-outline-success{% endif %}">
+                        <i class="bi bi-arrow-repeat"></i> {% if has_unpublished_changes %}Republish{% else %}Republish{% endif %}
+                    </a>
+                    {% endif %}
+                    {% if is_owner %}
+                    <form method="post" action="{% url 'regenerate_api_key' agent.slug %}" class="d-inline" onsubmit="return confirm('Rotate all API keys? Every existing key will stop working immediately.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-clockwise"></i> {% if agent.api_key_hash or agent_api_keys %}Rotate all keys{% else %}Generate key{% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% include 'dashboard/partials/agent_mcp_servers_manage.html' with mcp_return_page='detail' %}
+
+        <!-- Agent Shares Section -->
+        {% if agent.user == user and agent.status == 'published' and agent_shares %}
+        <div class="card mb-4" id="shares-section">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-share"></i> Shared With</h5>
+                <a href="{% url 'share_agent' agent.slug %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Share
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Shared On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for share in agent_shares %}
+                            <tr>
+                                <td>{{ share.email }}</td>
+                                <td>
+                                    {% if share.is_accepted %}
+                                        <span class="badge bg-success">Accepted</span>
+                                    {% elif share.is_expired %}
+                                        <span class="badge bg-secondary">Expired</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ share.created_at|date:"M d, Y" }}</td>
+                                <td data-share-id="{{ share.id }}">
+                                    {% if share.is_expired %}
+                                        <span class="text-muted small">Expired</span>
+                                    {% elif share.is_accepted %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm withdraw-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    title="Revoke access">
+                                                <i class="bi bi-x-circle"></i> Revoke
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm resend-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    title="Resend email">
+                                                <i class="bi bi-envelope-arrow-repeat"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm withdraw-share-btn" 
+                                                    data-share-id="{{ share.id }}"
+                                                    data-share-email="{{ share.email }}"
+                                                    title="Withdraw share">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% if is_owner and shared_usage_stats %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Shared Agent Usage (This Month)</h5>
+            </div>
+            <div class="card-body">
+                {% if shared_usage_stats.total.total_messages %}
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h3 class="mb-0 text-primary">{{ shared_usage_stats.total.total_messages|default:0 }}</h3>
+                            <small class="text-muted">Total Messages</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h3 class="mb-0 text-success">{{ shared_usage_stats.total.total_conversations|default:0 }}</h3>
+                            <small class="text-muted">Total Conversations</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h3 class="mb-0 text-info">{{ shared_usage_stats.total.unique_users|default:0 }}</h3>
+                            <small class="text-muted">Active Users</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Messages</th>
+                                <th>Conversations</th>
+                                <th>Last Used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usage in shared_usage_stats.by_user %}
+                            <tr>
+                                <td>{{ usage.used_by__username }}</td>
+                                <td>{{ usage.used_by__email }}</td>
+                                <td><span class="badge bg-primary">{{ usage.total_messages|default:0 }}</span></td>
+                                <td><span class="badge bg-success">{{ usage.total_conversations|default:0 }}</span></td>
+                                <td>
+                                    {% if usage.last_used %}
+                                        {{ usage.last_used|date:"M d, Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">No usage data yet. Usage will be tracked when shared users start using the agent.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Quick Actions</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'agent_train' agent.slug %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-play-circle"></i> Training
+                </a>
+                <a href="{% url 'agent_test' agent.slug %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-bug"></i> Testing
+                </a>
+                {% if agent.status == 'draft' or agent.status == 'training' %}
+                <a href="{% url 'agent_publish' agent.slug %}" class="list-group-item list-group-item-action list-group-item-success">
+                    <i class="bi bi-rocket-takeoff"></i> Publish Agent
+                </a>
+                {% elif agent.status == 'testing' %}
+                <a href="{% url 'agent_publish' agent.slug %}" class="list-group-item list-group-item-action list-group-item-success">
+                    <i class="bi bi-rocket-takeoff"></i> Publish Agent
+                </a>
+                {% elif agent.status == 'published' %}
+                <a href="{% url 'agent_publish' agent.slug %}" class="list-group-item list-group-item-action {% if has_unpublished_changes %}list-group-item-info{% else %}list-group-item-success{% endif %}">
+                    <i class="bi bi-arrow-repeat"></i> Republish Agent
+                </a>
+                {% endif %}
+                <a href="{% url 'agent_delete' agent.slug %}" class="list-group-item list-group-item-action text-danger">
+                    <i class="bi bi-trash"></i> Delete Agent
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Statistics</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Training Data:</strong> {{ agent.training_data_count }}</p>
+                <p><strong>Total Feedback:</strong> {{ feedback_analysis.total }}</p>
+                {% if feedback_analysis.total > 0 %}
+                <p><strong>Positive Rate:</strong> {{ feedback_analysis.positive_ratio|floatformat:1 }}%</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-star"></i> Feedback Status</h5>
+            </div>
+            <div class="card-body">
+                {% if feedback_analysis.total > 0 %}
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Total Feedback:</strong> {{ feedback_analysis.total }}</p>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ feedback_analysis.positive_ratio|floatformat:0 }}%"
+                             title="{{ feedback_analysis.positive_count }} Positive">
+                            {{ feedback_analysis.positive_count }} Positive
+                        </div>
+                        {% if feedback_analysis.neutral_count > 0 %}
+                        <div class="progress-bar bg-secondary" role="progressbar" 
+                             style="width: {% widthratio feedback_analysis.neutral_count feedback_analysis.total 100 %}%"
+                             title="{{ feedback_analysis.neutral_count }} Neutral">
+                            {{ feedback_analysis.neutral_count }} Neutral
+                        </div>
+                        {% endif %}
+                        <div class="progress-bar bg-danger" role="progressbar" 
+                             style="width: {{ feedback_analysis.negative_ratio|floatformat:0 }}%"
+                             title="{{ feedback_analysis.negative_count }} Negative">
+                            {{ feedback_analysis.negative_count }} Negative
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        Positive: {{ feedback_analysis.positive_ratio|floatformat:1 }}% | 
+                        Negative: {{ feedback_analysis.negative_ratio|floatformat:1 }}%
+                        {% if feedback_analysis.neutral_count > 0 %}
+                        | Neutral: {% widthratio feedback_analysis.neutral_count feedback_analysis.total 100 %}%
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <p class="mb-1"><strong>Recent Trend:</strong> 
+                    <span class="badge bg-{% if feedback_analysis.recent_trend == 'improving' %}success{% elif feedback_analysis.recent_trend == 'declining' %}danger{% elif feedback_analysis.recent_trend == 'stable' %}info{% else %}secondary{% endif %}">
+                        {{ feedback_analysis.recent_trend|title }}
+                    </span>
+                </p>
+                
+                {% if optimization_applied %}
+                <div class="alert alert-info mt-2 mb-2">
+                    <small><i class="bi bi-check-circle"></i> Agent optimized based on feedback</small>
+                </div>
+                {% endif %}
+                
+                {% if feedback_analysis.recommendations %}
+                <div class="mt-3">
+                    <strong>Recommendations:</strong>
+                    <ul class="small mb-0 mt-2">
+                        {% for rec in feedback_analysis.recommendations|slice:":3" %}
+                        <li class="text-muted">{{ rec.description }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if recent_feedbacks %}
+                <div class="mt-3 pt-3 border-top">
+                    <strong class="small">Recent Feedback:</strong>
+                    <div class="list-group list-group-flush mt-2">
+                        {% for feedback in recent_feedbacks|slice:":5" %}
+                        <div class="list-group-item px-0 py-2 border-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <span class="badge bg-{% if feedback.feedback_type == 'positive' %}success{% elif feedback.feedback_type == 'negative' %}danger{% else %}secondary{% endif %} me-2">
+                                        {{ feedback.get_feedback_type_display }}
+                                    </span>
+                                    <small class="text-muted">{{ feedback.created_at|date:"M d, H:i" }}</small>
+                                </div>
+                            </div>
+                            {% if feedback.query %}
+                            <p class="mb-0 mt-1 small text-muted">{{ feedback.query|truncatewords:10 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-star" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">No feedback received yet</p>
+                    <small>Feedback will appear here after users interact with the agent</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+function updateModel(selectElement) {
+    const selectedValue = selectElement.value;
+    if (!selectedValue) {
+        return; // Don't submit if no model selected
+    }
+    
+    // Show loading spinner
+    const spinner = document.getElementById('model-update-spinner');
+    const form = document.getElementById('model-update-form');
+    
+    if (!form) {
+        console.error('Form not found');
+        return;
+    }
+    
+    if (spinner) {
+        spinner.classList.remove('d-none');
+    }
+    
+    // Create a hidden input to ensure the value is submitted
+    // (disabled select elements don't submit their values)
+    let hiddenInput = form.querySelector('input[name="model_id"][type="hidden"]');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'model_id';
+        form.appendChild(hiddenInput);
+    }
+    hiddenInput.value = selectedValue;
+    
+    // Disable select during submission to prevent double submission
+    selectElement.disabled = true;
+    
+    // Submit form
+    console.log('Submitting form with model_id:', selectedValue);
+    form.submit();
+}
+
+// Agent Share AJAX handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Simple notification function
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+    
+    // Handle resend share email
+    document.querySelectorAll('.resend-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            const shareEmail = this.dataset.shareEmail;
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            fetch(`/dashboard/share/${shareId}/resend/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                } else {
+                    showNotification(data.error || 'Failed to resend email', 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while resending the email', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+        });
+    });
+    
+    // Handle withdraw share
+    document.querySelectorAll('.withdraw-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            const shareEmail = this.dataset.shareEmail;
+            const isAccepted = this.closest('tr').querySelector('.badge.bg-success') !== null;
+            
+            const confirmMessage = isAccepted 
+                ? `Are you sure you want to revoke access for ${shareEmail}? They will no longer be able to use this agent.`
+                : `Are you sure you want to withdraw the share invitation to ${shareEmail}?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            const btn = this;
+            const row = btn.closest('tr');
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            fetch(`/dashboard/share/${shareId}/withdraw/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the row with animation
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // Check if table is empty and hide section
+                        const tbody = document.querySelector('#shares-section table tbody');
+                        if (tbody && tbody.children.length === 0) {
+                            const sharesSection = document.getElementById('shares-section');
+                            if (sharesSection) {
+                                sharesSection.style.transition = 'opacity 0.3s';
+                                sharesSection.style.opacity = '0';
+                                setTimeout(() => sharesSection.remove(), 300);
+                            }
+                        }
+                    }, 300);
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.error || 'Failed to withdraw share', 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while withdrawing the share', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+        });
+    });
+});
+
+// Copy public share URL to clipboard
+function copyPublicShareUrl() {
+    const urlElement = document.getElementById('publicShareUrl');
+    const url = urlElement.textContent.trim();
+    
+    navigator.clipboard.writeText(url).then(function() {
+        // Show success feedback
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }, function() {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('URL copied to clipboard!');
+        } catch (err) {
+            alert('Failed to copy URL. Please select and copy manually.');
+        }
+        document.body.removeChild(textArea);
+    });
+}
+</script>
+{% endblock %}
+

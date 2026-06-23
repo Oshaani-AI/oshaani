@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Agent - {{ agent.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Delete Agent</h4>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-exclamation-triangle-fill"></i> Warning: This action cannot be undone!</h5>
+                    <p class="mb-0">Deleting this agent will permanently remove:</p>
+                    <ul class="mb-0 mt-2">
+                        <li>All training data</li>
+                        <li>All test results</li>
+                        <li>All conversations and messages</li>
+                        <li>RAG index data</li>
+                        <li>API keys</li>
+                        <li>All associated files</li>
+                    </ul>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5>Agent Details</h5>
+                        <p><strong>Name:</strong> {{ agent.name }}</p>
+                        <p><strong>Description:</strong> {{ agent.description|default:"No description" }}</p>
+                        <p><strong>Status:</strong> <span class="status-badge status-{{ agent.status }}">{{ agent.get_status_display }}</span></p>
+                        <p><strong>Training Data:</strong> {{ agent.training_data_count }} items</p>
+                        <p><strong>Test Results:</strong> {{ agent.test_results.count }} tests</p>
+                        {% if agent.status == 'published' %}
+                        <p class="text-danger"><strong>⚠️ This agent is published and has an active API key!</strong></p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <form method="post" id="deleteForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="agent_name" id="agentName" value="{{ agent.name }}">
+                    
+                    <div class="mb-3">
+                        <label for="confirmInput" class="form-label">
+                            To confirm deletion, type <strong>"delete"</strong> below:
+                        </label>
+                        <input type="text" class="form-control" id="confirmInput" name="confirm" 
+                               placeholder="Type 'delete' to confirm" required autocomplete="off">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="agentNameInput" class="form-label">
+                            Type the agent name <strong>"{{ agent.name }}"</strong> to confirm:
+                        </label>
+                        <input type="text" class="form-control" id="agentNameInput" 
+                               placeholder="Type agent name" required autocomplete="off">
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="bi bi-trash"></i> Delete Agent Permanently
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmInput = document.getElementById('confirmInput');
+    const agentNameInput = document.getElementById('agentNameInput');
+    const agentName = document.getElementById('agentName').value;
+    const deleteButton = document.getElementById('deleteButton');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    function validateInputs() {
+        const confirmValue = confirmInput.value.trim().toLowerCase();
+        const nameValue = agentNameInput.value.trim();
+        
+        if (confirmValue === 'delete' && nameValue === agentName) {
+            deleteButton.disabled = false;
+            deleteButton.classList.remove('btn-secondary');
+            deleteButton.classList.add('btn-danger');
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-secondary');
+        }
+    }
+    
+    confirmInput.addEventListener('input', validateInputs);
+    agentNameInput.addEventListener('input', validateInputs);
+    
+    deleteForm.addEventListener('submit', function(e) {
+        const confirmValue = confirmInput.value.trim().toLowerCase();
+        const nameValue = agentNameInput.value.trim();
+        
+        if (confirmValue !== 'delete' || nameValue !== agentName) {
+            e.preventDefault();
+            alert('Please type "delete" and the agent name correctly to confirm deletion.');
+            return false;
+        }
+        
+        // Final confirmation
+        const finalConfirm = confirm(`Final confirmation: Are you absolutely sure you want to delete "${agentName}"?\n\nThis action is PERMANENT and cannot be undone!`);
+        
+        if (!finalConfirm) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+
+<style>
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-draft {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-training {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.status-testing {
+    background-color: #ffc107;
+    color: black;
+}
+
+.status-published {
+    background-color: #198754;
+    color: white;
+}
+</style>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+

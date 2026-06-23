@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Terms & Conditions - Oshaani AI Agents{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h1 class="h3 mb-0"><i class="bi bi-file-text"></i> Terms & Conditions</h1>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted"><strong>Last Updated:</strong> June 2026</p>
+                    
+                    <h2 class="h5 mt-4">1. Acceptance of Terms</h2>
+                    <p>By accessing or using the Oshaani AI Agents platform ("Service"), you agree to be bound by these Terms & Conditions and the <a href="{% url 'license' %}">open source license</a>. If you do not agree to these terms, please do not use the Service.</p>
+                    
+                    <h2 class="h5 mt-4">2. Description of Service</h2>
+                    <p>Oshaani is an open-source AI agents platform that allows users to:</p>
+                    <ul>
+                        <li>Create and configure custom AI agents</li>
+                        <li>Train agents with custom data</li>
+                        <li>Chat with AI agents</li>
+                        <li>Share agents publicly or privately</li>
+                        <li>Access agents via API</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">3. User Accounts</h2>
+                    <ul>
+                        <li>You must provide accurate information when creating an account</li>
+                        <li>You are responsible for maintaining the security of your account</li>
+                        <li>You must be at least 13 years old to use this Service</li>
+                        <li>One person may not maintain multiple accounts</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">4. Open Source License</h2>
+                    <p>This software is provided under a <strong>non-commercial open source license</strong>. You may use, modify, and distribute it for personal, educational, and research purposes only. Commercial use requires a separate written license.</p>
+                    <p>See the full <a href="{% url 'license' %}">license terms</a> for details.</p>
+                    
+                    <h2 class="h5 mt-4">5. Acceptable Use</h2>
+                    <p>You agree NOT to use the Service to:</p>
+                    <ul>
+                        <li>Generate illegal, harmful, or offensive content</li>
+                        <li>Violate intellectual property rights</li>
+                        <li>Harass, abuse, or harm others</li>
+                        <li>Spread malware or engage in hacking</li>
+                        <li>Circumvent security measures</li>
+                        <li>Use automated tools to abuse the Service</li>
+                        <li>Impersonate others or provide false information</li>
+                        <li>Use the software for commercial purposes without a commercial license</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">6. Content Ownership</h2>
+                    <ul>
+                        <li><strong>Your Content:</strong> You retain ownership of content you create (agents, training data, conversations)</li>
+                        <li><strong>Software:</strong> The platform source code is licensed under the non-commercial open source license</li>
+                        <li><strong>License:</strong> You grant us a license to use your content only as needed to provide the Service on your deployment</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">7. AI-Generated Content</h2>
+                    <ul>
+                        <li>AI responses are generated automatically and may contain errors</li>
+                        <li>We do not guarantee the accuracy of AI-generated content</li>
+                        <li>You are responsible for reviewing and verifying AI outputs</li>
+                        <li>Do not rely on AI responses for medical, legal, or financial advice</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">8. API Usage</h2>
+                    <ul>
+                        <li>API keys must be kept confidential</li>
+                        <li>You are responsible for all activity under your API keys</li>
+                        <li>Self-hosted operators may impose their own fair usage policies</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">9. Service Availability</h2>
+                    <ul>
+                        <li>Self-hosted deployments are operated at your own discretion</li>
+                        <li>Features may change as the open source project evolves</li>
+                        <li>No uptime or support guarantees are provided unless separately agreed</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">10. Limitation of Liability</h2>
+                    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW:</p>
+                    <ul>
+                        <li>The Service is provided "AS IS" without warranties</li>
+                        <li>We are not liable for indirect, incidental, or consequential damages</li>
+                        <li>Our total liability is limited to the extent permitted by applicable law</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">11. Indemnification</h2>
+                    <p>You agree to indemnify and hold harmless the project contributors from claims arising from your use of the Service or violation of these Terms.</p>
+                    
+                    <h2 class="h5 mt-4">12. Termination</h2>
+                    <ul>
+                        <li>You may stop using the Service at any time</li>
+                        <li>Operators may suspend accounts that violate these Terms</li>
+                    </ul>
+                    
+                    <h2 class="h5 mt-4">13. Changes to Terms</h2>
+                    <p>These Terms may be updated from time to time. Continued use after changes constitutes acceptance of the new Terms.</p>
+                    
+                    <h2 class="h5 mt-4">14. Governing Law</h2>
+                    <p>These Terms are governed by applicable law in your jurisdiction unless otherwise required by local law.</p>
+                    
+                    <hr class="my-4">
+                    <p class="text-center">
+                        <a href="{% url 'license' %}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-code-square"></i> View License
+                        </a>
+                        <a href="{% url 'privacy_policy' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-shield-check"></i> View Privacy Policy
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

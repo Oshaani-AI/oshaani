@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+    <title>Oshaani — Open-source platform for production AI agents</title>
+    <meta name="title" content="Oshaani — Open-source platform for production AI agents">
+    <meta name="description" content="Oshaani is an open-source platform to build, train, and deploy AI agents. Multi-model (Bedrock + Ollama), RAG, custom tools, MCP, API keys, and a public marketplace—self-host or run locally.">
+    <meta name="keywords" content="AI agents, AI platform, RAG, Bedrock, Ollama, MCP, custom tools, AI API, agent marketplace, GenAI, conversational AI">
+    <meta name="author" content="Oshaani">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://oshaani.com/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://oshaani.com/">
+    <meta property="og:title" content="Oshaani — Open-source platform for production AI agents">
+    <meta property="og:description" content="Build, train, and deploy AI agents with Bedrock & Ollama, RAG, tools, MCP, and instant API access. Open source for non-commercial use.">
+    <meta property="og:image" content="https://oshaani.com/static/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Oshaani">
+    <meta property="og:locale" content="en_US">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://oshaani.com/">
+    <meta name="twitter:title" content="Oshaani — Open-source platform for production AI agents">
+    <meta name="twitter:description" content="Build production AI agents with RAG, MCP, custom tools, and API keys. Models from Bedrock & Ollama.">
+    <meta name="twitter:image" content="https://oshaani.com/static/images/twitter-card.jpg">
+    <meta name="twitter:creator" content="@oshaani">
+    <meta name="twitter:site" content="@oshaani">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap-icons.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Oshaani",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Create, train, and deploy production AI agents with Oshaani. Multi-model (Bedrock & Ollama), RAG, MCP, custom tools, and sharing—all in one open-source workspace.",
+      "url": "https://oshaani.com",
+      "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "120" },
+      "featureList": [
+        "Multi-model AI (Amazon Bedrock, Ollama)",
+        "RAG and knowledge bases",
+        "Custom tools and integrations",
+        "MCP server support",
+        "Sharing, collaboration and analytics",
+        "API keys and instant deployment",
+        "Public agent marketplace"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Oshaani",
+      "url": "https://oshaani.com",
+      "logo": "https://oshaani.com/static/images/logo.svg",
+      "sameAs": ["https://social.oshaani.com", "https://twitter.com/oshaani", "https://linkedin.com/company/oshaani"],
+      "contactPoint": { "@type": "ContactPoint", "contactType": "Sales", "url": "https://oshaani.com/" }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "How fast can I launch an agent?", "acceptedAnswer": { "@type": "Answer", "text": "Most teams ship a working agent in under 15 minutes—pick a model, attach a knowledge base, optionally add tools or MCP, then test in the built-in chat or via API." } },
+        { "@type": "Question", "name": "Which models can I use?", "acceptedAnswer": { "@type": "Answer", "text": "Amazon Bedrock (Claude, Llama, Titan and more) and self-hosted Ollama models. Switch models per-agent without rewriting prompts." } },
+        { "@type": "Question", "name": "Is my data secure?", "acceptedAnswer": { "@type": "Answer", "text": "Your knowledge bases are isolated per workspace, traffic is encrypted in transit, API keys are scoped per agent, and you control sharing." } },
+        { "@type": "Question", "name": "Can I use Oshaani commercially?", "acceptedAnswer": { "@type": "Answer", "text": "The open source license permits non-commercial use only. Commercial use requires a separate license from the project maintainers." } }
+      ]
+    }
+    </script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.55;
+            color: #0f172a;
+            background: #ffffff;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; }
+        img, svg { max-width: 100%; }
+        .display-font { font-family: 'Sora', 'Inter', sans-serif; letter-spacing: -0.02em; }
+
+        :root {
+            --brand-1: #6366f1;   /* indigo */
+            --brand-2: #8b5cf6;   /* violet */
+            --brand-3: #06b6d4;   /* cyan */
+            --brand-4: #f59e0b;   /* amber */
+            --ink: #0f172a;
+            --ink-soft: #475569;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --success: #10b981;
+            --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+        }
+
+        /* ---------- Top nav ---------- */
+        .nav {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: saturate(160%) blur(12px);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 24px;
+        }
+        .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.15rem;
+            text-decoration: none; color: var(--ink);
+        }
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: 9px;
+            background: var(--grad);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.95rem;
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+        }
+        .nav-links { display: flex; align-items: center; gap: 6px; }
+        .nav-link {
+            text-decoration: none; color: var(--ink-soft);
+            font-weight: 500; font-size: 0.95rem;
+            padding: 9px 12px; border-radius: 8px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .nav-link:hover { background: var(--surface-2); color: var(--ink); }
+        .nav-cta {
+            margin-left: 6px;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 16px; border-radius: 999px;
+            background: var(--ink); color: #fff !important;
+            font-weight: 600; font-size: 0.9rem;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.3); }
+        .nav-toggle { display: none; }
+
+        /* ---------- Container ---------- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* ---------- Hero ---------- */
+        .hero {
+            position: relative; overflow: hidden;
+            padding: 80px 0 96px;
+            background:
+                radial-gradient(900px 540px at 110% -10%, rgba(139, 92, 246, 0.18), transparent 60%),
+                radial-gradient(820px 480px at -10% 0%, rgba(6, 182, 212, 0.18), transparent 60%),
+                linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+        }
+        .hero-grid {
+            display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            gap: 56px; align-items: center;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 999px;
+            background: rgba(99, 102, 241, 0.08); color: #4338ca;
+            font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .hero h1 {
+            margin: 18px 0 18px;
+            font-family: 'Sora', sans-serif; font-weight: 800;
+            font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+            line-height: 1.05; letter-spacing: -0.025em;
+        }
+        .hero h1 .grad {
+            background: var(--grad);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+        }
+        .hero p.lede {
+            color: var(--ink-soft); font-size: 1.125rem; max-width: 560px; margin: 0 0 28px;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none; cursor: pointer; border: 1px solid transparent;
+            font-family: inherit; font-weight: 600;
+            padding: 14px 22px; border-radius: 12px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            font-size: 0.95rem; line-height: 1;
+        }
+        .btn-primary { background: var(--ink); color: #fff; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.22); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(15, 23, 42, 0.28); }
+        .btn-grad {
+            background: var(--grad); color: #fff;
+            box-shadow: 0 10px 28px rgba(99, 102, 241, 0.35);
+        }
+        .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(99, 102, 241, 0.45); }
+        .btn-ghost { background: #fff; color: var(--ink); border-color: var(--border); }
+        .btn-ghost:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+        .btn-link {
+            color: var(--ink); text-decoration: none; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-link:hover { color: #4338ca; }
+
+        .hero-meta {
+            margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap;
+            color: var(--muted); font-size: 0.9rem;
+        }
+        .hero-meta i { color: var(--success); margin-right: 6px; }
+
+        /* Hero visual: agent builder mock */
+        .hero-visual {
+            position: relative;
+            border-radius: 22px;
+            background: #fff;
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.16), 0 8px 24px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+        .hero-visual::before {
+            content: ''; position: absolute; inset: -1px;
+            border-radius: 22px; padding: 1px;
+            background: var(--grad);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.35; pointer-events: none;
+        }
+        .hv-titlebar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 14px; border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+        .hv-dot { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; }
+        .hv-dot.r { background: #fda4af; } .hv-dot.y { background: #fde68a; } .hv-dot.g { background: #86efac; }
+        .hv-url { margin-left: 10px; font-size: 0.78rem; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .hv-body { display: grid; grid-template-columns: 200px 1fr; min-height: 360px; }
+        .hv-side {
+            border-right: 1px solid var(--border);
+            padding: 16px; background: #fafbff;
+            font-size: 0.85rem;
+        }
+        .hv-side h4 { margin: 0 0 10px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+        .hv-side ul { list-style: none; margin: 0 0 16px; padding: 0; }
+        .hv-side li { padding: 6px 8px; border-radius: 6px; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
+        .hv-side li.active { background: rgba(99, 102, 241, 0.1); color: #4338ca; font-weight: 600; }
+        .hv-side li i { font-size: 0.95rem; }
+        .hv-main { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+        .hv-row { display: flex; gap: 10px; align-items: flex-start; }
+        .hv-bubble {
+            padding: 10px 12px; border-radius: 12px;
+            font-size: 0.88rem; max-width: 78%; line-height: 1.45;
+            border: 1px solid var(--border);
+        }
+        .hv-bubble.user { background: #eef2ff; border-color: #e0e7ff; color: #3730a3; align-self: flex-end; margin-left: auto; }
+        .hv-bubble.bot { background: #fff; }
+        .hv-typing { display: inline-flex; gap: 4px; }
+        .hv-typing i { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; animation: pulse 1.2s infinite ease-in-out; }
+        .hv-typing i:nth-child(2) { animation-delay: 0.15s; }
+        .hv-typing i:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes pulse { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.6; } 40% { transform: scale(1); opacity: 1; } }
+        .hv-input {
+            display: flex; gap: 8px; align-items: center; margin-top: auto;
+            border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; background: #fff;
+            font-size: 0.85rem; color: var(--muted);
+        }
+        .hv-input i { color: var(--brand-1); }
+        .hv-floats {
+            position: absolute; right: -10px; top: 84px;
+            background: #fff; border: 1px solid var(--border);
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+            border-radius: 12px; padding: 10px 14px; font-size: 0.8rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .hv-floats .ok { color: var(--success); }
+        .hv-floats.b { top: auto; bottom: 36px; right: 18px; }
+
+        /* ---------- Logo strip ---------- */
+        .logos {
+            padding: 28px 0 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+        .logos-label {
+            text-align: center; color: var(--muted);
+            font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px;
+        }
+        .logos-row {
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 18px 36px;
+            color: #94a3b8;
+        }
+        .logos-row .l-item {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-weight: 700; font-size: 1rem; opacity: 0.85;
+            font-family: 'Sora', sans-serif;
+        }
+        .logos-row .l-item i { font-size: 1.15rem; }
+
+        /* ---------- Section base ---------- */
+        section { padding: 88px 0; }
+        .eyebrow {
+            display: inline-block; padding: 5px 12px; border-radius: 999px;
+            background: var(--surface-2); color: #4338ca;
+            font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            border: 1px solid var(--border);
+        }
+        .section-head { text-align: center; max-width: 720px; margin: 0 auto 48px; }
+        .section-head h2 {
+            font-family: 'Sora', sans-serif; font-weight: 700;
+            font-size: clamp(1.8rem, 3.5vw, 2.6rem); line-height: 1.15;
+            margin: 12px 0 12px; letter-spacing: -0.02em; color: var(--ink);
+        }
+        .section-head p { color: var(--ink-soft); font-size: 1.05rem; margin: 0; }
+
+        /* ---------- Use cases ---------- */
+        .usecases {
+            background: #fff;
+        }
+        .uc-grid {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;
+        }
+        .uc-card {
+            border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+            background: #fff; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .uc-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); border-color: #cbd5e1; }
+        .uc-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; margin-bottom: 14px;
+        }
+        .uc-icon.a { background: rgba(99, 102, 241, 0.1); color: #4338ca; }
+        .uc-icon.b { background: rgba(6, 182, 212, 0.12); color: #0e7490; }
+        .uc-icon.c { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+        .uc-icon.d { background: rgba(16, 185, 129, 0.12); color: #047857; }
+        .uc-card h3 { margin: 0 0 6px; font-family: 'Sora', sans-serif; font-size: 1.05rem; }
+        .uc-card p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+
+        /* ---------- How it works ---------- */
+        .howto {
+            background:
+                radial-gradient(1000px 500px at 50% -10%, rgba(99, 102, 241, 0.08), transparent 70%),
+                #f8fafc;
+            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+        }
+        .ht-grid {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px;
+        }
+        .ht-step {
+            background: #fff; border: 1px solid var(--border);
+            border-radius: 16px; padding: 22px; position: relative;
+        }
+        .ht-num {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--grad); color: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.95rem;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 18px rgba(99, 102, 241, 0.35);
+        }
+        .ht-step h3 { margin: 0 0 6px; font-size: 1.05rem; font-family: 'Sora', sans-serif; }
+        .ht-step p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+
+        /* ---------- Features ---------- */
+        .features { background: #fff; }
+        .feat-grid {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px;
+        }
+        .feat {
+            border: 1px solid var(--border); border-radius: 18px; padding: 26px;
+            background: #fff; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .feat:hover { transform: translateY(-4px); box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08); border-color: #cbd5e1; }
+        .feat-icon {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; margin-bottom: 16px;
+            background: var(--grad); color: #fff;
+            box-shadow: 0 10px 22px rgba(99, 102, 241, 0.3);
+        }
+        .feat h3 { margin: 0 0 8px; font-family: 'Sora', sans-serif; font-size: 1.18rem; }
+        .feat p { margin: 0 0 12px; color: var(--ink-soft); font-size: 0.95rem; }
+        .feat ul { margin: 0; padding-left: 1.1rem; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.7; }
+
+        /* ---------- Stats ---------- */
+        .stats-band {
+            padding: 56px 0; background: var(--ink); color: #fff;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; text-align: center;
+        }
+        .stat-num {
+            font-family: 'Sora', sans-serif; font-weight: 800;
+            font-size: clamp(1.8rem, 3vw, 2.6rem);
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5f3fc 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: #cbd5e1; font-size: 0.95rem; margin-top: 4px; }
+
+        /* ---------- Testimonials ---------- */
+        .testimonials { background: #fff; }
+        .t-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+        .t-card {
+            background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 24px;
+            position: relative; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .t-stars { color: #f59e0b; letter-spacing: 1px; margin-bottom: 12px; font-size: 0.95rem; }
+        .t-quote { color: var(--ink); font-size: 1rem; line-height: 1.6; margin: 0 0 16px; }
+        .t-author { display: flex; align-items: center; gap: 12px; }
+        .t-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--grad); color: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-family: 'Sora', sans-serif;
+        }
+        .t-meta strong { display: block; font-size: 0.92rem; }
+        .t-meta span { font-size: 0.82rem; color: var(--muted); }
+
+        /* ---------- Pricing teaser ---------- */
+        .pricing { background: #f8fafc; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+        .price-card {
+            background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 28px;
+            display: flex; flex-direction: column;
+        }
+        .price-card.popular {
+            border-color: transparent; position: relative;
+            box-shadow: 0 24px 60px rgba(99, 102, 241, 0.18);
+        }
+        .price-card.popular::before {
+            content: ''; position: absolute; inset: -1px; border-radius: 18px; padding: 1.5px;
+            background: var(--grad);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+        }
+        .price-badge {
+            align-self: flex-start; padding: 4px 10px; border-radius: 999px;
+            background: rgba(99, 102, 241, 0.1); color: #4338ca;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;
+        }
+        .price-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.2rem; margin: 0 0 4px; }
+        .price-amt { display: flex; align-items: baseline; gap: 4px; margin: 6px 0 6px; }
+        .price-amt .num { font-family: 'Sora', sans-serif; font-size: 2.2rem; font-weight: 800; }
+        .price-amt .per { color: var(--muted); font-size: 0.9rem; }
+        .price-card p.tag { color: var(--ink-soft); margin: 0 0 16px; font-size: 0.92rem; }
+        .price-card ul { margin: 0 0 22px; padding: 0; list-style: none; }
+        .price-card li {
+            color: var(--ink-soft); font-size: 0.92rem; padding: 6px 0;
+            display: flex; gap: 8px; align-items: flex-start;
+        }
+        .price-card li i { color: var(--success); margin-top: 3px; }
+        .price-cta { margin-top: auto; }
+
+        /* ---------- Video ---------- */
+        .video-section { background: #fff; }
+        .video-wrap {
+            max-width: 960px; margin: 0 auto;
+            position: relative; padding-bottom: 56.25%;
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
+            border: 1px solid var(--border);
+        }
+        .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+        /* ---------- Products ---------- */
+        .products { background: #f8fafc; border-top: 1px solid var(--border); }
+        .p-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+        .p-card {
+            background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+            display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .p-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); }
+        .p-tag { font-size: 0.72rem; color: #4338ca; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .p-card h3 { margin: 6px 0 4px; font-family: 'Sora', sans-serif; font-size: 1.15rem; }
+        .p-url { color: var(--muted); font-size: 0.85rem; font-family: ui-monospace, SFMono-Regular, monospace; margin-bottom: 8px; }
+        .p-card p { color: var(--ink-soft); font-size: 0.92rem; margin: 0 0 14px; }
+        .p-card .btn-link { margin-top: auto; }
+
+        /* ---------- FAQ ---------- */
+        .faq { background: #fff; }
+        .faq-list { max-width: 880px; margin: 0 auto; }
+        .faq-item {
+            border: 1px solid var(--border); border-radius: 14px;
+            background: #fff; margin-bottom: 12px; overflow: hidden;
+        }
+        .faq-q {
+            width: 100%; text-align: left; cursor: pointer; background: #fff;
+            border: 0; padding: 18px 20px; font-weight: 600; color: var(--ink);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            font-family: inherit; font-size: 1rem;
+        }
+        .faq-q i { color: var(--muted); transition: transform 0.2s ease; }
+        .faq-item[open] .faq-q i { transform: rotate(180deg); color: var(--brand-1); }
+        .faq-a {
+            padding: 0 20px 18px; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.65;
+        }
+
+        /* ---------- Final CTA ---------- */
+        .final-cta {
+            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            color: #fff;
+        }
+        .final-cta::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(700px 380px at 15% 20%, rgba(99, 102, 241, 0.35), transparent 60%),
+                radial-gradient(620px 360px at 85% 80%, rgba(6, 182, 212, 0.25), transparent 60%);
+            pointer-events: none;
+        }
+        .final-cta .container { position: relative; }
+        .final-cta h2 {
+            font-family: 'Sora', sans-serif; font-weight: 800;
+            font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; letter-spacing: -0.02em;
+            text-align: center; margin: 0 0 14px;
+        }
+        .final-cta p { text-align: center; color: #cbd5e1; max-width: 640px; margin: 0 auto 26px; font-size: 1.05rem; }
+        .final-cta .actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .final-cta .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.25); }
+        .final-cta .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+
+        /* ---------- Footer ---------- */
+        footer.site {
+            padding: 56px 0 36px; background: #0b1220; color: #cbd5e1;
+        }
+        .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 28px; }
+        .foot-brand { display: flex; align-items: center; gap: 10px; color: #fff; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.1rem; text-decoration: none; margin-bottom: 10px; }
+        .foot-brand .brand-mark { box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4); }
+        .foot-tag { color: #94a3b8; font-size: 0.92rem; max-width: 320px; }
+        .foot-col h4 { color: #fff; font-size: 0.92rem; font-family: 'Sora', sans-serif; margin: 0 0 10px; }
+        .foot-col a { display: block; color: #cbd5e1; text-decoration: none; padding: 4px 0; font-size: 0.92rem; }
+        .foot-col a:hover { color: #fff; }
+        .foot-social { display: flex; gap: 10px; margin-top: 14px; }
+        .foot-social a {
+            width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.06); color: #cbd5e1; padding: 0;
+        }
+        .foot-social a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+        .foot-bottom {
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin-top: 32px; padding-top: 18px;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            color: #94a3b8; font-size: 0.85rem;
+        }
+        .foot-bottom a { color: #94a3b8; text-decoration: none; margin-left: 14px; }
+        .foot-bottom a:hover { color: #fff; }
+
+        /* ---------- Modal (book demo) ---------- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; padding: 20px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal {
+            background: #fff; border-radius: 20px; max-width: 580px; width: 100%;
+            max-height: 90vh; overflow-y: auto; padding: 28px;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.4);
+            transform: scale(0.96); transition: transform 0.2s ease;
+            position: relative;
+        }
+        .modal-overlay.show .modal { transform: scale(1); }
+        .modal-close {
+            position: absolute; top: 14px; right: 14px;
+            background: var(--surface-2); border: 0; width: 36px; height: 36px;
+            border-radius: 10px; cursor: pointer; color: var(--ink-soft);
+            font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: #eef2ff; color: var(--ink); }
+        .modal h2 { font-family: 'Sora', sans-serif; margin: 0 0 4px; font-size: 1.5rem; }
+        .modal-sub { color: var(--ink-soft); margin: 0 0 18px; font-size: 0.95rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .form-group label { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+            font-family: inherit; font-size: 0.95rem; color: var(--ink); background: #fff;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none; border-color: var(--brand-1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        .submit-btn {
+            background: var(--ink); color: #fff; border: 0; padding: 12px 22px;
+            border-radius: 10px; font-weight: 600; cursor: pointer; width: 100%;
+            font-family: inherit; font-size: 1rem; margin-top: 6px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .form-error { padding: 10px 12px; border-radius: 10px; background: #fee2e2; color: #991b1b; font-size: 0.9rem; margin-top: 8px; display: none; }
+        .form-success { text-align: center; padding: 12px 0; }
+        .form-success .ok-icon {
+            width: 64px; height: 64px; border-radius: 50%; background: var(--success); color: #fff;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 12px;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+            .uc-grid, .ht-grid, .feat-grid, .t-grid, .price-grid, .p-grid, .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .foot-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            section { padding: 64px 0; }
+            .hero { padding: 56px 0 64px; }
+            .nav-links { display: none; }
+            .nav-toggle {
+                display: inline-flex; align-items: center; justify-content: center;
+                width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
+                background: #fff; color: var(--ink); cursor: pointer; padding: 0;
+            }
+            .nav-links.open {
+                display: flex; flex-direction: column; align-items: stretch;
+                position: absolute; top: 100%; left: 0; right: 0;
+                background: #fff; padding: 12px 16px; gap: 4px;
+                border-bottom: 1px solid var(--border);
+                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            }
+            .nav-links.open .nav-cta { margin-left: 0; margin-top: 6px; justify-content: center; }
+            .uc-grid, .ht-grid, .feat-grid, .t-grid, .price-grid, .p-grid, .stats-grid { grid-template-columns: 1fr; }
+            .foot-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .hv-body { grid-template-columns: 1fr; min-height: 320px; }
+            .hv-side { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top navigation -->
+    <header class="nav" role="banner">
+        <div class="nav-inner">
+            <a href="{% url 'home' %}" class="brand" aria-label="Oshaani home">
+                <span class="brand-mark">O</span>
+                <span>Oshaani</span>
+            </a>
+            <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+                <i class="bi bi-list" style="font-size: 1.25rem;"></i>
+            </button>
+            <nav id="nav-links" class="nav-links" aria-label="Main navigation">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how" class="nav-link">How it works</a>
+                <a href="{% url 'public_agents_list' %}" class="nav-link">Marketplace</a>
+                <a href="{% url 'license' %}" class="nav-link">License</a>
+                <a href="https://oshaani.com/blog/" class="nav-link">Blog</a>
+                <a href="{% url 'login' %}" class="nav-link">Log in</a>
+                <a href="{% url 'login' %}" class="nav-cta">Start free <i class="bi bi-arrow-right"></i></a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero" aria-label="Hero">
+        <div class="container hero-grid">
+            <div>
+                <span class="hero-eyebrow"><i class="bi bi-stars"></i> AI agents · production-grade · in minutes</span>
+                <h1 class="display-font">
+                    Build, ship, and <span class="grad">share</span> production AI agents.
+                </h1>
+                <p class="lede">
+                    Oshaani is an open-source workspace to design, train, and deploy AI agents your users can chat with or call from your apps. Plug in models, knowledge, tools and MCP—then publish and share from one place.
+                </p>
+                <div class="hero-actions">
+                    <a href="{% url 'login' %}" class="btn btn-grad" aria-label="Start free">
+                        Start free <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <button type="button" class="btn btn-ghost" id="book-demo-btn" aria-label="Book a demo">
+                        <i class="bi bi-calendar-check"></i> Book a demo
+                    </button>
+                    <a href="#video" class="btn-link" aria-label="Watch the 90 second tour">
+                        <i class="bi bi-play-circle"></i> Watch 90s tour
+                    </a>
+                </div>
+                <div class="hero-meta">
+                    <span><i class="bi bi-check-circle-fill"></i>Open source</span>
+                    <span><i class="bi bi-check-circle-fill"></i>Self-hostable</span>
+                    <span><i class="bi bi-check-circle-fill"></i>Non-commercial license</span>
+                </div>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hv-titlebar">
+                    <span class="hv-dot r"></span><span class="hv-dot y"></span><span class="hv-dot g"></span>
+                    <span class="hv-url">oshaani.com / agent-builder</span>
+                </div>
+                <div class="hv-body">
+                    <aside class="hv-side">
+                        <h4>Agent</h4>
+                        <ul>
+                            <li class="active"><i class="bi bi-cpu"></i> Model</li>
+                            <li><i class="bi bi-database"></i> Knowledge</li>
+                            <li><i class="bi bi-tools"></i> Tools</li>
+                            <li><i class="bi bi-plug"></i> MCP</li>
+                            <li><i class="bi bi-shield-check"></i> Permissions</li>
+                        </ul>
+                        <h4>Deploy</h4>
+                        <ul>
+                            <li><i class="bi bi-key"></i> API key</li>
+                            <li><i class="bi bi-people"></i> Share</li>
+                            <li><i class="bi bi-shop"></i> Marketplace</li>
+                        </ul>
+                    </aside>
+                    <div class="hv-main">
+                        <div class="hv-row"><div class="hv-bubble user">Summarize today's open support tickets and link to them.</div></div>
+                        <div class="hv-row">
+                            <div class="hv-bubble bot">
+                                Found 12 open tickets. 4 are P1 (latency), 5 are auth-related, 3 are billing.
+                                Top priority: <strong>#4821</strong> – API timeout on /v1/run. <a href="#" style="color:#4338ca;text-decoration:none;">Open ticket →</a>
+                            </div>
+                        </div>
+                        <div class="hv-row"><div class="hv-bubble bot"><span class="hv-typing"><i></i><i></i><i></i></span></div></div>
+                        <div class="hv-input">
+                            <i class="bi bi-chat-dots"></i>
+                            <span>Ask your agent anything…</span>
+                            <span style="margin-left:auto;color:#cbd5e1;">⌘ ↵</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hv-floats"><i class="bi bi-check-circle-fill ok"></i> Grounded · 12 sources</div>
+                <div class="hv-floats b"><i class="bi bi-lightning-charge-fill" style="color:#f59e0b;"></i> Latency 312 ms</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Logos -->
+    <div class="logos">
+        <div class="container">
+            <div class="logos-label">Powering teams across support, sales, ops &amp; product</div>
+            <div class="logos-row" aria-hidden="true">
+                <span class="l-item"><i class="bi bi-amazon"></i> Bedrock</span>
+                <span class="l-item"><i class="bi bi-cpu"></i> Ollama</span>
+                <span class="l-item"><i class="bi bi-plug"></i> MCP</span>
+                <span class="l-item"><i class="bi bi-slack"></i> Slack</span>
+                <span class="l-item"><i class="bi bi-google"></i> Workspace</span>
+                <span class="l-item"><i class="bi bi-github"></i> GitHub</span>
+                <span class="l-item"><i class="bi bi-database"></i> Postgres</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use cases -->
+    <section class="usecases" aria-labelledby="uc-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Use cases</span>
+                <h2 id="uc-heading">Real agents shipping real outcomes</h2>
+                <p>From customer-facing copilots to internal automations—launch in hours, not quarters.</p>
+            </div>
+            <div class="uc-grid">
+                <article class="uc-card">
+                    <span class="uc-icon a"><i class="bi bi-headset"></i></span>
+                    <h3>Customer support</h3>
+                    <p>Resolve tier-1 tickets 24/7, grounded in your help docs and connected to Zendesk, Intercom, or Slack.</p>
+                </article>
+                <article class="uc-card">
+                    <span class="uc-icon b"><i class="bi bi-graph-up-arrow"></i></span>
+                    <h3>Sales &amp; SDR</h3>
+                    <p>Qualify leads, book meetings, and personalize outreach using your CRM and product knowledge.</p>
+                </article>
+                <article class="uc-card">
+                    <span class="uc-icon c"><i class="bi bi-buildings"></i></span>
+                    <h3>Internal ops</h3>
+                    <p>Onboarding, HR, IT and finance copilots that act on your tools via MCP—safely and auditable.</p>
+                </article>
+                <article class="uc-card">
+                    <span class="uc-icon d"><i class="bi bi-lightbulb"></i></span>
+                    <h3>Product &amp; embedded</h3>
+                    <p>Ship in-app AI features over an API key in days—no model plumbing, no infra babysitting.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="howto" id="how" aria-labelledby="how-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">How it works</span>
+                <h2 id="how-heading">From idea to live agent in 4 steps</h2>
+                <p>No chains. No glue code. Visual builder + production APIs in one workspace.</p>
+            </div>
+            <div class="ht-grid">
+                <div class="ht-step">
+                    <div class="ht-num">1</div>
+                    <h3>Pick a model</h3>
+                    <p>Choose from 100+ models on Bedrock or self-hosted Ollama. Switch any time without rewriting prompts.</p>
+                </div>
+                <div class="ht-step">
+                    <div class="ht-num">2</div>
+                    <h3>Add knowledge</h3>
+                    <p>Upload PDFs, docs, sitemaps and data—your agent answers from your facts, not the open web.</p>
+                </div>
+                <div class="ht-step">
+                    <div class="ht-num">3</div>
+                    <h3>Connect tools &amp; MCP</h3>
+                    <p>Wire in custom tools, REST APIs, and MCP servers so agents can act—not just answer.</p>
+                </div>
+                <div class="ht-step">
+                    <div class="ht-num">4</div>
+                    <h3>Deploy &amp; share</h3>
+                    <p>Test in the built-in chat, ship via API key or embed, and publish to the community marketplace.</p>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top: 36px;">
+                <a href="{% url 'login' %}" class="btn btn-primary">Build my first agent <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features" aria-labelledby="feat-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Platform</span>
+                <h2 id="feat-heading">Everything you need to ship production agents</h2>
+                <p>Stop stitching together a dozen services. Oshaani gives builders and teams one cohesive stack.</p>
+            </div>
+            <div class="feat-grid">
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-cpu"></i></span>
+                    <h3>Multi-model AI</h3>
+                    <p>Bedrock Claude, Llama, Titan, Mistral, plus self-hosted Ollama models. One workspace, many models.</p>
+                    <ul><li>Per-agent model selection</li><li>Streaming &amp; tool calls</li><li>Cost &amp; latency analytics</li></ul>
+                </div>
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-database-check"></i></span>
+                    <h3>RAG &amp; knowledge</h3>
+                    <p>Bring your docs, sites, and data. Built-in vector search keeps answers grounded and citable.</p>
+                    <ul><li>PDFs, web, structured data</li><li>Auto-refresh sources</li><li>Citations on every answer</li></ul>
+                </div>
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-tools"></i></span>
+                    <h3>Custom tools</h3>
+                    <p>Give agents real capabilities. Define tools as JSON or call your existing REST APIs securely.</p>
+                    <ul><li>OpenAPI import</li><li>Per-agent tool toggles</li><li>Audit logs of every call</li></ul>
+                </div>
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-plug"></i></span>
+                    <h3>MCP server support</h3>
+                    <p>Connect Oshaani agents to Cursor, Claude Desktop, and any MCP-compatible client out of the box.</p>
+                    <ul><li>Hosted or self-hosted</li><li>Tool &amp; resource exposure</li><li>Standardized protocol</li></ul>
+                </div>
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-people"></i></span>
+                    <h3>Sharing &amp; analytics</h3>
+                    <p>Invite teammates, share agents with customers, and track usage, quality, and cost in one view.</p>
+                    <ul><li>Role-based access</li><li>Per-agent dashboards</li><li>Conversation insights</li></ul>
+                </div>
+                <div class="feat">
+                    <span class="feat-icon"><i class="bi bi-shop"></i></span>
+                    <h3>Marketplace &amp; sharing</h3>
+                    <p>Publish public agents to the community marketplace or keep things private behind your domain.</p>
+                    <ul><li>Public listings &amp; likes</li><li>API key embed</li><li>Team sharing</li></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats band -->
+    <section class="stats-band" aria-labelledby="stats-heading">
+        <div class="container">
+            <h2 id="stats-heading" style="text-align:center; font-family:'Sora',sans-serif; margin:0 0 28px; font-size: 1.4rem; color:#fff;">Built for builders. Trusted by teams.</h2>
+            <div class="stats-grid">
+                <div><div class="stat-num" data-count="100" data-suffix="+">100+</div><div class="stat-label">AI models supported</div></div>
+                <div><div class="stat-num" data-count="15" data-suffix=" min">15 min</div><div class="stat-label">Avg time to first agent</div></div>
+                <div><div class="stat-num" data-count="99.9" data-suffix="%">99.9%</div><div class="stat-label">Uptime target</div></div>
+                <div><div class="stat-num" data-count="100" data-suffix="%">100</div><div class="stat-label">Open source</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials" aria-labelledby="t-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Loved by builders</span>
+                <h2 id="t-heading">What teams say about Oshaani</h2>
+                <p>From solo founders to platform teams, Oshaani is how modern teams ship AI agents.</p>
+            </div>
+            <div class="t-grid">
+                <article class="t-card">
+                    <div class="t-stars">★★★★★</div>
+                    <p class="t-quote">“We replaced a half-built RAG pipeline and a third-party chat widget with one Oshaani agent. Our deflection rate jumped 38% in three weeks.”</p>
+                    <div class="t-author">
+                        <span class="t-avatar">PT</span>
+                        <div class="t-meta"><strong>Priya T.</strong><span>Head of Support · B2B SaaS</span></div>
+                    </div>
+                </article>
+                <article class="t-card">
+                    <div class="t-stars">★★★★★</div>
+                    <p class="t-quote">“The MCP support was the unlock. Our agents now act inside Jira and GitHub safely. We shipped what would have been a 6-month build in a weekend.”</p>
+                    <div class="t-author">
+                        <span class="t-avatar">DR</span>
+                        <div class="t-meta"><strong>Daniel R.</strong><span>Staff Engineer · Fintech</span></div>
+                    </div>
+                </article>
+                <article class="t-card">
+                    <div class="t-stars">★★★★★</div>
+                    <p class="t-quote">“Listing on the marketplace let us share our agent with the community in minutes. Setup was literally one form.”</p>
+                    <div class="t-author">
+                        <span class="t-avatar">AK</span>
+                        <div class="t-meta"><strong>Aiko K.</strong><span>Indie founder · Productivity</span></div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Open source -->
+    <section class="pricing" aria-labelledby="oss-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Open Source</span>
+                <h2 id="oss-heading">Free to use for non-commercial purposes.</h2>
+                <p>Self-host Oshaani on your own infrastructure. Use, modify, and share under the non-commercial open source license.</p>
+            </div>
+            <div class="price-grid">
+                <div class="price-card popular">
+                    <span class="price-badge">License</span>
+                    <h3 class="price-name">Non-Commercial</h3>
+                    <div class="price-amt"><span class="num">Free</span><span class="per">/ for personal &amp; research use</span></div>
+                    <p class="tag">Full platform features for education, research, and personal projects.</p>
+                    <ul>
+                        <li><i class="bi bi-check-circle-fill"></i>Bedrock &amp; Ollama models</li>
+                        <li><i class="bi bi-check-circle-fill"></i>RAG, tools, MCP</li>
+                        <li><i class="bi bi-check-circle-fill"></i>API keys &amp; sharing</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Marketplace publishing</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Self-hosted deployment</li>
+                    </ul>
+                    <a href="{% url 'license' %}" class="btn btn-grad price-cta">Read license</a>
+                </div>
+                <div class="price-card">
+                    <h3 class="price-name">Get Started</h3>
+                    <div class="price-amt"><span class="num">Clone</span><span class="per">/ and run locally</span></div>
+                    <p class="tag">Deploy on your own servers with your own model credentials.</p>
+                    <ul>
+                        <li><i class="bi bi-check-circle-fill"></i>Django + MySQL + Redis</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Bring your own AWS keys</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Optional Ollama backend</li>
+                        <li><i class="bi bi-check-circle-fill"></i>No payment setup required</li>
+                    </ul>
+                    <a href="{% url 'login' %}" class="btn btn-ghost price-cta">Sign in to build</a>
+                </div>
+                <div class="price-card">
+                    <h3 class="price-name">Commercial Use</h3>
+                    <div class="price-amt"><span class="num">Contact</span></div>
+                    <p class="tag">Commercial deployments require a separate license from the maintainers.</p>
+                    <ul>
+                        <li><i class="bi bi-check-circle-fill"></i>SaaS offerings</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Paid hosted services</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Revenue-generating products</li>
+                    </ul>
+                    <button type="button" class="btn btn-ghost price-cta book-demo-trigger">Contact maintainers</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video -->
+    <section class="video-section" id="video" aria-labelledby="video-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Tour</span>
+                <h2 id="video-heading">See Oshaani in 90 seconds</h2>
+                <p>Watch how to spin up a knowledge-grounded agent and ship it as an API key.</p>
+            </div>
+            <div class="video-wrap">
+                <iframe id="tutorial-video"
+                    src="https://www.youtube.com/embed/J6G7neOlAms?si=TzOBx90nYMRvzXgr"
+                    title="Oshaani product tour"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+            </div>
+            <div style="text-align:center; margin-top: 26px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'login' %}" class="btn btn-grad">Start creating now <i class="bi bi-arrow-right"></i></a>
+                <a href="{% url 'login' %}?next={% url 'agent_create' %}" class="btn btn-ghost">Sign in to build</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products / Ecosystem -->
+    <section class="products" aria-labelledby="prod-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">Ecosystem</span>
+                <h2 id="prod-heading">More than a builder—an AI agent ecosystem</h2>
+                <p>Discover everything in the Oshaani family of products and integrations.</p>
+            </div>
+            <div class="p-grid">
+                <article class="p-card">
+                    <span class="p-tag">New</span>
+                    <h3>Oshaani Social</h3>
+                    <span class="p-url">social.oshaani.com</span>
+                    <p>Discover, share and collaborate around AI agents. Build a community around your creations.</p>
+                    <a href="https://social.oshaani.com" target="_blank" rel="noopener noreferrer" class="btn-link">Visit Social <i class="bi bi-arrow-up-right"></i></a>
+                </article>
+                <article class="p-card">
+                    <span class="p-tag">Platform</span>
+                    <h3>AI Agents Platform</h3>
+                    <span class="p-url">oshaani.com</span>
+                    <p>The flagship workspace—models, RAG, tools, MCP, sharing, analytics, and marketplace.</p>
+                    <a href="{% url 'login' %}" class="btn-link">Get started <i class="bi bi-arrow-right"></i></a>
+                </article>
+                <article class="p-card">
+                    <span class="p-tag">Developers</span>
+                    <h3>API &amp; SDKs</h3>
+                    <span class="p-url">REST · streaming · webhooks</span>
+                    <p>Embed agents into your apps with simple API keys. SDKs and OpenAPI specs included.</p>
+                    <a href="https://oshaani.com/sop/" class="btn-link">View API docs <i class="bi bi-arrow-right"></i></a>
+                </article>
+                <article class="p-card">
+                    <span class="p-tag">MCP</span>
+                    <h3>MCP Server</h3>
+                    <span class="p-url">mcp.oshaani.com</span>
+                    <p>Connect Oshaani agents to Cursor, Claude Desktop, and any MCP-compatible client.</p>
+                    <a href="https://mcp.oshaani.com/" target="_blank" rel="noopener noreferrer" class="btn-link">Visit MCP <i class="bi bi-arrow-up-right"></i></a>
+                </article>
+                <article class="p-card">
+                    <span class="p-tag">Open source</span>
+                    <h3>License</h3>
+                    <span class="p-url">Non-commercial use</span>
+                    <p>Use, modify, and distribute Oshaani for personal, educational, and research purposes.</p>
+                    <a href="{% url 'license' %}" class="btn-link">Read license <i class="bi bi-arrow-right"></i></a>
+                </article>
+                <article class="p-card">
+                    <span class="p-tag">Community</span>
+                    <h3>Google AI Worker</h3>
+                    <span class="p-url">github.com/dataspider99</span>
+                    <p>Workspace-grounded AI worker that integrates with Oshaani agents and stores data in Drive/Tasks.</p>
+                    <a href="https://github.com/dataspider99/Google-AI-Worker" target="_blank" rel="noopener noreferrer" class="btn-link">View on GitHub <i class="bi bi-github"></i></a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" aria-labelledby="faq-heading">
+        <div class="container">
+            <div class="section-head">
+                <span class="eyebrow">FAQ</span>
+                <h2 id="faq-heading">Questions, answered</h2>
+                <p>Everything sales and engineering teams ask before saying yes.</p>
+            </div>
+            <div class="faq-list">
+                <details class="faq-item" open>
+                    <summary class="faq-q">How fast can I launch a real agent? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">Most teams ship a working agent in under 15 minutes. Pick a model, attach a knowledge base, optionally add tools or MCP, then test in the built-in chat or call it via API.</div>
+                </details>
+                <details class="faq-item">
+                    <summary class="faq-q">Which models are supported? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">Amazon Bedrock (Claude, Llama, Titan, Mistral and more) and self-hosted Ollama models. You can switch the model on any agent without rewriting prompts.</div>
+                </details>
+                <details class="faq-item">
+                    <summary class="faq-q">How is my data handled and secured? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">Your knowledge bases are isolated per workspace, traffic is encrypted in transit, API keys are scoped per agent, and you control sharing and access. Enterprise plans add SSO and audit logs.</div>
+                </details>
+                <details class="faq-item">
+                    <summary class="faq-q">Can I use Oshaani commercially? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">The open source license permits non-commercial use only. Commercial use requires a separate license from the project maintainers.</div>
+                </details>
+                <details class="faq-item">
+                    <summary class="faq-q">Do you support custom tools and MCP? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">Yes. Define tools as JSON, import OpenAPI specs, or connect any MCP server—agents can act on real systems with full audit trails.</div>
+                </details>
+                <details class="faq-item">
+                    <summary class="faq-q">Is it free to use? <i class="bi bi-chevron-down"></i></summary>
+                    <div class="faq-a">Yes, for non-commercial purposes. Clone the repository, self-host, and use the full platform without subscription or payment setup.</div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta" aria-labelledby="cta-final">
+        <div class="container">
+            <h2 id="cta-final" class="display-font">Ship the agent your customers will actually use.</h2>
+            <p>Join the builders shipping production AI on Oshaani. Open source and free for non-commercial use.</p>
+            <div class="actions">
+                <a href="{% url 'login' %}" class="btn btn-grad">Start free <i class="bi bi-arrow-right"></i></a>
+                <button type="button" class="btn btn-ghost book-demo-trigger"><i class="bi bi-calendar-check"></i> Book a demo</button>
+                <a href="{% url 'public_agents_list' %}" class="btn-link" style="color:#cbd5e1;">Browse marketplace <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site" role="contentinfo">
+        <div class="container">
+            <div class="foot-grid">
+                <div>
+                    <a href="{% url 'home' %}" class="foot-brand"><span class="brand-mark">O</span><span>Oshaani</span></a>
+                    <p class="foot-tag">Open-source workspace to build, ship, and share production AI agents.</p>
+                    {% if social_links %}
+                    <div class="foot-social">
+                        {% for link in social_links %}
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.name }}" title="{{ link.name }}">
+                            <i class="bi {{ link.icon_class }}"></i>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="foot-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="{% url 'license' %}">License</a>
+                    <a href="{% url 'public_agents_list' %}">Marketplace</a>
+                    <a href="https://oshaani.com/sop/">API docs</a>
+                </div>
+                <div class="foot-col">
+                    <h4>Resources</h4>
+                    <a href="https://oshaani.com/blog/">Blog</a>
+                    <a href="{% url 'license' %}">Open source license</a>
+                    <a href="https://mcp.oshaani.com/" target="_blank" rel="noopener noreferrer">MCP server</a>
+                    <a href="https://social.oshaani.com" target="_blank" rel="noopener noreferrer">Oshaani Social</a>
+                </div>
+                <div class="foot-col">
+                    <h4>Company</h4>
+                    <a href="#" class="book-demo-trigger">Contact sales</a>
+                    <a href="{% url 'privacy_policy' %}">Privacy</a>
+                    <a href="{% url 'terms_conditions' %}">Terms</a>
+                    <a href="{% url 'login' %}">Log in</a>
+                </div>
+            </div>
+            <div class="foot-bottom">
+                <span>© 2026 Oshaani Contributors. Licensed for non-commercial use.</span>
+                <span>
+                    <a href="{% url 'privacy_policy' %}">Privacy</a>
+                    <a href="{% url 'terms_conditions' %}">Terms</a>
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Demo modal -->
+    <div id="contact-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal">
+            <button type="button" class="modal-close" id="close-modal" aria-label="Close">×</button>
+            <h2 id="modal-title">Book a demo</h2>
+            <p class="modal-sub">Tell us a bit about your use case—we'll reach out to schedule a personalized walkthrough.</p>
+
+            <div id="form-success" class="form-success" style="display: none;">
+                <div class="ok-icon">✓</div>
+                <h3 style="margin: 0 0 6px;">Thanks!</h3>
+                <p style="margin: 0; color: var(--ink-soft);">Your demo request has been submitted. We'll email you shortly.</p>
+            </div>
+
+            <form id="demo-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Work email *</label>
+                        <input type="email" id="email" name="email" required placeholder="you@company.com">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="company">Company</label>
+                        <input type="text" id="company" name="company" placeholder="Company name">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="demoDate">Preferred date</label>
+                        <input type="date" id="demoDate" name="demoDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="demoTime">Preferred time</label>
+                        <select id="demoTime" name="demoTime">
+                            <option value="">Select a time</option>
+                            <option value="09:00">9:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="14:00">2:00 PM</option>
+                            <option value="15:00">3:00 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="17:00">5:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="message">What would you like to see? *</label>
+                    <textarea id="message" name="message" required rows="3" placeholder="Use case, models you're considering, integrations…"></textarea>
+                </div>
+                <div id="form-error" class="form-error"><span id="error-message"></span></div>
+                <button type="submit" class="submit-btn">Request demo</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var navToggle = document.querySelector('.nav-toggle');
+        var navLinks = document.getElementById('nav-links');
+        if (navToggle && navLinks) {
+            navToggle.addEventListener('click', function () {
+                var open = navLinks.classList.toggle('open');
+                navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            navLinks.addEventListener('click', function (e) {
+                if (e.target.tagName === 'A') {
+                    navLinks.classList.remove('open');
+                    navToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        var contactModal = document.getElementById('contact-modal');
+        var closeBtn = document.getElementById('close-modal');
+        var demoForm = document.getElementById('demo-form');
+        var successEl = document.getElementById('form-success');
+        var errorEl = document.getElementById('form-error');
+        var errorMsg = document.getElementById('error-message');
+
+        function openModal() { if (!contactModal) return; contactModal.classList.add('show'); document.body.style.overflow = 'hidden'; }
+        function closeModal() {
+            if (!contactModal) return;
+            contactModal.classList.remove('show'); document.body.style.overflow = '';
+            setTimeout(function () {
+                if (demoForm) { demoForm.reset(); demoForm.style.display = ''; }
+                if (successEl) successEl.style.display = 'none';
+                if (errorEl) errorEl.style.display = 'none';
+            }, 250);
+        }
+
+        document.querySelectorAll('#book-demo-btn, .book-demo-trigger').forEach(function (el) {
+            el.addEventListener('click', function (e) { e.preventDefault(); openModal(); });
+        });
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (contactModal) contactModal.addEventListener('click', function (e) { if (e.target === contactModal) closeModal(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && contactModal && contactModal.classList.contains('show')) closeModal();
+        });
+
+        var dateInput = document.getElementById('demoDate');
+        if (dateInput) dateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
+
+        function getCSRFToken() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) return meta.getAttribute('content');
+            var name = 'csrftoken';
+            if (document.cookie) {
+                var parts = document.cookie.split(';');
+                for (var i = 0; i < parts.length; i++) {
+                    var c = parts[i].trim();
+                    if (c.substring(0, name.length + 1) === name + '=') return decodeURIComponent(c.substring(name.length + 1));
+                }
+            }
+            return '';
+        }
+
+        if (demoForm) {
+            demoForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var btn = demoForm.querySelector('.submit-btn');
+                var fd = new FormData(demoForm);
+                var data = {
+                    form_type: 'demo',
+                    name: fd.get('name'), email: fd.get('email'),
+                    company: fd.get('company') || '', phone: fd.get('phone') || '',
+                    message: fd.get('message'), demoDate: fd.get('demoDate') || '', demoTime: fd.get('demoTime') || ''
+                };
+                if (errorEl) errorEl.style.display = 'none';
+                if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+                try {
+                    var res = await fetch('/api/contact/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                        body: JSON.stringify(data)
+                    });
+                    var result = await res.json();
+                    if (result && result.success) {
+                        if (successEl) successEl.style.display = 'block';
+                        demoForm.style.display = 'none';
+                        setTimeout(closeModal, 2000);
+                    } else {
+                        if (errorEl && errorMsg) { errorEl.style.display = 'block'; errorMsg.textContent = (result && result.error) || 'Failed to submit. Please try again.'; }
+                        if (btn) { btn.disabled = false; btn.textContent = 'Request demo'; }
+                    }
+                } catch (err) {
+                    if (errorEl && errorMsg) { errorEl.style.display = 'block'; errorMsg.textContent = 'Network error. Please try again later.'; }
+                    if (btn) { btn.disabled = false; btn.textContent = 'Request demo'; }
+                }
+            });
+        }
+
+        var seenStats = false;
+        var statsBand = document.querySelector('.stats-band');
+        function animateStats() {
+            if (seenStats) return;
+            var rect = statsBand && statsBand.getBoundingClientRect();
+            if (!rect || rect.top > window.innerHeight - 80) return;
+            seenStats = true;
+            document.querySelectorAll('.stat-num[data-count]').forEach(function (el) {
+                var target = parseFloat(el.getAttribute('data-count'));
+                var suffix = el.getAttribute('data-suffix') || '';
+                var start = 0; var dur = 1200; var t0 = null;
+                var isFloat = !Number.isInteger(target);
+                function tick(t) {
+                    if (!t0) t0 = t;
+                    var p = Math.min((t - t0) / dur, 1);
+                    var v = start + (target - start) * (1 - Math.pow(1 - p, 3));
+                    el.textContent = (isFloat ? v.toFixed(1) : Math.floor(v)) + suffix;
+                    if (p < 1) requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
+            });
+        }
+        window.addEventListener('scroll', animateStats, { passive: true });
+        animateStats();
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Agent - AI Agents Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h1><i class="bi bi-plus-circle"></i> Create New Agent</h1>
+        
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            
+            <div class="mb-3" data-tour="agent-name-field">
+                <label for="name" class="form-label">Agent Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <div class="form-text">Choose a descriptive name for your agent</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                <div class="form-text">Describe what this agent will do</div>
+            </div>
+            
+            <div class="mb-3" data-tour="agent-model-field">
+                <label for="model_id" class="form-label">AI Model *</label>
+                <select class="form-select" id="model_id" name="model_id" required onchange="showModelUseCases(this); checkInferenceProfileRequired(this)">
+                    <option value="">-- Select a model --</option>
+                    {% for model in available_models %}
+                    <option value="{{ model.id }}" 
+                            data-use-cases="{{ model.use_cases_json|escape }}"
+                            data-description="{{ model.description|escape }}"
+                            data-requires-inference-profile="{{ model.metadata.requires_inference_profile|default:False }}">
+                        {{ model.model_name }} ({{ model.get_provider_display }})
+                        {% if model.metadata.requires_inference_profile %}
+                         - Requires Inference Profile
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Select the AI model to use for this agent</div>
+                <small class="text-muted">Models are synced on-demand. <a href="{% url 'models-sync' %}">Sync now</a> to update available models</small>
+                
+                <!-- Inference Profile Notice -->
+                <div id="inference-profile-notice" class="alert alert-info mt-2" style="display: none;">
+                    <strong>ℹ️ Inference Profile Required:</strong>
+                    <p class="mb-2">This model requires an inference profile to be created before use.</p>
+                    <a href="/api/inference-profiles/" class="btn btn-sm btn-primary" target="_blank">
+                        Manage Inference Profiles
+                    </a>
+                </div>
+                
+                <!-- Inference Profile Selection -->
+                <div id="inference-profile-selection" class="mt-2" style="display: none;">
+                    <label for="inference_profile_id" class="form-label">Inference Profile *</label>
+                    <select class="form-select" id="inference_profile_id" name="inference_profile_id">
+                        <option value="">-- Select an inference profile --</option>
+                        <!-- Will be populated via JavaScript -->
+                    </select>
+                    <div class="form-text">Select an inference profile for this model</div>
+                </div>
+                
+                <!-- Use cases display -->
+                <div id="model-use-cases" class="mt-2" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Best Use Cases:</strong>
+                        <ul id="use-cases-list" class="mb-0 mt-2"></ul>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+            function checkInferenceProfileRequired(selectElement) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const requiresProfile = selectedOption.getAttribute('data-requires-inference-profile') === 'true';
+                const modelId = selectElement.value;
+                
+                const noticeDiv = document.getElementById('inference-profile-notice');
+                const selectionDiv = document.getElementById('inference-profile-selection');
+                const profileSelect = document.getElementById('inference_profile_id');
+                
+                if (requiresProfile && modelId) {
+                    noticeDiv.style.display = 'block';
+                    selectionDiv.style.display = 'block';
+                    
+                    // Load inference profiles for this model
+                    loadInferenceProfiles(modelId);
+                } else {
+                    noticeDiv.style.display = 'none';
+                    selectionDiv.style.display = 'none';
+                    if (profileSelect) {
+                        profileSelect.innerHTML = '<option value="">-- Select an inference profile --</option>';
+                    }
+                }
+            }
+            
+            function loadInferenceProfiles(modelId) {
+                const profileSelect = document.getElementById('inference_profile_id');
+                if (!profileSelect) return;
+                
+                // Fetch inference profiles for this model
+                fetch(`/api/inference-profiles/?model_id=${modelId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        profileSelect.innerHTML = '<option value="">-- Select an inference profile --</option>';
+                        
+                        if (data.length === 0) {
+                            profileSelect.innerHTML += '<option value="" disabled>No inference profiles found. Create one first.</option>';
+                        } else {
+                            data.forEach(profile => {
+                                const option = document.createElement('option');
+                                option.value = profile.id;
+                                option.textContent = `${profile.profile_name} (${profile.status})`;
+                                if (profile.status === 'active') {
+                                    option.selected = true; // Auto-select active profile
+                                }
+                                profileSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading inference profiles:', error);
+                        profileSelect.innerHTML = '<option value="" disabled>Error loading inference profiles</option>';
+                    });
+            }
+            
+            function showModelUseCases(selectElement) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const useCasesDiv = document.getElementById('model-use-cases');
+                const useCasesList = document.getElementById('use-cases-list');
+                
+                if (selectedOption.value && selectedOption.dataset.useCases) {
+                    const useCasesStr = selectedOption.dataset.useCases;
+                    // Handle both comma-separated and JSON array formats
+                    let useCases = [];
+                    try {
+                        // Try parsing as JSON array first
+                        useCases = JSON.parse(useCasesStr);
+                    } catch (e) {
+                        // If not JSON, split by comma
+                        useCases = useCasesStr.split(',').map(uc => uc.trim());
+                    }
+                    
+                    useCasesList.innerHTML = '';
+                    if (Array.isArray(useCases) && useCases.length > 0) {
+                        useCases.forEach(useCase => {
+                            if (useCase && useCase.trim()) {
+                                const li = document.createElement('li');
+                                li.textContent = useCase.trim();
+                                useCasesList.appendChild(li);
+                            }
+                        });
+                        useCasesDiv.style.display = 'block';
+                    } else {
+                        useCasesDiv.style.display = 'none';
+                    }
+                } else {
+                    useCasesDiv.style.display = 'none';
+                }
+            }
+            </script>
+            
+            <!-- Agent Settings Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-gear"></i> Agent Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3" data-tour="agent-instruction-field">
+                        <label for="instruction" class="form-label">System Instructions / Prompt *</label>
+                        <textarea class="form-control" id="instruction" name="instruction" rows="6" required 
+                                  placeholder="Enter instructions for the agent on how it should behave, what it should do, and any specific guidelines..."></textarea>
+                        <div class="form-text">Provide clear instructions for the agent on how it should behave and what tasks it should perform</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="send_introduction" name="send_introduction" checked>
+                            <label class="form-check-label" for="send_introduction">
+                                <strong>Send Self Introduction</strong>
+                            </label>
+                            <div class="form-text">When enabled, the agent will automatically send its introduction when a new chat conversation starts</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="memory_type" class="form-label">Memory Type</label>
+                            <select class="form-select" id="memory_type" name="memory_type">
+                                <option value="buffer" selected>Buffer (Default)</option>
+                                <option value="summary">Summary</option>
+                                <option value="summary_buffer">Summary + Buffer</option>
+                            </select>
+                            <div class="form-text">How the agent remembers conversation history</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="memory_max_tokens" class="form-label">Memory Max Tokens</label>
+                            <input type="number" class="form-control" id="memory_max_tokens" name="memory_max_tokens" 
+                                   placeholder="Leave empty for default">
+                            <div class="form-text">Maximum tokens to keep in conversation memory</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="use_rag" name="use_rag">
+                            <label class="form-check-label" for="use_rag">
+                                <strong>Use RAG (Retrieval Augmented Generation)</strong>
+                            </label>
+                            <div class="form-text">Enable RAG to use training data for context-aware responses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'agents_list' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" data-tour="create-agent-submit">Create Agent</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

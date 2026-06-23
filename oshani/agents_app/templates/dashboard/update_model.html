@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Model - {{ agent.name }} - AI Agents Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-pencil"></i> Update LLM Model for: {{ agent.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Agent
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-cpu"></i> Select New LLM Model</h5>
+            </div>
+            <div class="card-body">
+                {% if agent.model %}
+                <div class="alert alert-info">
+                    <strong>Current Model:</strong> {{ agent.model.model_name }} 
+                    <span class="badge bg-info">{{ agent.model.get_provider_display }}</span>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <strong>No Model Configured:</strong> Please select a model for this agent.
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="model_id" class="form-label">Select LLM Model <span class="text-danger">*</span></label>
+                        <select class="form-select" id="model_id" name="model_id" required>
+                            <option value="">-- Select a model --</option>
+                            {% for model in available_models %}
+                            <option value="{{ model.id }}" 
+                                    data-provider="{{ model.provider }}"
+                                    data-description="{{ model.description|default:'' }}"
+                                    data-use-cases="{{ model.use_cases_json|default:'[]' }}"
+                                    {% if agent.model and agent.model.id == model.id %}selected{% endif %}>
+                                {{ model.model_name }} ({{ model.get_provider_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            Choose the LLM model that best fits your agent's use case.
+                        </small>
+                    </div>
+                    
+                    <!-- Model Information Display -->
+                    <div id="model-info" class="card mb-3" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title">Model Information</h6>
+                            <p id="model-description" class="text-muted small"></p>
+                            
+                            <div id="model-use-cases" style="display: none;">
+                                <strong class="small">Best Use Cases:</strong>
+                                <ul id="use-cases-list" class="list-unstyled small mb-0 mt-1"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Model
+                        </button>
+                        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Information</h5>
+            </div>
+            <div class="card-body">
+                <p class="small">
+                    <strong>Note:</strong> Updating the model will change the LLM used by this agent for all future interactions.
+                </p>
+                <p class="small text-muted">
+                    The agent's instructions and training data will remain the same, but responses may vary based on the selected model's capabilities.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const modelSelect = document.getElementById('model_id');
+    const modelInfo = document.getElementById('model-info');
+    const modelDescription = document.getElementById('model-description');
+    const modelUseCases = document.getElementById('model-use-cases');
+    const useCasesList = document.getElementById('use-cases-list');
+    
+    function updateModelInfo() {
+        const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+        
+        if (!selectedOption.value) {
+            modelInfo.style.display = 'none';
+            return;
+        }
+        
+        const description = selectedOption.dataset.description;
+        const useCasesJson = selectedOption.dataset.useCases || '[]';
+        let useCases = [];
+        
+        try {
+            useCases = JSON.parse(useCasesJson);
+        } catch (e) {
+            useCases = [];
+        }
+        
+        // Update description
+        if (description) {
+            modelDescription.textContent = description;
+            modelDescription.style.display = 'block';
+        } else {
+            modelDescription.style.display = 'none';
+        }
+        
+        // Update use cases
+        if (useCases && useCases.length > 0) {
+            useCasesList.innerHTML = '';
+            useCases.forEach(useCase => {
+                const li = document.createElement('li');
+                li.className = 'text-muted';
+                li.textContent = '• ' + useCase;
+                useCasesList.appendChild(li);
+            });
+            modelUseCases.style.display = 'block';
+        } else {
+            modelUseCases.style.display = 'none';
+        }
+        
+        modelInfo.style.display = 'block';
+    }
+    
+    // Show info for initially selected model
+    updateModelInfo();
+    
+    // Update info when selection changes
+    modelSelect.addEventListener('change', updateModelInfo);
+})();
+</script>
+{% endblock %}
+

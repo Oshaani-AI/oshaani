@@ -1,0 +1,853 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}My Agents — Oshaani Dashboard{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --bg: #f6f7fb;
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --ink: #0f172a;
+        --ink-soft: #334155;
+        --muted: #64748b;
+        --border: #e6e8ee;
+        --border-strong: #cbd5e1;
+        --brand-1: #6366f1;
+        --brand-2: #8b5cf6;
+        --brand-3: #06b6d4;
+        --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+        --ok: #059669;
+        --warn: #d97706;
+        --danger: #dc2626;
+        --info: #2563eb;
+    }
+
+    body {
+        font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background:
+            radial-gradient(900px 420px at 110% -10%, rgba(139, 92, 246, 0.06), transparent 60%),
+            radial-gradient(800px 400px at -10% 0%, rgba(6, 182, 212, 0.06), transparent 60%),
+            var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+    }
+    .display-font { font-family: 'Sora', 'Inter', sans-serif; letter-spacing: -0.02em; }
+
+    .container-fluid { position: relative; z-index: 1; }
+    .navbar { z-index: 1030 !important; }
+    .navbar .dropdown-menu { z-index: 1055 !important; }
+
+    /* Welcome / hero banner */
+    .dash-hero {
+        background:
+            radial-gradient(700px 300px at 0% 0%, rgba(99,102,241,0.18), transparent 60%),
+            radial-gradient(600px 280px at 100% 100%, rgba(6,182,212,0.16), transparent 60%),
+            linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%);
+        color: #fff;
+        border-radius: 22px;
+        padding: 28px 28px 24px;
+        margin-bottom: 22px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 18px 40px rgba(15,23,42,0.18);
+    }
+    .dash-hero::after {
+        content: ''; position: absolute; right: -60px; top: -60px;
+        width: 240px; height: 240px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%);
+        pointer-events: none;
+    }
+    .dash-hero .row-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; position: relative; }
+    .dash-hero .greet { display: flex; align-items: center; gap: 14px; }
+    .dash-hero .avatar {
+        width: 48px; height: 48px; border-radius: 14px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--grad); color: #fff;
+        font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.15rem;
+        box-shadow: 0 10px 20px rgba(99,102,241,0.35);
+    }
+    .dash-hero h1 {
+        font-family: 'Sora', sans-serif; font-weight: 700;
+        font-size: 1.6rem; line-height: 1.15; margin: 0; letter-spacing: -0.02em;
+    }
+    .dash-hero .sub { color: #cbd5e1; font-size: 0.95rem; margin: 4px 0 0; }
+    .dash-hero .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-grad {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--grad); color: #fff; border: 0; padding: 11px 18px;
+        border-radius: 12px; font-weight: 600; font-size: 0.92rem;
+        box-shadow: 0 12px 26px rgba(99,102,241,0.35);
+        text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 16px 32px rgba(99,102,241,0.45); color: #fff; text-decoration: none; }
+    .btn-ghost-light {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.18);
+        padding: 11px 16px; border-radius: 12px; font-weight: 600; font-size: 0.92rem;
+        text-decoration: none; transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-ghost-light:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.32); color: #fff; text-decoration: none; }
+
+    /* KPI strip */
+    .kpi-strip {
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px; margin-top: 22px;
+    }
+    .kpi {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 14px; padding: 14px 16px;
+        backdrop-filter: blur(8px);
+        position: relative;
+    }
+    .kpi .lbl { color: #cbd5e1; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .kpi .num {
+        font-family: 'Sora', sans-serif; font-weight: 800;
+        font-size: 1.6rem; line-height: 1.2; margin-top: 2px;
+        background: linear-gradient(135deg, #c7d2fe 0%, #a5f3fc 100%);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .kpi .meta { color: #94a3b8; font-size: 0.8rem; margin-top: 2px; }
+    .kpi i.bi { color: rgba(255,255,255,0.5); position: absolute; right: 14px; top: 14px; font-size: 1.1rem; }
+
+    /* Section heading */
+    .section-h {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; margin: 28px 0 14px;
+    }
+    .section-h h2 {
+        font-family: 'Sora', sans-serif; font-weight: 700;
+        font-size: 1.2rem; margin: 0; color: var(--ink);
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .section-h h2 i { color: var(--brand-1); }
+    .section-h .count {
+        font-size: 0.78rem; font-weight: 600;
+        color: var(--muted); background: var(--surface-2);
+        border: 1px solid var(--border); padding: 3px 9px; border-radius: 999px;
+    }
+
+    /* Toolbar (search + filter + sort) */
+    .toolbar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px; padding: 12px;
+        display: grid; grid-template-columns: 1fr auto auto; gap: 10px;
+        align-items: center;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    }
+    .toolbar .search {
+        display: flex; align-items: center; gap: 8px;
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 12px; padding: 0 12px; min-height: 42px;
+    }
+    .toolbar .search:focus-within { border-color: var(--brand-1); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); background: #fff; }
+    .toolbar .search i.bi-search { color: var(--muted); }
+    .toolbar .search input {
+        border: 0; outline: 0; background: transparent;
+        font: inherit; color: var(--ink); flex: 1; padding: 0 4px;
+    }
+    .toolbar .search .kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem; color: var(--muted);
+        background: #fff; border: 1px solid var(--border);
+        padding: 2px 6px; border-radius: 6px;
+    }
+    .toolbar .search .clear {
+        background: transparent; border: 0; color: var(--muted); padding: 4px;
+        cursor: pointer; border-radius: 6px;
+    }
+    .toolbar .search .clear:hover { color: var(--ink); background: #fff; }
+
+    .seg {
+        display: inline-flex; background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 12px; padding: 4px;
+    }
+    .seg a {
+        text-decoration: none; padding: 7px 14px; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; color: var(--ink-soft);
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .seg a:hover { background: #fff; color: var(--ink); }
+    .seg a.active {
+        background: #fff; color: var(--ink);
+        box-shadow: 0 1px 2px rgba(15,23,42,0.06), 0 4px 10px rgba(15,23,42,0.04);
+    }
+
+    .sort-select {
+        appearance: none; -webkit-appearance: none;
+        background: var(--surface-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='%2364748b'><path d='M3.204 5h9.592L8 10.481 3.204 5z'/></svg>") no-repeat right 12px center / 12px;
+        border: 1px solid var(--border); color: var(--ink);
+        padding: 9px 36px 9px 14px; border-radius: 12px;
+        font: inherit; font-weight: 500; font-size: 0.9rem; cursor: pointer;
+        min-width: 200px;
+    }
+    .sort-select:focus { outline: 0; border-color: var(--brand-1); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+
+    /* Result info */
+    .result-info {
+        background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af;
+        border-radius: 12px; padding: 10px 14px; margin-top: 14px; font-size: 0.92rem;
+    }
+    .result-info i { margin-right: 4px; }
+
+    /* Agent grid */
+    .agent-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 18px; margin-top: 18px;
+    }
+    .agent-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 18px; padding: 18px;
+        display: flex; flex-direction: column; gap: 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        position: relative; overflow: hidden;
+    }
+    .agent-card::before {
+        content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+        background: var(--grad); opacity: 0; transition: opacity 0.2s ease;
+    }
+    .agent-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(15,23,42,0.08); border-color: var(--border-strong); }
+    .agent-card:hover::before { opacity: 1; }
+    .agent-card.shared { border-color: rgba(6,182,212,0.4); background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%); }
+    .agent-card.shared::before { background: linear-gradient(90deg, #06b6d4, #0e7490); opacity: 1; }
+
+    .agent-head { display: flex; align-items: flex-start; gap: 12px; }
+    .agent-icon {
+        width: 40px; height: 40px; border-radius: 12px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--grad); color: #fff; font-size: 1.1rem; flex: 0 0 40px;
+        box-shadow: 0 8px 18px rgba(99,102,241,0.3);
+    }
+    .agent-card.shared .agent-icon { background: linear-gradient(135deg, #06b6d4 0%, #0e7490 100%); box-shadow: 0 8px 18px rgba(6,182,212,0.3); }
+    .agent-title {
+        font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.05rem;
+        margin: 0; color: var(--ink); line-height: 1.25;
+    }
+    .agent-title a { color: var(--ink); text-decoration: none; }
+    .agent-title a:hover { color: var(--brand-1); }
+    .agent-desc {
+        color: var(--ink-soft); font-size: 0.9rem; line-height: 1.5; margin: 0;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* Status pill */
+    .pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 3px 10px; border-radius: 999px;
+        font-size: 0.74rem; font-weight: 600; line-height: 1;
+        border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-soft);
+    }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; line-height: 1; }
+    .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-draft { background: #f1f5f9; color: #475569; }
+    .status-training { background: #ecfeff; color: #0e7490; }
+    .status-testing { background: #fffbeb; color: #b45309; }
+    .status-published { background: #ecfdf5; color: #047857; }
+    .visibility-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; }
+    .visibility-private { background: #f1f5f9; color: #475569; }
+    .visibility-shared { background: #ecfeff; color: #0e7490; }
+    .visibility-public { background: #fef3c7; color: #b45309; }
+
+    .meta-row {
+        display: flex; flex-wrap: wrap; gap: 8px 14px;
+        font-size: 0.82rem; color: var(--ink-soft);
+    }
+    .meta-row strong { color: var(--ink); font-weight: 600; }
+    .meta-row .meta-item { display: inline-flex; align-items: center; gap: 6px; }
+    .meta-row .meta-item i { color: var(--muted); }
+
+    /* Usage strip */
+    .usage-strip {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 12px; padding: 10px 12px;
+    }
+    .usage-strip h6 {
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--muted); margin: 0 0 6px; font-weight: 700;
+    }
+    .usage-strip .row-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 0.85rem;
+    }
+    .usage-strip .row-grid > div i { color: var(--muted); margin-right: 4px; }
+    .usage-strip .row-grid a { color: var(--brand-1); text-decoration: none; font-weight: 600; }
+    .usage-strip .row-grid a:hover { text-decoration: underline; }
+    .usage-strip .total {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);
+        font-size: 0.85rem;
+    }
+    .usage-strip .total strong { font-family: 'Sora', sans-serif; font-weight: 700; }
+
+    /* Action toolbar inside card */
+    .agent-actions {
+        display: flex; flex-wrap: wrap; gap: 6px;
+        margin-top: auto; padding-top: 4px;
+    }
+    .agent-actions .btn {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 11px; font-size: 0.82rem; font-weight: 600;
+        border-radius: 8px; line-height: 1; min-height: 32px;
+    }
+    .agent-actions .btn-primary, .agent-actions .btn-success { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .agent-actions .btn-primary:hover, .agent-actions .btn-success:hover { background: #1e293b; border-color: #1e293b; }
+    .agent-actions .btn-success { background: var(--ok); border-color: var(--ok); }
+    .agent-actions .btn-success:hover { background: #047857; border-color: #047857; }
+    .agent-actions .btn-outline-primary { color: var(--ink); border-color: var(--border); background: #fff; }
+    .agent-actions .btn-outline-primary:hover { color: var(--ink); border-color: var(--border-strong); background: var(--surface-2); }
+    .agent-actions .btn-outline-secondary { color: var(--ink-soft); border-color: var(--border); background: #fff; }
+    .agent-actions .btn-outline-secondary:hover { color: var(--ink); border-color: var(--border-strong); background: var(--surface-2); }
+    .agent-actions .btn-outline-success { color: var(--ok); border-color: rgba(16,185,129,0.4); background: #fff; }
+    .agent-actions .btn-outline-success:hover { color: #fff; border-color: var(--ok); background: var(--ok); }
+    .agent-actions .btn-outline-warning { color: var(--warn); border-color: rgba(217,119,6,0.4); background: #fff; }
+    .agent-actions .btn-outline-warning:hover { color: #fff; border-color: var(--warn); background: var(--warn); }
+    .agent-actions .btn-outline-danger { color: var(--danger); border-color: rgba(220,38,38,0.3); background: #fff; }
+    .agent-actions .btn-outline-danger:hover { color: #fff; border-color: var(--danger); background: var(--danger); }
+    .agent-actions .btn-outline-info { color: #0e7490; border-color: rgba(14,116,144,0.3); background: #fff; }
+    .agent-actions .btn-outline-info:hover { color: #fff; border-color: #0e7490; background: #0e7490; }
+
+    /* Empty state */
+    .empty-state {
+        margin-top: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 48px 28px;
+        text-align: center;
+        position: relative; overflow: hidden;
+    }
+    .empty-state::before {
+        content: ''; position: absolute; inset: 0;
+        background:
+            radial-gradient(500px 220px at 0% 0%, rgba(99,102,241,0.07), transparent 60%),
+            radial-gradient(500px 220px at 100% 100%, rgba(6,182,212,0.07), transparent 60%);
+        pointer-events: none;
+    }
+    .empty-state .es-inner { position: relative; max-width: 720px; margin: 0 auto; }
+    .empty-state .es-icon {
+        width: 72px; height: 72px; border-radius: 18px;
+        background: var(--grad); color: #fff;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 2rem; box-shadow: 0 16px 30px rgba(99,102,241,0.3);
+        margin-bottom: 18px;
+    }
+    .empty-state h3 {
+        font-family: 'Sora', sans-serif; font-weight: 700;
+        font-size: 1.6rem; margin: 0 0 8px; letter-spacing: -0.02em;
+    }
+    .empty-state p { color: var(--ink-soft); margin: 0 auto 20px; max-width: 540px; font-size: 1rem; }
+    .empty-state .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 22px; }
+    .empty-state .quickstart {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px; margin-top: 12px; text-align: left;
+    }
+    .empty-state .qs-card {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 14px; padding: 14px;
+    }
+    .empty-state .qs-num {
+        width: 26px; height: 26px; border-radius: 8px;
+        background: var(--grad); color: #fff;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    .empty-state .qs-card h5 { font-family: 'Sora', sans-serif; font-size: 0.95rem; margin: 0 0 4px; }
+    .empty-state .qs-card p { color: var(--ink-soft); font-size: 0.85rem; margin: 0; }
+    .btn-outline-primary-2 {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #fff; color: var(--ink); border: 1px solid var(--border);
+        padding: 11px 18px; border-radius: 12px; font-weight: 600; font-size: 0.92rem;
+        text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .btn-outline-primary-2:hover { border-color: var(--border-strong); transform: translateY(-1px); color: var(--ink); text-decoration: none; }
+
+    /* Analytics card */
+    .analytics-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+        margin-bottom: 18px;
+    }
+    .analytics-card .card-header {
+        background: transparent; border-bottom: 1px solid var(--border);
+        padding: 16px 20px; border-radius: 18px 18px 0 0;
+    }
+    .analytics-card .card-header h5 {
+        font-family: 'Sora', sans-serif; font-size: 1rem; font-weight: 700; margin: 0;
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .analytics-card .card-header h5 i { color: var(--brand-1); }
+    .analytics-card .card-body { padding: 20px; }
+
+    .stat-tile {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 14px; padding: 16px; text-align: center;
+    }
+    .usage-stat {
+        font-family: 'Sora', sans-serif; font-size: 1.7rem; font-weight: 800;
+        background: var(--grad);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        line-height: 1.1;
+    }
+
+    /* Table */
+    .table {
+        background: #fff;
+        border: 1px solid var(--border); border-radius: 14px;
+        overflow: hidden; margin: 0;
+    }
+    .table thead { background: var(--surface-2); color: var(--ink); }
+    .table thead th {
+        font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.82rem;
+        letter-spacing: 0.02em; border-bottom: 1px solid var(--border); color: var(--ink-soft);
+    }
+    .table tbody td { vertical-align: middle; border-color: var(--border); }
+    .table tbody tr:hover { background: var(--surface-2); }
+
+    /* Bootstrap helpers cleanup */
+    .text-muted { color: var(--muted) !important; }
+    .bg-light { background: var(--surface-2) !important; }
+    .alert-info { background: #eff6ff; border-color: #dbeafe; color: #1e40af; border-radius: 12px; }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+        .kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .toolbar { grid-template-columns: 1fr; }
+        .sort-select { width: 100%; }
+        .seg { flex-wrap: wrap; }
+    }
+    @media (max-width: 575px) {
+        .dash-hero { padding: 22px 18px 18px; border-radius: 18px; }
+        .dash-hero h1 { font-size: 1.3rem; }
+        .empty-state .quickstart { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome / hero -->
+<section class="dash-hero" aria-label="Dashboard welcome">
+    <div class="row-top">
+        <div class="greet">
+            <span class="avatar">{{ request.user.username|first|upper|default:"O" }}</span>
+            <div>
+                <h1 class="display-font">Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+                <p class="sub">Here's an overview of your AI agents and recent activity.</p>
+            </div>
+        </div>
+        <div class="actions">
+            <a href="{% url 'agent_create' %}" class="btn-grad" data-tour="create-agent-btn">
+                <i class="bi bi-plus-circle-fill"></i> Create new agent
+            </a>
+            <button type="button" class="btn-ghost-light restart-tour-btn" title="Show help tour">
+                <i class="bi bi-question-circle"></i> Help tour
+            </button>
+        </div>
+    </div>
+
+    <div class="kpi-strip">
+        <div class="kpi">
+            <i class="bi bi-robot"></i>
+            <div class="lbl">Your agents</div>
+            <div class="num">{{ agents|length }}</div>
+            <div class="meta">{{ shared_agents|length }} shared with you</div>
+        </div>
+        <div class="kpi">
+            <i class="bi bi-broadcast"></i>
+            <div class="lbl">Published</div>
+            <div class="num" id="kpiPublished">0</div>
+            <div class="meta">Live for users</div>
+        </div>
+        <div class="kpi">
+            <i class="bi bi-chat-dots"></i>
+            <div class="lbl">Messages (30d)</div>
+            <div class="num" id="kpiMessages">0</div>
+            <div class="meta">Across your agents</div>
+        </div>
+        <div class="kpi">
+            <i class="bi bi-people"></i>
+            <div class="lbl">Users (30d)</div>
+            <div class="num">{{ per_user_stats|length|default:0 }}</div>
+            <div class="meta">On shared agents</div>
+        </div>
+    </div>
+</section>
+
+<!-- Toolbar -->
+<div class="section-h">
+    <h2><i class="bi bi-grid-3x3-gap"></i> My agents <span class="count">{{ agents|length }}</span></h2>
+</div>
+
+<form method="get" class="toolbar" id="searchForm" role="search" aria-label="Search and filter agents">
+    {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+    {% if sort_by and sort_by != '-created_at' %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+
+    <label class="search">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" placeholder="Search agents by name or description…" value="{{ search_query }}" aria-label="Search agents">
+        {% if search_query %}
+        <a class="clear" href="{% url 'agents_list' %}{% if status_filter %}?status={{ status_filter }}{% endif %}{% if sort_by and sort_by != '-created_at' %}{% if status_filter %}&{% else %}?{% endif %}sort={{ sort_by }}{% endif %}" title="Clear search">
+            <i class="bi bi-x-circle-fill"></i>
+        </a>
+        {% else %}
+        <span class="kbd">⌘K</span>
+        {% endif %}
+    </label>
+
+    <div class="seg" role="group" aria-label="Status filter">
+        <a href="{% url 'agents_list' %}{% if search_query %}?search={{ search_query|urlencode }}{% endif %}{% if sort_by and sort_by != '-created_at' %}{% if search_query %}&{% else %}?{% endif %}sort={{ sort_by }}{% endif %}" class="{% if not status_filter %}active{% endif %}">All</a>
+        <a href="{% url 'agents_list' %}?status=draft{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if sort_by and sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}" class="{% if status_filter == 'draft' %}active{% endif %}">Draft</a>
+        <a href="{% url 'agents_list' %}?status=testing{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if sort_by and sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}" class="{% if status_filter == 'testing' %}active{% endif %}">Testing</a>
+        <a href="{% url 'agents_list' %}?status=published{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if sort_by and sort_by != '-created_at' %}&sort={{ sort_by }}{% endif %}" class="{% if status_filter == 'published' %}active{% endif %}">Published</a>
+    </div>
+
+    <select class="sort-select" id="sortSelect" onchange="applySort(this.value)" aria-label="Sort agents">
+        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest first</option>
+        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest first</option>
+        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name (A–Z)</option>
+        <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>Name (Z–A)</option>
+        <option value="-updated_at" {% if sort_by == '-updated_at' %}selected{% endif %}>Recently updated</option>
+        <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Status</option>
+    </select>
+</form>
+
+{% if search_query %}
+<div class="result-info" role="status">
+    <i class="bi bi-info-circle-fill"></i>
+    Showing results for "<strong>{{ search_query }}</strong>"
+    {% if status_filter %} in <strong>{{ status_filter|capfirst }}</strong> status{% endif %}
+    — Found <strong>{{ agents|length }}</strong> agent{{ agents|length|pluralize }}
+    {% if shared_agents %} and <strong>{{ shared_agents|length }}</strong> shared agent{{ shared_agents|length|pluralize }}{% endif %}
+</div>
+{% endif %}
+
+{% if agents %}
+<div class="agent-grid">
+    {% for agent in agents %}
+    <article class="agent-card">
+        <header class="agent-head">
+            <span class="agent-icon" aria-hidden="true"><i class="bi bi-robot"></i></span>
+            <div style="min-width:0; flex:1;">
+                <h3 class="agent-title">
+                    {% if agent.status == 'published' %}
+                    <a href="{% url 'agent_chat' agent.slug %}" title="Chat with this agent">{{ agent.name }}</a>
+                    {% else %}
+                    <a href="{% url 'agent_detail' agent.slug %}" title="View agent details">{{ agent.name }}</a>
+                    {% endif %}
+                </h3>
+                <div class="pill-row" style="margin-top:6px;">
+                    <span class="status-badge status-{{ agent.status }}">{{ agent.get_status_display }}</span>
+                    <span class="pill"><i class="bi bi-tag"></i> {{ agent.get_agent_type_display }}</span>
+                    {% if agent.visibility_status %}
+                    <span class="visibility-badge visibility-{{ agent.visibility_status }}" title="{% if agent.visibility_status == 'public' %}Publicly shared via public URL{% elif agent.visibility_status == 'shared' %}Shared via email{% else %}Private — not shared{% endif %}">
+                        <i class="bi {% if agent.visibility_status == 'public' %}bi-globe{% elif agent.visibility_status == 'shared' %}bi-share{% else %}bi-lock{% endif %}"></i>
+                        {{ agent.visibility_status|capfirst }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        {% if agent.description %}
+        <p class="agent-desc">{{ agent.description|truncatewords:24 }}</p>
+        {% endif %}
+
+        <div class="meta-row">
+            <span class="meta-item">
+                <i class="bi bi-cpu"></i>
+                {% if agent.model %}<strong>{{ agent.model.model_name }}</strong> · {{ agent.model.get_provider_display }}{% else %}<span class="text-muted">Model not configured</span>{% endif %}
+            </span>
+            <span class="meta-item"><i class="bi bi-database"></i> {{ agent.training_data_count }} training items</span>
+        </div>
+
+        {% if agent.usage_stats %}
+        <div class="usage-strip">
+            <h6><i class="bi bi-graph-up"></i> Usage · last 30 days</h6>
+            <div class="row-grid">
+                <div><i class="bi bi-lock"></i> {{ agent.usage_stats.private_messages|intcomma }} private msgs</div>
+                <div>
+                    <a href="{% url 'agent_chat' agent.slug %}" title="View conversations">
+                        <i class="bi bi-chat-left-text"></i> {{ agent.usage_stats.private_conversations|intcomma }} convos →
+                    </a>
+                </div>
+                {% if agent.usage_stats.shared_messages > 0 or agent.usage_stats.unique_users > 0 %}
+                <div><i class="bi bi-share"></i> {{ agent.usage_stats.shared_messages|intcomma }} shared msgs</div>
+                <div><i class="bi bi-people"></i> {{ agent.usage_stats.unique_users }} users</div>
+                {% endif %}
+            </div>
+            <div class="total">
+                <span><i class="bi bi-bar-chart"></i> Total</span>
+                <span><strong>{{ agent.usage_stats.total_messages|intcomma }}</strong> msgs · <strong>{{ agent.usage_stats.total_conversations|intcomma }}</strong> convos</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="agent-actions" role="group">
+            <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+            <a href="{% url 'agent_edit' agent.slug %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+            {% if agent.status == 'draft' %}
+                <a href="{% url 'agent_train' agent.slug %}" class="btn btn-outline-success"><i class="bi bi-play-circle"></i> Train</a>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-primary" title="Publish agent"><i class="bi bi-check-circle"></i> Publish</a>
+            {% elif agent.status == 'training' %}
+                <a href="{% url 'agent_train' agent.slug %}" class="btn btn-outline-info"><i class="bi bi-hourglass-split"></i> Status</a>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-primary" title="Publish agent"><i class="bi bi-check-circle"></i> Publish</a>
+            {% elif agent.status == 'testing' %}
+                <a href="{% url 'agent_test' agent.slug %}" class="btn btn-outline-warning"><i class="bi bi-bug"></i> Test</a>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-success" title="Publish agent"><i class="bi bi-check-circle"></i> Publish</a>
+            {% elif agent.status == 'published' %}
+                <a href="{% url 'agent_chat' agent.slug %}" class="btn btn-success" title="Chat with this agent"><i class="bi bi-chat-dots"></i> Chat</a>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-outline-success" title="Republish agent"><i class="bi bi-arrow-repeat"></i> Republish</a>
+                <a href="{% url 'share_agent' agent.slug %}" class="btn btn-outline-info" title="Share agent"><i class="bi bi-share"></i> Share</a>
+            {% endif %}
+            <a href="{% url 'agent_delete' agent.slug %}" class="btn btn-outline-danger"
+               onclick="return confirmDelete('{{ agent.name|escapejs }}', '{{ agent.slug|escapejs }}');"
+               title="Delete agent">
+                <i class="bi bi-trash"></i>
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" role="region" aria-labelledby="empty-heading">
+    <div class="es-inner">
+        <div class="es-icon" aria-hidden="true"><i class="bi bi-stars"></i></div>
+        <h3 id="empty-heading" class="display-font">Welcome to Oshaani{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}!</h3>
+        <p>Spin up your first AI agent in minutes. Pick a model, attach knowledge, plug in tools, and ship to users.</p>
+        <div class="actions">
+            <a href="{% url 'create_first_agent' %}" class="btn-grad" data-tour="create-agent-btn">
+                <i class="bi bi-magic"></i> Create my first agent
+            </a>
+            <a href="{% url 'agent_create' %}" class="btn-outline-primary-2" data-tour="create-agent-btn">
+                <i class="bi bi-plus-circle"></i> Create custom agent
+            </a>
+            <button type="button" class="btn-outline-primary-2 restart-tour-btn">
+                <i class="bi bi-question-circle"></i> Help tour
+            </button>
+        </div>
+        <div class="quickstart">
+            <div class="qs-card">
+                <div class="qs-num">1</div>
+                <h5>Pick a model</h5>
+                <p>Choose a Bedrock or Ollama model—switch any time later.</p>
+            </div>
+            <div class="qs-card">
+                <div class="qs-num">2</div>
+                <h5>Add knowledge</h5>
+                <p>Upload docs or connect data so agents answer from your facts.</p>
+            </div>
+            <div class="qs-card">
+                <div class="qs-num">3</div>
+                <h5>Test &amp; share</h5>
+                <p>Chat in-app, then ship via API key or publish to the marketplace.</p>
+            </div>
+        </div>
+        <p style="margin-top: 18px; font-size: 0.85rem; color: var(--muted);">
+            <i class="bi bi-info-circle"></i>
+            "Create my first agent" sets up an agent similar to <strong>Oshaani Agent Creator</strong> with MCP server pre-configured.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% if shared_agents %}
+<div class="section-h">
+    <h2><i class="bi bi-share"></i> Shared with me <span class="count">{{ shared_agents|length }}</span></h2>
+</div>
+<div class="agent-grid">
+    {% for agent in shared_agents %}
+    <article class="agent-card shared">
+        <header class="agent-head">
+            <span class="agent-icon" aria-hidden="true"><i class="bi bi-people-fill"></i></span>
+            <div style="min-width:0; flex:1;">
+                <h3 class="agent-title">
+                    {% if agent.status == 'published' %}
+                    <a href="{% url 'agent_chat' agent.slug %}" title="Chat with this shared agent">{{ agent.name }}</a>
+                    {% else %}
+                    <a href="{% url 'agent_detail' agent.slug %}" title="View shared agent details">{{ agent.name }}</a>
+                    {% endif %}
+                </h3>
+                <div class="pill-row" style="margin-top:6px;">
+                    <span class="status-badge status-{{ agent.status }}">{{ agent.get_status_display }}</span>
+                    <span class="pill" style="background:#ecfeff; color:#0e7490; border-color:#cffafe;"><i class="bi bi-share"></i> Shared</span>
+                    <span class="pill"><i class="bi bi-tag"></i> {{ agent.get_agent_type_display }}</span>
+                </div>
+            </div>
+        </header>
+
+        {% if agent.description %}
+        <p class="agent-desc">{{ agent.description|truncatewords:24 }}</p>
+        {% endif %}
+
+        <div class="meta-row">
+            <span class="meta-item">
+                <i class="bi bi-cpu"></i>
+                {% if agent.model %}<strong>{{ agent.model.model_name }}</strong> · {{ agent.model.get_provider_display }}{% else %}<span class="text-muted">Model not configured</span>{% endif %}
+            </span>
+            <span class="meta-item"><i class="bi bi-database"></i> {{ agent.training_data_count }} training items</span>
+        </div>
+
+        {% if agent.my_usage_stats %}
+        <div class="usage-strip">
+            <h6><i class="bi bi-graph-up"></i> My usage · last 30 days</h6>
+            <div class="row-grid">
+                <div><i class="bi bi-chat-dots"></i> {{ agent.my_usage_stats.total_messages|intcomma }} messages</div>
+                <div>
+                    <a href="{% url 'agent_chat' agent.slug %}" title="View my conversations">
+                        <i class="bi bi-chat-left-text"></i> {{ agent.my_usage_stats.total_conversations|intcomma }} convos →
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="agent-actions" role="group">
+            {% if agent.status == 'published' %}
+            <a href="{% url 'agent_chat' agent.slug %}" class="btn btn-success"><i class="bi bi-chat-dots"></i> Chat</a>
+            {% endif %}
+            <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Analytics Dashboard Section -->
+{% if per_user_stats or owner_usage_stats %}
+<div class="section-h" style="margin-top: 36px;">
+    <h2><i class="bi bi-bar-chart-line"></i> Shared agent analytics</h2>
+</div>
+
+{% if per_user_stats %}
+<div class="analytics-card">
+    <div class="card-header">
+        <h5><i class="bi bi-graph-up"></i> Usage statistics · last 30 days</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3 col-6">
+                <div class="stat-tile">
+                    <div class="usage-stat" id="totalMessages">0</div>
+                    <small class="text-muted">Total messages</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-tile">
+                    <div class="usage-stat" id="totalConversations">0</div>
+                    <small class="text-muted">Total conversations</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-tile">
+                    <div class="usage-stat">{{ per_user_stats|length }}</div>
+                    <small class="text-muted">Unique users</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-tile">
+                    <div class="usage-stat">{{ agents|length }}</div>
+                    <small class="text-muted">Agents shared</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="analytics-card">
+    <div class="card-header">
+        <h5><i class="bi bi-people"></i> Usage by user</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Messages</th>
+                        <th>Conversations</th>
+                        <th>Agents used</th>
+                        <th>Last used</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_stat in per_user_stats %}
+                    <tr>
+                        <td><strong>{{ user_stat.used_by__username }}</strong></td>
+                        <td class="text-muted">{{ user_stat.used_by__email }}</td>
+                        <td><span class="pill" style="background:#eef2ff; color:#4338ca; border-color:#e0e7ff;">{{ user_stat.total_messages|intcomma }}</span></td>
+                        <td><span class="pill" style="background:#ecfeff; color:#0e7490; border-color:#cffafe;">{{ user_stat.total_conversations|intcomma }}</span></td>
+                        <td><span class="pill" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;">{{ user_stat.agents_used }}</span></td>
+                        <td><small class="text-muted">{% if user_stat.last_used %}{{ user_stat.last_used|date:"M d, Y H:i" }}{% else %}Never{% endif %}</small></td>
+                        <td class="text-end">
+                            <a href="{% url 'chat_home' %}?view_user_id={{ user_stat.used_by__id }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-chat-dots"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<script>
+{% if per_user_stats %}
+let totalMessages = 0;
+let totalConversations = 0;
+{% for user_stat in per_user_stats %}
+totalMessages += {{ user_stat.total_messages|default:0 }};
+totalConversations += {{ user_stat.total_conversations|default:0 }};
+{% endfor %}
+var tm = document.getElementById('totalMessages'); if (tm) tm.textContent = totalMessages.toLocaleString();
+var tc = document.getElementById('totalConversations'); if (tc) tc.textContent = totalConversations.toLocaleString();
+var km = document.getElementById('kpiMessages'); if (km) km.textContent = totalMessages.toLocaleString();
+{% endif %}
+
+function confirmDelete(agentName, agentSlug) {
+    const ok = confirm(`Delete the agent "${agentName}"?\n\nThis cannot be undone and will remove training data, conversations, RAG index, API keys, and test results.`);
+    if (ok) window.location.href = `/dashboard/${encodeURIComponent(agentSlug)}/delete/`;
+    return false;
+}
+
+function applySort(sortValue) {
+    const url = new URL(window.location.href);
+    if (sortValue && sortValue !== '-created_at') url.searchParams.set('sort', sortValue);
+    else url.searchParams.delete('sort');
+    window.location.href = url.toString();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+        });
+    }
+
+    var pub = document.querySelectorAll('.agent-grid .status-published').length;
+    var kp = document.getElementById('kpiPublished');
+    if (kp) kp.textContent = pub.toString();
+});
+</script>
+{% endblock %}

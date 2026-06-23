@@ -1,0 +1,21 @@
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+.env
+.env.*
+!.env.example
+
+# Django artifacts
+oshani/staticfiles/
+oshani/media/
+
+# Git and IDE
+.git/
+.cursor/
+.idea/
+.vscode/
+
+# Local storage
+oshani/qdrant_storage/

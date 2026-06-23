@@ -1,0 +1,544 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Blog{% if search_query %} - Search: {{ search_query }}{% elif current_category %} - {{ current_category|title }}{% elif current_tag %} - {{ current_tag|title }}{% endif %}{% endblock %}
+
+{% block meta_description %}Read our latest blog posts about AI agents, automation, and technology.{% if search_query %} Search results for: {{ search_query }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+<!-- Canonical URL -->
+<link rel="canonical" href="{{ request.build_absolute_uri }}" />
+
+<!-- Open Graph -->
+<meta property="og:title" content="{% if search_query %}Search: {{ search_query }}{% else %}Blog{% endif %}" />
+<meta property="og:description" content="Read our latest blog posts about AI agents, automation, and technology.{% if search_query %} Search results for: {{ search_query }}{% endif %}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="{{ request.build_absolute_uri }}" />
+
+<!-- Structured Data for Blog -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Oshaani Blog",
+  "description": "Latest blog posts about AI agents, automation, and technology",
+  "url": "{{ request.build_absolute_uri }}"
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Mobile-first responsive design */
+    .blog-container {
+        padding: 1rem 0.75rem;
+    }
+    
+    @media (min-width: 768px) {
+        .blog-container {
+            padding: 2rem 1rem;
+        }
+    }
+    
+    /* Header improvements */
+    .blog-header h1 {
+        font-size: 1.75rem;
+        line-height: 1.3;
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .blog-header h1 {
+            font-size: 2.5rem;
+        }
+    }
+    
+    /* Search form mobile optimization */
+    .blog-search-form .input-group {
+        flex-wrap: nowrap;
+    }
+    
+    .blog-search-form .form-control {
+        min-height: 44px; /* Touch-friendly */
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .blog-search-form .btn {
+        min-height: 44px;
+        padding: 0.5rem 1.25rem;
+        white-space: nowrap;
+    }
+    
+    /* Blog post cards */
+    .blog-post-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+    
+    .blog-post-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+    }
+    
+    .blog-post-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    @media (min-width: 768px) {
+        .blog-post-card .card-img-top {
+            height: 250px;
+        }
+    }
+    
+    /* Post meta info mobile */
+    .post-meta {
+        font-size: 0.875rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .post-meta > div {
+        margin-bottom: 0.25rem;
+    }
+    
+    .post-meta i {
+        margin-right: 0.25rem;
+    }
+    
+    /* Badges mobile */
+    .post-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .post-badges .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 500;
+    }
+    
+    /* Sidebar mobile */
+    .blog-sidebar {
+        margin-top: 2rem;
+    }
+    
+    @media (min-width: 992px) {
+        .blog-sidebar {
+            margin-top: 0;
+        }
+    }
+    
+    .sidebar-card {
+        margin-bottom: 1.5rem;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .sidebar-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+        padding: 0.875rem 1rem;
+    }
+    
+    .sidebar-card .card-header h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .sidebar-card .card-body {
+        padding: 1rem;
+    }
+    
+    /* Category list mobile */
+    .category-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .category-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .category-list a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        color: #333;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .category-list a:hover {
+        color: #0d6efd;
+    }
+    
+    /* Tags mobile */
+    .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .tag-cloud .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+        cursor: pointer;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    
+    .tag-cloud .badge:hover {
+        transform: scale(1.05);
+        background-color: #6c757d !important;
+    }
+    
+    /* Recent posts mobile */
+    .recent-post-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .recent-post-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recent-post-item a {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: #333;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .recent-post-item a:hover {
+        color: #0d6efd;
+    }
+    
+    /* Pagination mobile */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+    
+    .pagination .page-link {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0.75rem;
+        margin: 0.25rem;
+    }
+    
+    /* Read more button */
+    .read-more-btn {
+        min-height: 44px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    /* Loading states */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Mobile sidebar toggle */
+    .sidebar-toggle-btn {
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+    
+    /* Improve touch targets */
+    a, button, .btn {
+        -webkit-tap-highlight-color: rgba(13, 110, 253, 0.2);
+    }
+    
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Better focus states for accessibility */
+    .form-control:focus,
+    .btn:focus {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
+    
+    /* Image optimization */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container blog-container">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="blog-header mb-4">
+                <h1>
+                    {% if search_query %}
+                        Search Results: "{{ search_query }}"
+                    {% elif current_category_obj %}
+                        {{ current_category_obj.name }}
+                    {% elif current_tag %}
+                        Tag: {{ current_tag|title }}
+                    {% else %}
+                        Blog
+                    {% endif %}
+                </h1>
+                {% if search_query %}
+                <p class="text-muted mb-0">Found {{ page_obj.paginator.count }} result(s)</p>
+                {% elif current_category_obj %}
+                <p class="text-muted mb-0">{{ page_obj.paginator.count }} post{{ page_obj.paginator.count|pluralize }} in this category</p>
+                {% elif current_tag %}
+                <p class="text-muted mb-0">{{ page_obj.paginator.count }} post{{ page_obj.paginator.count|pluralize }} tagged "{{ current_tag }}"</p>
+                {% endif %}
+            </div>
+            
+            <!-- Search Form -->
+            <form method="get" class="blog-search-form mb-4">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Search blog posts..." value="{{ search_query }}"
+                           aria-label="Search blog posts">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search d-md-none"></i>
+                        <span class="d-none d-md-inline">Search</span>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Blog Posts List -->
+            {% if posts %}
+            <div class="row g-3">
+                {% for post in posts %}
+                <div class="col-12">
+                    <article class="card blog-post-card h-100 shadow-sm">
+                        {% if post.featured_image %}
+                        <a href="{% url 'blog:post_detail' post.slug %}" class="text-decoration-none">
+                            <img src="{{ post.featured_image.url }}" class="card-img-top" 
+                                 alt="{{ post.title }}" loading="lazy">
+                        </a>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <div class="post-badges">
+                                {% if post.category %}
+                                <a href="{% url 'blog:category_detail' post.category.slug %}" 
+                                   class="badge bg-primary text-decoration-none">
+                                    {{ post.category.name }}
+                                </a>
+                                {% endif %}
+                                {% for tag in post.tags.all|slice:":3" %}
+                                <a href="{% url 'blog:tag_detail' tag.slug %}" 
+                                   class="badge bg-secondary text-decoration-none">
+                                    {{ tag.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                            
+                            <h2 class="card-title h5 mb-2">
+                                <a href="{% url 'blog:post_detail' post.slug %}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ post.title }}
+                                </a>
+                            </h2>
+                            
+                            <p class="card-text text-muted flex-grow-1 mb-3">{{ post.excerpt }}</p>
+                            
+                            <div class="post-meta d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mt-auto">
+                                <div class="d-flex flex-wrap gap-2 mb-2 mb-md-0">
+                                    <small class="text-muted">
+                                        <i class="bi bi-person"></i> 
+                                        <span class="d-none d-sm-inline">{{ post.author.username }}</span>
+                                        <span class="d-sm-none">{{ post.author.username|truncatechars:15 }}</span>
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar"></i> 
+                                        <span class="d-none d-sm-inline">{{ post.published_at|date:"M d, Y" }}</span>
+                                        <span class="d-sm-none">{{ post.published_at|date:"M d" }}</span>
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-eye"></i> {{ post.view_count|intcomma }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ post.reading_time_minutes }} min
+                                    </small>
+                                </div>
+                                <a href="{% url 'blog:post_detail' post.slug %}" 
+                                   class="read-more-btn btn btn-outline-primary btn-sm align-self-start align-self-md-center">
+                                    Read More <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Blog pagination" class="mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                            <span class="d-none d-sm-inline ms-1">Previous</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}" aria-label="Next">
+                            <span class="d-none d-sm-inline me-1">Next</span>
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h4>No posts found</h4>
+                <p class="text-muted">{% if search_query %}Try a different search term.{% else %}Check back soon for new posts!{% endif %}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4 blog-sidebar">
+            <!-- Mobile sidebar toggle button -->
+            <button class="btn btn-outline-secondary w-100 d-lg-none mb-3" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#blogSidebar" 
+                    aria-expanded="false" aria-controls="blogSidebar">
+                <i class="bi bi-funnel"></i> Filter & Browse
+            </button>
+            
+            <div class="collapse d-lg-block" id="blogSidebar">
+                <!-- Categories -->
+                {% if categories %}
+                <div class="card sidebar-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-folder"></i> Categories</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-unstyled mb-0 category-list">
+                            {% for category in categories %}
+                            <li>
+                                <a href="{% url 'blog:category_detail' category.slug %}">
+                                    <span>{{ category.name }}</span>
+                                    <span class="badge bg-secondary">{{ category.post_count }}</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Tags -->
+                {% if tags %}
+                <div class="card sidebar-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-tags"></i> Popular Tags</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="tag-cloud">
+                            {% for tag in tags %}
+                            <a href="{% url 'blog:tag_detail' tag.slug %}" 
+                               class="badge bg-secondary text-decoration-none">
+                                {{ tag.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Recent Posts -->
+                {% if recent_posts %}
+                <div class="card sidebar-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Posts</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-unstyled mb-0">
+                            {% for post in recent_posts %}
+                            <li class="recent-post-item">
+                                <a href="{% url 'blog:post_detail' post.slug %}">
+                                    {{ post.title }}
+                                </a>
+                                <small class="text-muted d-block mt-1">
+                                    {{ post.published_at|date:"M d, Y" }}
+                                </small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

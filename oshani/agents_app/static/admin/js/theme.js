@@ -1,0 +1,1 @@
+// Theme JavaScript - placeholder file

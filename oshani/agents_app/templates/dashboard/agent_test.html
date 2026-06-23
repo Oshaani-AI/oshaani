@@ -1,0 +1,1619 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Test {{ agent.name }} - AI Agents Dashboard{% endblock %}
+
+{% block extra_head %}
+<!-- Conversation messages data -->
+{% if conversation_messages_json %}
+{{ conversation_messages_json|json_script:"conversation-messages-data" }}
+{% endif %}
+
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+<!-- Highlight.js for code syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+    /* Markdown styling */
+    .message-content.markdown {
+        line-height: 1.6;
+    }
+    .message-content.markdown h1, .message-content.markdown h2, .message-content.markdown h3 {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+    .message-content.markdown h1 { font-size: 1.5em; }
+    .message-content.markdown h2 { font-size: 1.3em; }
+    .message-content.markdown h3 { font-size: 1.1em; }
+    .message-content.markdown p { margin-bottom: 0.8em; }
+    .message-content.markdown ul, .message-content.markdown ol {
+        margin-left: 1.5em;
+        margin-bottom: 0.8em;
+    }
+    .message-content.markdown code {
+        background-color: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+    .message-content.markdown pre {
+        background-color: #f8f8f8;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 12px;
+        overflow-x: auto;
+        margin-bottom: 0.8em;
+    }
+    .message-content.markdown pre code {
+        background-color: transparent;
+        padding: 0;
+    }
+    .message-content.markdown blockquote {
+        border-left: 4px solid #dfe2e5;
+        padding-left: 1em;
+        margin-left: 0;
+        color: #6a737d;
+    }
+    .message-content.markdown table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 0.8em;
+    }
+    .message-content.markdown table th,
+    .message-content.markdown table td {
+        border: 1px solid #dfe2e5;
+        padding: 6px 13px;
+    }
+    .message-content.markdown table th {
+        background-color: #f6f8fa;
+        font-weight: 600;
+    }
+    .message-content.markdown a {
+        color: #0366d6;
+        text-decoration: none;
+    }
+    .message-content.markdown a:hover {
+        text-decoration: underline;
+    }
+    
+    /* File attachment styling */
+    .file-attachment {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        background-color: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 4px;
+        font-size: 0.85em;
+        margin: 2px;
+    }
+    .file-attachment .file-icon {
+        color: #0066cc;
+    }
+    .file-attachment .file-name {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .file-attachment .file-size {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .file-attachment .remove-file {
+        cursor: pointer;
+        color: #dc3545;
+        margin-left: 4px;
+    }
+    .file-attachment .remove-file:hover {
+        color: #c82333;
+    }
+    
+    /* Message with files */
+    .message-with-files {
+        margin-bottom: 0.5em;
+    }
+    .attached-files-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e1e4e8;
+    }
+
+    /* Fill viewport below nav + container mt-4; inner toolbar steals space via flex (not this offset) */
+    .agent-test-page {
+        --agent-test-chrome: 5.5rem;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100svh - var(--agent-test-chrome));
+        height: calc(100svh - var(--agent-test-chrome));
+        max-height: calc(100svh - var(--agent-test-chrome));
+    }
+    @supports not (height: 100svh) {
+        .agent-test-page {
+            min-height: calc(100vh - var(--agent-test-chrome));
+            height: calc(100vh - var(--agent-test-chrome));
+            max-height: calc(100vh - var(--agent-test-chrome));
+        }
+    }
+    @media (max-width: 575.98px) {
+        .agent-test-page {
+            --agent-test-chrome: 6rem;
+        }
+    }
+    .agent-test-toolbar {
+        flex-shrink: 0;
+    }
+    .agent-test-layout.row {
+        flex: 1 1 0%;
+        min-height: 0;
+    }
+    .agent-test-layout > [class*="col-"] {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    /* Live chat card: stretch to max height of column; inner scroll unchanged */
+    .agent-test-chat-card {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 260px;
+        height: auto;
+        max-height: none;
+    }
+    .agent-test-chat-inner {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    #chat-messages.agent-test-chat-messages {
+        flex: 1 1 0%;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .agent-test-title {
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+    }
+    .agent-test-toolbar .agent-test-back {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    /* Chat card polish */
+    .agent-test-chat-card {
+        box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.06) !important;
+    }
+    .agent-test-chat-card .card-header {
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.65) 100%);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .agent-test-chat-form textarea {
+        border-radius: 0.75rem;
+        resize: vertical;
+        min-height: 3rem;
+    }
+    @media (max-width: 575.98px) {
+        .agent-test-chat-form .btn-send-chat {
+            width: 100%;
+            min-height: 44px;
+        }
+    }
+
+    /* Empty state */
+    .agent-test-empty-icon {
+        width: 4rem;
+        height: 4rem;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3b82f6;
+    }
+
+    /* Sidebar column */
+    .agent-test-sidebar-col {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    /* Sticky wrapper only — do not overflow:hidden here; MCP modals live inside and must not be clipped
+       (otherwise the grey backdrop can trap clicks and the page feels “inactive”). Scroll MCP body only. */
+    @media (min-width: 992px) {
+        .agent-test-sidebar-inner {
+            position: sticky;
+            top: 1rem;
+            align-self: flex-start;
+        }
+    }
+    .agent-test-sidebar-scroll {
+        max-height: min(420px, 38vh);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    @media (max-width: 991.98px) {
+        .agent-test-sidebar-scroll {
+            max-height: min(360px, 45vh);
+        }
+    }
+
+    /* MCP nested cards */
+    .agent-test-mcp-nested .card {
+        border-radius: 0.65rem;
+    }
+
+    /* Webhook card */
+    .agent-test-webhook-card .card-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.06) 100%);
+        border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+    }
+    .agent-test-webhook-card textarea,
+    .agent-test-webhook-card #webhook-api-url {
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+    }
+    .agent-test-result-box {
+        border-radius: 0.65rem;
+        background: #f8fafc !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    }
+
+    /* Publish CTA card */
+    .agent-test-publish-card {
+        border-radius: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agent-test-page">
+<div class="row agent-test-toolbar mb-2 mb-lg-3 g-3 align-items-start align-items-md-center">
+    <div class="col-12 col-lg">
+        <p class="small text-uppercase text-muted mb-1 fw-semibold letter-spacing-wide" style="letter-spacing: .06em;">Agent test</p>
+        <h1 class="agent-test-title h3 mb-1"><i class="bi bi-chat-dots text-primary me-2"></i>{{ agent.name }}</h1>
+        <p class="text-muted small mb-0">Try your agent before publishing · Messages use your dashboard session</p>
+    </div>
+    <div class="col-12 col-lg-auto">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-lg-end">
+            <span class="badge rounded-pill px-3 py-2 fw-normal {% if agent.status == 'published' %}text-bg-success{% elif agent.status == 'testing' %}text-bg-primary{% else %}text-bg-secondary{% endif %}">
+                {{ agent.get_status_display }}
+            </span>
+            <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary agent-test-back rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Back to agent
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 agent-test-layout">
+    <div class="col-lg-8">
+        <div class="card mb-2 mb-lg-0 agent-test-chat-card rounded-4 overflow-hidden">
+            <div class="card-header d-flex justify-content-between align-items-center flex-shrink-0 py-3">
+                <div>
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Live chat</h5>
+                    <small class="text-muted">Streaming replies when connected</small>
+                </div>
+                <span id="connection-status" class="badge rounded-pill bg-secondary px-3 py-2">Connecting…</span>
+            </div>
+            <div class="card-body p-0 agent-test-chat-inner">
+                <!-- Chat Messages Area -->
+                <div id="chat-messages" class="p-3 p-md-4 agent-test-chat-messages">
+                    <div class="agent-test-empty text-center text-muted">
+                        <div class="agent-test-empty-icon mb-3">
+                            <i class="bi bi-chat-quote fs-3"></i>
+                        </div>
+                        <p class="mb-1 fw-semibold text-secondary">Start chatting</p>
+                        <p class="small mb-0 px-sm-2">Send a message below or attach files. The panel above shows when the connection is live.</p>
+                    </div>
+                </div>
+                
+                <!-- Chat Input Area -->
+                <div class="border-top p-3 p-md-4 flex-shrink-0 bg-white shadow-sm" style="box-shadow: 0 -4px 12px rgba(15,23,42,.04) !important;">
+                    <!-- File Upload Area -->
+                    <div id="file-upload-area" class="mb-2" style="display: none;">
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <span class="small text-muted">Attached files:</span>
+                            <div id="attached-files" class="d-flex gap-2 flex-wrap"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAttachedFiles()">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="chat-form" class="agent-test-chat-form d-flex flex-column flex-sm-row gap-2 gap-sm-3 align-items-stretch align-items-sm-end">
+                        <div class="flex-grow-1 position-relative">
+                            <label for="message-input" class="visually-hidden">Message</label>
+                            <textarea 
+                                id="message-input" 
+                                class="form-control border" 
+                                rows="2" 
+                                placeholder="Message your agent…"
+                                required></textarea>
+                            <!-- File upload button overlay -->
+                            <div class="position-absolute" style="bottom: 6px; right: 8px;">
+                                <label for="file-input" class="btn btn-sm btn-light border mb-0 rounded-pill px-2" style="cursor: pointer;" title="Attach files">
+                                    <i class="bi bi-paperclip"></i>
+                                </label>
+                                <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button type="submit" class="btn btn-primary btn-send-chat rounded-pill px-4 fw-semibold" id="send-button">
+                                <i class="bi bi-send-fill me-1"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Optional: Expected Response for Testing -->
+                    <div class="mt-3 pt-2 border-top">
+                        <details class="agent-test-details">
+                            <summary class="text-muted small user-select-none" style="cursor: pointer;">Optional: expected reply (for validation)</summary>
+                            <div class="mt-2">
+                                <label for="expected-response" class="form-label small text-muted mb-1">Expected response snippet</label>
+                                <input 
+                                    type="text" 
+                                    id="expected-response" 
+                                    class="form-control form-control-sm rounded-3" 
+                                    placeholder="Text you expect in the agent reply"
+                                />
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 agent-test-sidebar-col">
+        {% with ret=mcp_return_page|default:'detail' %}
+        <div class="agent-test-sidebar-inner">
+        {% include 'dashboard/partials/agent_mcp_servers_card.html' with mcp_wrap_class='border-0 shadow-sm rounded-4 mb-3 agent-test-mcp-nested' mcp_card_body_class='pt-3 agent-test-sidebar-scroll' %}
+
+        <div class="card border-0 shadow-sm rounded-4 agent-test-webhook-card" id="webhook-section">
+            <div class="card-header border-0 py-3 rounded-top-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-link-45deg text-primary me-2"></i>Webhook test</h5>
+                    <small class="text-muted">Same payload as <code class="small">POST /api/webhook/agent/</code></small>
+                </div>
+                <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark border">API</span>
+            </div>
+            <div class="card-body pt-0">
+                <p class="text-muted small mb-3">
+                    Each webhook call starts a <strong>new conversation</strong> for this agent (same as the API).
+                    Use the form below to queue a test with your login (no API key). For integrations, call the public URL with
+                    <code>Authorization: ApiKey …</code> — the agent must be <strong>published</strong> for external webhooks.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Production webhook URL</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control font-monospace" id="webhook-api-url" readonly value="{{ webhook_api_url }}">
+                        <button type="button" class="btn btn-outline-secondary" id="copy-webhook-url" title="Copy URL">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="webhook-agent-api-key" class="form-label small fw-bold">Agent API key <span class="text-muted fw-normal">(optional)</span></label>
+                    <input type="password" class="form-control form-control-sm font-monospace" id="webhook-agent-api-key" autocomplete="off" spellcheck="false" placeholder="Leave blank for dashboard session test">
+                    <small class="text-muted d-block mt-1">
+                        When set, <strong>Run test</strong> uses <code class="small">Authorization: ApiKey …</code> on the URL above and polls <code class="small">GET /api/get_answer</code> — same as a real integration.
+                        Requires a <strong>published</strong> agent and a valid key. Leave blank to use your login on the dashboard test endpoint (supports <strong>Testing</strong> agents).
+                    </small>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="webhook-message" class="form-label">Message / instruction</label>
+                        <textarea id="webhook-message" class="form-control font-monospace" rows="3" placeholder="What should the agent do with this webhook?"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="webhook-payload" class="form-label">Payload <span class="text-muted small">(JSON, optional)</span></label>
+                        <textarea id="webhook-payload" class="form-control font-monospace" rows="3" placeholder='{"event":"example","id":"123"}'></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="webhook-metadata" class="form-label">Metadata <span class="text-muted small">(JSON, echoed in response only — optional)</span></label>
+                        <textarea id="webhook-metadata" class="form-control font-monospace" rows="2" placeholder='{"trace_id":"my-run-1"}'></textarea>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+                    <button type="button" class="btn btn-primary rounded-pill px-3 btn-sm fw-semibold" id="webhook-send-test">
+                        <i class="bi bi-play-fill me-1"></i> Run test
+                    </button>
+                    <span id="webhook-status" class="small text-muted"></span>
+                </div>
+                <div id="webhook-result" class="mt-3 p-3 agent-test-result-box d-none">
+                    <div class="small text-muted mb-2 fw-semibold">Response</div>
+                    <pre id="webhook-result-body" class="small mb-0 text-body" style="white-space: pre-wrap; max-height: 280px; overflow-y: auto;"></pre>
+                </div>
+            </div>
+        </div>
+        
+        {% if agent.status == 'testing' or has_unpublished_changes %}
+        <div class="card mt-1 shadow-sm agent-test-publish-card overflow-hidden {% if has_unpublished_changes %}border border-info border-start border-5{% else %}border border-warning border-start border-5{% endif %}">
+            <div class="card-body text-center py-4">
+                {% if has_unpublished_changes %}
+                <h5><i class="bi bi-exclamation-circle text-info"></i> Unpublished Changes Detected</h5>
+                <p class="text-muted">Your agent has configuration or training data changes that haven't been published yet.</p>
+                {% if change_summary %}
+                <div class="alert alert-info text-start mb-3">
+                    <strong>Changes:</strong>
+                    <ul class="mb-0 small">
+                        {% for change in change_summary %}
+                        <li>{{ change }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <p class="text-muted">After testing, you can publish with the new configuration.</p>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-info">
+                    <i class="bi bi-check-circle"></i> Publish with New Configuration
+                </a>
+                {% else %}
+                <h5>Ready to Publish?</h5>
+                <p class="text-muted">If your agent is working well, you can publish it.</p>
+                <a href="{% url 'agent_publish' agent.slug %}" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Publish Agent
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        </div>
+        {# MCP modals outside sticky scroll column so Bootstrap backdrop does not trap clicks #}
+        {% include 'dashboard/partials/agent_mcp_servers_modals.html' %}
+        {% endwith %}
+    </div>
+</div>
+</div>
+
+<script>
+(function() {
+    const agentId = {% if agent.id %}{{ agent.id }}{% else %}null{% endif %};
+    const agentSlug = {% if agent.slug %}"{{ agent.slug|escapejs }}"{% else %}null{% endif %};
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const chatForm = document.getElementById('chat-form');
+    const sendButton = document.getElementById('send-button');
+    const connectionStatus = document.getElementById('connection-status');
+    const expectedResponseInput = document.getElementById('expected-response');
+    
+    // File upload state
+    let attachedFiles = [];
+    
+    // Markdown rendering function
+    function renderMarkdown(text) {
+        if (!text) return '';
+        if (typeof marked === 'undefined') {
+            // Fallback to plain text if marked.js not loaded
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+        try {
+            return marked.parse(text);
+        } catch (e) {
+            console.error('Markdown rendering error:', e);
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+    }
+    
+    // File handling functions
+    window.handleFileSelect = function(event) {
+        const files = Array.from(event.target.files);
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        files.forEach(file => {
+            if (file.size > maxSize) {
+                alert(`File "${file.name}" exceeds 10MB limit. Please choose a smaller file.`);
+                return;
+            }
+            
+            // Check if file already attached
+            if (attachedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                return;
+            }
+            
+            attachedFiles.push(file);
+        });
+        
+        updateFileDisplay();
+        event.target.value = ''; // Reset input
+    };
+    
+    window.clearAttachedFiles = function() {
+        attachedFiles = [];
+        updateFileDisplay();
+    };
+    
+    function updateFileDisplay() {
+        const fileArea = document.getElementById('file-upload-area');
+        const attachedFilesDiv = document.getElementById('attached-files');
+        
+        if (attachedFiles.length === 0) {
+            fileArea.style.display = 'none';
+            return;
+        }
+        
+        fileArea.style.display = 'block';
+        attachedFilesDiv.innerHTML = '';
+        
+        attachedFiles.forEach((file, index) => {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'file-attachment';
+            fileDiv.innerHTML = `
+                <i class="bi bi-file-earmark file-icon"></i>
+                <span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+                <span class="file-size">(${formatFileSize(file.size)})</span>
+                <i class="bi bi-x-circle remove-file" onclick="removeFile(${index})" title="Remove file"></i>
+            `;
+            attachedFilesDiv.appendChild(fileDiv);
+        });
+    }
+    
+    window.removeFile = function(index) {
+        attachedFiles.splice(index, 1);
+        updateFileDisplay();
+    };
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    function renderAttachedFiles(files) {
+        if (!files || files.length === 0) return '';
+        return `
+            <div class="attached-files-display">
+                ${files.map(file => `
+                    <div class="file-attachment">
+                        <i class="bi bi-file-earmark file-icon"></i>
+                        <span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+                        <span class="file-size">(${formatFileSize(file.size)})</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Configure marked.js for markdown rendering
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+    }
+    
+    // Determine WebSocket URL
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent/${agentId}/chat/`;
+    
+    let chatSocket = null;
+    let isConnected = false;
+    
+    // Load conversation history on page load
+    function loadConversationHistory() {
+        try {
+            // Parse JSON-encoded conversation messages from json_script tag
+            const messagesJsonElement = document.getElementById('conversation-messages-data');
+            if (messagesJsonElement && messagesJsonElement.textContent) {
+                const jsonText = messagesJsonElement.textContent.trim();
+                if (jsonText && jsonText !== '[]' && jsonText !== '') {
+                    const messages = JSON.parse(jsonText);
+                    
+                    // Display all messages
+                    messages.forEach(msg => {
+                        if (msg.type === 'user') {
+                            addMessage('user', msg.content, 'user', null, null, 0, 1);
+                        } else if (msg.type === 'agent') {
+                            addMessage('agent', msg.content, 'agent', null, null, 0, 1);
+                        } else if (msg.type === 'tool_call') {
+                            addToolCall(msg.tool_name, msg.tool_parameters || {}, msg.timestamp);
+                        } else if (msg.type === 'tool_result') {
+                            addToolResult(msg.tool_name, msg.tool_result || {}, msg.timestamp);
+                        }
+                    });
+                    
+                    // Scroll to bottom after loading history
+                    setTimeout(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 100);
+                }
+            }
+        } catch (e) {
+            console.error('Error loading conversation history:', e);
+        }
+    }
+    
+    // Connect to WebSocket
+    function connect() {
+        chatSocket = new WebSocket(wsUrl);
+        
+        chatSocket.onopen = function(e) {
+            isConnected = true;
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.className = 'badge rounded-pill text-bg-success px-3 py-2';
+            console.log('WebSocket connected');
+        };
+        
+        chatSocket.onclose = function(e) {
+            isConnected = false;
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.className = 'badge rounded-pill text-bg-danger px-3 py-2';
+            console.log('WebSocket disconnected');
+            
+            // Try to reconnect after 3 seconds
+            setTimeout(connect, 3000);
+        };
+        
+        chatSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+            connectionStatus.textContent = 'Error';
+            connectionStatus.className = 'badge rounded-pill text-bg-danger px-3 py-2';
+        };
+        
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            handleMessage(data);
+        };
+    }
+    
+    // Track streaming messages
+    let currentStreamingMessage = null;
+    
+    // Handle incoming messages
+    function handleMessage(data) {
+        const { type, message, timestamp, error } = data;
+        
+        if (type === 'error') {
+            addMessage('system', error || message, 'error');
+            return;
+        }
+        
+        if (type === 'system_message') {
+            addMessage('system', message, 'info');
+            return;
+        }
+        
+        if (type === 'user_message') {
+            addMessage('user', message, 'user');
+            return;
+        }
+        
+        if (type === 'tool_call') {
+            addToolCall(data.tool_name, data.parameters, data.timestamp);
+            return;
+        }
+        
+        if (type === 'tool_result') {
+            addToolResult(data.tool_name, data.result, data.timestamp);
+            return;
+        }
+        
+        if (type === 'agent_message_start') {
+            // Start a new streaming message
+            currentStreamingMessage = {
+                responseId: data.response_id,
+                query: data.query,
+                timestamp: data.timestamp,
+                model: data.model,
+                provider: data.provider
+            };
+            startStreamingMessage(currentStreamingMessage);
+            return;
+        }
+        
+        if (type === 'stream_chunk') {
+            // Append chunk to streaming message; wait for agent_message to finalize
+            if (currentStreamingMessage) {
+                appendStreamChunk(data.content, data.done);
+            }
+            return;
+        }
+        
+        if (type === 'agent_message') {
+            const responseId = data.response_id;
+            const streamingEl = responseId
+                ? document.getElementById(`streaming-message-${responseId}`)
+                : null;
+
+            // Finalize in-place when streaming already rendered this response
+            if (currentStreamingMessage || streamingEl) {
+                if (!currentStreamingMessage && responseId) {
+                    currentStreamingMessage = {
+                        responseId: responseId,
+                        query: data.query,
+                        timestamp: data.timestamp,
+                        model: data.model,
+                        provider: data.provider,
+                    };
+                }
+                finalizeStreamingMessage(data);
+                currentStreamingMessage = null;
+            } else {
+                const query = data.query;
+                const toolCallsCount = data.tool_calls_count || 0;
+                const iterations = data.iterations || 1;
+                addMessage('agent', message, 'agent', responseId, query, toolCallsCount, iterations);
+            }
+            return;
+        }
+        
+        if (type === 'feedback_received') {
+            // Show feedback confirmation
+            const feedbackMsg = document.createElement('div');
+            feedbackMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+            feedbackMsg.innerHTML = `
+                <small>${data.message}</small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            chatMessages.appendChild(feedbackMsg);
+            setTimeout(() => feedbackMsg.remove(), 3000);
+            return;
+        }
+        
+        if (type === 'typing') {
+            // Show/hide typing indicator
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (data.status) {
+                if (!typingIndicator) {
+                    const indicator = document.createElement('div');
+                    indicator.id = 'typing-indicator';
+                    indicator.className = 'text-muted small mb-2';
+                    indicator.innerHTML = '<i class="bi bi-three-dots"></i> Agent is typing...';
+                    chatMessages.appendChild(indicator);
+                    scrollToBottom();
+                }
+            } else {
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+            return;
+        }
+    }
+    
+    // Add tool call visualization
+    function addToolCall(toolName, parameters, timestamp) {
+        // Remove placeholder if exists
+        const placeholder = chatMessages.querySelector('.text-center.text-muted');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-2 d-flex justify-content-start';
+        
+        const toolCallBubble = document.createElement('div');
+        toolCallBubble.className = 'p-2 rounded bg-info bg-opacity-10 border border-info border-opacity-25';
+        toolCallBubble.style.maxWidth = '75%';
+        
+        const paramsText = typeof parameters === 'string' ? parameters : JSON.stringify(parameters, null, 2);
+        
+        toolCallBubble.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-gear-fill text-info"></i>
+                <span class="fw-bold small">Using tool: ${escapeHtml(toolName)}</span>
+            </div>
+            <details class="small">
+                <summary style="cursor: pointer; color: #0d6efd;">View parameters</summary>
+                <pre class="mt-2 mb-0 small bg-white p-2 rounded" style="max-height: 200px; overflow-y: auto;">${escapeHtml(paramsText)}</pre>
+            </details>
+        `;
+        
+        messageDiv.appendChild(toolCallBubble);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    // Add tool result visualization
+    function addToolResult(toolName, result, timestamp) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-2 d-flex justify-content-start';
+        
+        const toolResultBubble = document.createElement('div');
+        toolResultBubble.className = 'p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25';
+        toolResultBubble.style.maxWidth = '75%';
+        
+        let resultContent = '';
+        if (result && typeof result === 'object') {
+            if (result.error) {
+                toolResultBubble.className = 'p-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25';
+                resultContent = `<div class="text-danger small"><strong>Error:</strong> ${escapeHtml(result.error)}</div>`;
+            } else if (result.result_content) {
+                resultContent = `<div class="small">${escapeHtml(result.result_content)}</div>`;
+            } else if (result.full_result) {
+                resultContent = `<div class="small">${escapeHtml(JSON.stringify(result.full_result, null, 2))}</div>`;
+            } else {
+                resultContent = `<div class="small">${escapeHtml(JSON.stringify(result, null, 2))}</div>`;
+            }
+            
+            // Show result files if any
+            if (result.result_files && result.result_files.length > 0) {
+                const filesList = result.result_files.map(file => {
+                    const fileName = file.file_name || file;
+                    const fileUrl = file.file_url || file.url || '#';
+                    return `<a href="${fileUrl}" target="_blank" class="text-decoration-none">${escapeHtml(fileName)}</a>`;
+                }).join(', ');
+                resultContent += `<div class="mt-1 small text-muted"><i class="bi bi-file-earmark"></i> Files: ${filesList}</div>`;
+            }
+        } else {
+            resultContent = `<div class="small">${escapeHtml(String(result))}</div>`;
+        }
+        
+        toolResultBubble.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span class="fw-bold small">Tool result: ${escapeHtml(toolName)}</span>
+            </div>
+            <div class="mt-1">
+                ${resultContent}
+            </div>
+        `;
+        
+        messageDiv.appendChild(toolResultBubble);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    // Start streaming message
+    function startStreamingMessage(messageData) {
+        // Remove placeholder if exists
+        const placeholder = chatMessages.querySelector('.text-center.text-muted');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-3 d-flex justify-content-start';
+        messageDiv.id = `streaming-message-${messageData.responseId}`;
+        
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'p-3 rounded bg-white border';
+        messageBubble.style.maxWidth = '75%';
+        
+        messageBubble.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-robot"></i>
+                <span class="fw-bold">Agent</span>
+                <span class="badge bg-secondary small">${escapeHtml(messageData.model || 'Unknown')}</span>
+            </div>
+            <div class="message-content" style="white-space: pre-wrap; word-wrap: break-word;">
+                <span class="streaming-cursor">▊</span>
+            </div>
+            <div class="mt-2 small text-muted">
+                <i class="bi bi-arrow-repeat"></i> Streaming...
+            </div>
+        `;
+        
+        messageDiv.appendChild(messageBubble);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    // Append chunk to streaming message
+    function appendStreamChunk(content, done) {
+        if (!currentStreamingMessage) return;
+        
+        const messageDiv = document.getElementById(`streaming-message-${currentStreamingMessage.responseId}`);
+        if (!messageDiv) return;
+        
+        const contentDiv = messageDiv.querySelector('.message-content');
+        if (!contentDiv) return;
+        
+        // Remove cursor if exists
+        const cursor = contentDiv.querySelector('.streaming-cursor');
+        if (cursor) {
+            cursor.remove();
+        }
+        
+        // Append content and re-render markdown
+        if (content) {
+            const currentText = contentDiv.textContent || '';
+            const newText = currentText + content;
+            // Update text content for streaming, but don't render markdown until done
+            contentDiv.textContent = newText;
+        }
+        
+        // Add cursor back if not done
+        if (!done) {
+            const cursorSpan = document.createElement('span');
+            cursorSpan.className = 'streaming-cursor';
+            cursorSpan.textContent = '▊';
+            cursorSpan.style.animation = 'blink 1s infinite';
+            contentDiv.appendChild(cursorSpan);
+        } else {
+            // Remove streaming indicator
+            const streamingIndicator = messageDiv.querySelector('.text-muted');
+            if (streamingIndicator) {
+                streamingIndicator.remove();
+            }
+        }
+        
+        scrollToBottom();
+    }
+    
+    // Finalize streaming message
+    function finalizeStreamingMessage(data) {
+        if (!currentStreamingMessage) return;
+        
+        const messageDiv = document.getElementById(`streaming-message-${currentStreamingMessage.responseId}`);
+        if (!messageDiv) return;
+        
+        // Remove streaming cursor and indicator
+        const cursor = messageDiv.querySelector('.streaming-cursor');
+        if (cursor) {
+            cursor.remove();
+        }
+        const streamingIndicator = messageDiv.querySelector('.text-muted');
+        if (streamingIndicator) {
+            streamingIndicator.remove();
+        }
+        
+        // Add feedback buttons and metadata
+        const messageBubble = messageDiv.querySelector('.p-3');
+        const contentDiv = messageDiv.querySelector('.message-content');
+        const currentText = contentDiv ? contentDiv.textContent : '';
+        
+        // Prefer server final text (stream buffer can include cursor artifacts)
+        const finalText = data.message || currentText || '';
+        if (contentDiv) {
+            contentDiv.className = 'message-content markdown';
+            contentDiv.innerHTML = renderMarkdown(finalText);
+            // Re-highlight code blocks
+            if (typeof hljs !== 'undefined') {
+                contentDiv.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            }
+        }
+        
+        // Update with final message structure
+        messageBubble.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-robot"></i>
+                <span class="fw-bold">Agent</span>
+                <span class="badge bg-secondary small">${escapeHtml(data.model || currentStreamingMessage.model || 'Unknown')}</span>
+            </div>
+            <div class="message-content markdown">${renderMarkdown(finalText)}</div>
+            <div class="mt-2 d-flex gap-2 align-items-center">
+                <button class="btn btn-sm btn-outline-primary feedback-btn" 
+                        data-response-id="${data.response_id || currentStreamingMessage.responseId}" 
+                        data-query="${escapeHtml(data.query || currentStreamingMessage.query || '')}"
+                        onclick="showFeedbackModal(this)">
+                    <i class="bi bi-hand-thumbs-up"></i> Feedback
+                </button>
+                <small class="text-muted">
+                    ${data.tool_calls_count ? `<i class="bi bi-gear"></i> ${data.tool_calls_count} tool calls` : ''}
+                    ${data.iterations > 1 ? `<i class="bi bi-arrow-repeat"></i> ${data.iterations} iterations` : ''}
+                </small>
+            </div>
+        `;
+        
+        // Re-highlight code blocks
+        if (typeof hljs !== 'undefined') {
+            messageBubble.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+            });
+        }
+        
+        // Store response ID for feedback
+        messageBubble.setAttribute('data-response-id', data.response_id || currentStreamingMessage.responseId);
+        messageBubble.setAttribute('data-query', data.query || currentStreamingMessage.query || '');
+    }
+    
+    // Add message to chat
+    function addMessage(sender, text, type, responseId = null, query = null, toolCallsCount = 0, iterations = 1, extraOpts = null) {
+        const opts = extraOpts || {};
+        // Remove placeholder if exists
+        const placeholder = chatMessages.querySelector('.text-center.text-muted');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-3 d-flex ${sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+        if (opts.wrapperId) {
+            messageDiv.id = opts.wrapperId;
+        }
+        
+        const messageBubble = document.createElement('div');
+        messageBubble.className = `p-3 rounded ${sender === 'user' ? 'bg-primary text-white' : sender === 'agent' ? 'bg-white border' : 'bg-light text-muted'}`;
+        messageBubble.style.maxWidth = '75%';
+        
+        if (sender === 'user') {
+            // Check if message has attached files (webhook-sourced lines must not pick up the file picker state)
+            const filesHtml = (!opts.skipAttachedFiles && attachedFiles.length > 0) ? renderAttachedFiles(attachedFiles) : '';
+            messageBubble.innerHTML = `
+                <div class="fw-bold mb-1">You</div>
+                <div class="message-content">${escapeHtml(text)}</div>
+                ${filesHtml}
+            `;
+        } else if (sender === 'agent') {
+            // Add tool call information if any
+            let toolInfo = '';
+            if (toolCallsCount > 0) {
+                toolInfo = `
+                    <div class="mt-2 pt-2 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-tools"></i> Used ${toolCallsCount} tool${toolCallsCount > 1 ? 's' : ''} 
+                            ${iterations > 1 ? `in ${iterations} iteration${iterations > 1 ? 's' : ''}` : ''}
+                        </small>
+                    </div>
+                `;
+            }
+            
+            // Add feedback buttons for agent messages
+            let feedbackButtons = '';
+            if (responseId) {
+                feedbackButtons = `
+                    <div class="mt-2 d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-success feedback-btn" 
+                                data-response-id="${responseId}" 
+                                data-feedback-type="positive"
+                                data-query="${escapeHtml(query || '')}"
+                                data-response="${escapeHtml(text)}"
+                                title="This response was helpful">
+                            <i class="bi bi-hand-thumbs-up"></i> Helpful
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger feedback-btn" 
+                                data-response-id="${responseId}" 
+                                data-feedback-type="negative"
+                                data-query="${escapeHtml(query || '')}"
+                                data-response="${escapeHtml(text)}"
+                                title="This response was not helpful">
+                            <i class="bi bi-hand-thumbs-down"></i> Not Helpful
+                        </button>
+                    </div>
+                `;
+            }
+            messageBubble.innerHTML = `
+                <div class="fw-bold mb-1">Agent</div>
+                <div class="message-content markdown">${renderMarkdown(text)}</div>
+                ${toolInfo}
+                ${feedbackButtons}
+            `;
+            
+            // Re-highlight code blocks
+            if (typeof hljs !== 'undefined') {
+                messageBubble.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            }
+            
+            // Add event listeners to feedback buttons
+            if (responseId) {
+                messageBubble.querySelectorAll('.feedback-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const responseId = this.dataset.responseId;
+                        const feedbackType = this.dataset.feedbackType;
+                        const query = this.dataset.query;
+                        const response = this.dataset.response;
+                        
+                        // Disable buttons to prevent multiple submissions
+                        messageBubble.querySelectorAll('.feedback-btn').forEach(b => b.disabled = true);
+                        
+                        // Send feedback
+                        chatSocket.send(JSON.stringify({
+                            type: 'feedback',
+                            response_id: responseId,
+                            feedback_type: feedbackType,
+                            query: query,
+                            response: response,
+                            feedback_text: ''
+                        }));
+                        
+                        // Visual feedback
+                        this.classList.add('active');
+                    });
+                });
+            }
+        } else {
+            messageBubble.innerHTML = `<small>${escapeHtml(text)}</small>`;
+        }
+        
+        messageDiv.appendChild(messageBubble);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Scroll to bottom of chat
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    /** Optional bridge for webhook test panel — live-updates the chat column */
+    window.agentTestWebhookChat = {
+        begin(composedText) {
+            document.getElementById('webhook-run-status-msg')?.remove();
+            document.getElementById('webhook-typing-indicator')?.remove();
+            addMessage('user', composedText, 'user', null, null, 0, 1, { skipAttachedFiles: true });
+            const row = document.createElement('div');
+            row.id = 'webhook-run-status-msg';
+            row.className = 'mb-2 d-flex justify-content-center';
+            row.innerHTML =
+                '<div class="small text-muted px-3 py-1 rounded-pill bg-light border">' +
+                '<i class="bi bi-link-45deg me-1"></i>' +
+                '<span class="webhook-run-status-text">Webhook test · sending…</span></div>';
+            chatMessages.appendChild(row);
+            scrollToBottom();
+        },
+        setStatus(text) {
+            const el = document.querySelector('#webhook-run-status-msg .webhook-run-status-text');
+            if (el) el.textContent = text;
+        },
+        complete(data) {
+            document.getElementById('webhook-run-status-msg')?.remove();
+            document.getElementById('webhook-typing-indicator')?.remove();
+            const toolCalls = data.tool_calls || [];
+            if (Array.isArray(toolCalls)) {
+                toolCalls.forEach(function (tc) {
+                    if (!tc || typeof tc !== 'object') return;
+                    const name = tc.tool_name || tc.name || tc.tool || 'Tool';
+                    const params = tc.parameters !== undefined ? tc.parameters : tc.arguments;
+                    const payload = params !== undefined ? params : tc;
+                    addToolCall(name, typeof payload === 'object' && payload !== null ? payload : { raw: payload }, tc.timestamp || '');
+                });
+            }
+            const tcCount = Array.isArray(toolCalls) ? toolCalls.length : 0;
+            addMessage('agent', data.answer || '', 'agent', null, null, tcCount, data.iterations || 1);
+            scrollToBottom();
+        },
+        fail(message) {
+            document.getElementById('webhook-run-status-msg')?.remove();
+            document.getElementById('webhook-typing-indicator')?.remove();
+            addMessage('system', message || 'Webhook test failed.', 'info');
+            scrollToBottom();
+        },
+    };
+    
+    // Handle form submission
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!isConnected) {
+            alert('Not connected to server. Please wait...');
+            return;
+        }
+        
+        const message = messageInput.value.trim();
+        if (!message && attachedFiles.length === 0) {
+            return;
+        }
+        
+        const expectedResponse = expectedResponseInput.value.trim();
+        
+        // Upload files first if any
+        if (attachedFiles.length > 0) {
+            uploadFilesAndSendMessage(message, expectedResponse);
+        } else {
+            // Send message via WebSocket
+            chatSocket.send(JSON.stringify({
+                type: 'chat_message',
+                message: message,
+                expected_response: expectedResponse
+            }));
+            
+            // Clear input
+            messageInput.value = '';
+            expectedResponseInput.value = '';
+        }
+        
+        // Disable send button temporarily
+        sendButton.disabled = true;
+        setTimeout(() => {
+            sendButton.disabled = false;
+        }, 1000);
+    });
+    
+    // Upload files and send message
+    async function uploadFilesAndSendMessage(message, expectedResponse) {
+        const formData = new FormData();
+        attachedFiles.forEach((file, index) => {
+            formData.append(`file_${index}`, file);
+        });
+        
+        try {
+            const response = await fetch(`/dashboard/${agentSlug}/upload-chat-file/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Get file info
+                const fileInfos = attachedFiles.map((file, index) => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                }));
+                
+                // Send message with file info via WebSocket
+                chatSocket.send(JSON.stringify({
+                    type: 'chat_message',
+                    message: message,
+                    expected_response: expectedResponse,
+                    files: fileInfos,
+                    file_urls: result.files || []
+                }));
+                
+                // Clear input and files
+                messageInput.value = '';
+                expectedResponseInput.value = '';
+                clearAttachedFiles();
+            } else {
+                alert('Failed to upload files: ' + (result.error || 'Unknown error'));
+                sendButton.disabled = false;
+            }
+        } catch (error) {
+            console.error('File upload error:', error);
+            alert('Failed to upload files. Please try again.');
+            sendButton.disabled = false;
+        }
+    }
+    
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Allow Enter to send (Shift+Enter for new line)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // Load conversation history on page load
+    loadConversationHistory();
+    
+    // Connect on page load
+    connect();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (chatSocket) {
+            chatSocket.close();
+        }
+    });
+})();
+</script>
+
+<script>
+(function () {
+    const testUrl = '{{ webhook_test_endpoint_url|escapejs }}';
+    const webhookApiUrl = '{{ webhook_api_url|escapejs }}';
+    const webhookGetAnswerUrl = '{{ webhook_get_answer_url|escapejs }}';
+    const sendBtn = document.getElementById('webhook-send-test');
+    const statusEl = document.getElementById('webhook-status');
+    const resultWrap = document.getElementById('webhook-result');
+    const resultBody = document.getElementById('webhook-result-body');
+    const copyBtn = document.getElementById('copy-webhook-url');
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function buildBody() {
+        const message = document.getElementById('webhook-message').value.trim();
+        const payloadRaw = document.getElementById('webhook-payload').value.trim();
+        const metaRaw = document.getElementById('webhook-metadata').value.trim();
+        let payload = undefined;
+        if (payloadRaw) {
+            try {
+                payload = JSON.parse(payloadRaw);
+            } catch (e) {
+                alert('Payload must be valid JSON.');
+                return null;
+            }
+        }
+        let metadata = {};
+        if (metaRaw) {
+            try {
+                metadata = JSON.parse(metaRaw);
+            } catch (e) {
+                alert('Metadata must be valid JSON.');
+                return null;
+            }
+        }
+        if (!message && payload === undefined) {
+            alert('Enter a message and/or a JSON payload.');
+            return null;
+        }
+        const body = {};
+        if (message) body.message = message;
+        if (payload !== undefined) body.payload = payload;
+        if (metadata && Object.keys(metadata).length) body.metadata = metadata;
+        return body;
+    }
+
+    /** Same composition as AgentWebhookSerializer.composed_message() (preview in chat). */
+    function composeWebhookPreview(body) {
+        const parts = [];
+        let primary = (body.message || '').trim();
+        if (!primary && body.text) primary = String(body.text).trim();
+        if (primary) parts.push(primary);
+        if (body.payload !== undefined && body.payload !== null) {
+            parts.push('\n\n[Webhook payload]\n' + JSON.stringify(body.payload, null, 2));
+        }
+        return parts.join('\n').trim();
+    }
+
+    function formatApiError(data) {
+        if (!data || typeof data !== 'object') return 'Request failed.';
+        if (data.error) return typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        if (data.detail) return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+        return 'Request failed.';
+    }
+
+    async function pollUntilDone(requestId, apiKey) {
+        const maxAttempts = 120;
+        let attempt = 0;
+        const useToken = !!(apiKey && String(apiKey).trim());
+        while (attempt < maxAttempts) {
+            attempt += 1;
+            let url;
+            /** @type {Record<string, string>} */
+            const headers = { Accept: 'application/json' };
+            if (useToken) {
+                url = webhookGetAnswerUrl + '?request_id=' + encodeURIComponent(requestId);
+                headers['Authorization'] = 'ApiKey ' + String(apiKey).trim();
+            } else {
+                url = testUrl + '?request_id=' + encodeURIComponent(requestId);
+            }
+            const res = await fetch(url, {
+                credentials: useToken ? 'omit' : 'same-origin',
+                headers,
+            });
+            const data = await res.json().catch(() => ({}));
+            resultBody.textContent = JSON.stringify(data, null, 2);
+            resultWrap.classList.remove('d-none');
+            if (res.status === 200 && data.status === 'completed') {
+                statusEl.textContent = 'Completed.';
+                if (window.agentTestWebhookChat) {
+                    window.agentTestWebhookChat.complete(data);
+                }
+                return;
+            }
+            if (res.status === 500 && data.status === 'failed') {
+                statusEl.textContent = 'Failed.';
+                if (window.agentTestWebhookChat) {
+                    window.agentTestWebhookChat.fail(data.error || 'Request processing failed');
+                }
+                return;
+            }
+            if ((res.status === 202 || res.status === 200) && (data.status === 'pending' || data.status === 'processing')) {
+                statusEl.textContent = 'Waiting… (' + data.status + ')';
+                if (window.agentTestWebhookChat) {
+                    window.agentTestWebhookChat.setStatus('Webhook test · ' + data.status + '…');
+                }
+                await new Promise((r) => setTimeout(r, 1500));
+                continue;
+            }
+            if (useToken && (res.status === 401 || res.status === 403 || res.status === 404)) {
+                statusEl.textContent = formatApiError(data);
+                if (window.agentTestWebhookChat) {
+                    window.agentTestWebhookChat.fail(formatApiError(data));
+                }
+                return;
+            }
+            statusEl.textContent = 'Waiting… (' + (data.status || res.status) + ')';
+            if (window.agentTestWebhookChat) {
+                window.agentTestWebhookChat.setStatus('Webhook test · waiting…');
+            }
+            await new Promise((r) => setTimeout(r, 1500));
+        }
+        statusEl.textContent = 'Timed out waiting for result.';
+        if (window.agentTestWebhookChat) {
+            window.agentTestWebhookChat.fail('Timed out waiting for result.');
+        }
+    }
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+            const input = document.getElementById('webhook-api-url');
+            if (!input) return;
+            input.select();
+            navigator.clipboard.writeText(input.value).then(
+                function () {
+                    copyBtn.innerHTML = '<i class="bi bi-check2"></i>';
+                    setTimeout(function () {
+                        copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                    }, 1500);
+                },
+                function () {
+                    document.execCommand('copy');
+                }
+            );
+        });
+    }
+
+    if (sendBtn) {
+        sendBtn.addEventListener('click', async function () {
+            const body = buildBody();
+            if (!body) return;
+            const apiKeyEl = document.getElementById('webhook-agent-api-key');
+            const apiKey = apiKeyEl ? apiKeyEl.value.trim() : '';
+            const composedPreview = composeWebhookPreview(body);
+            if (window.agentTestWebhookChat) {
+                window.agentTestWebhookChat.begin(composedPreview || '(webhook)');
+            }
+            statusEl.textContent = 'Sending…';
+            sendBtn.disabled = true;
+            try {
+                /** @type {RequestInit} */
+                let fetchOpts;
+                if (apiKey) {
+                    fetchOpts = {
+                        method: 'POST',
+                        credentials: 'omit',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Accept: 'application/json',
+                            Authorization: 'ApiKey ' + apiKey,
+                        },
+                        body: JSON.stringify(body),
+                    };
+                } else {
+                    fetchOpts = {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            Accept: 'application/json',
+                        },
+                        body: JSON.stringify(body),
+                    };
+                }
+                const postUrl = apiKey ? webhookApiUrl : testUrl;
+                const res = await fetch(postUrl, fetchOpts);
+                const data = await res.json().catch(() => ({}));
+                resultBody.textContent = JSON.stringify(data, null, 2);
+                resultWrap.classList.remove('d-none');
+                if (!res.ok && res.status !== 202) {
+                    statusEl.textContent = formatApiError(data);
+                    if (window.agentTestWebhookChat) {
+                        window.agentTestWebhookChat.fail(formatApiError(data));
+                    }
+                    return;
+                }
+                if (data.request_id) {
+                    statusEl.textContent = 'Queued. Polling for result…';
+                    if (window.agentTestWebhookChat) {
+                        window.agentTestWebhookChat.setStatus('Webhook test · queued · waiting for agent…');
+                    }
+                    await pollUntilDone(data.request_id, apiKey);
+                } else {
+                    statusEl.textContent = 'Done.';
+                    if (window.agentTestWebhookChat) {
+                        window.agentTestWebhookChat.fail('Unexpected response (no request_id).');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = 'Network error.';
+                resultBody.textContent = String(e);
+                resultWrap.classList.remove('d-none');
+                if (window.agentTestWebhookChat) {
+                    window.agentTestWebhookChat.fail('Network error.');
+                }
+            } finally {
+                sendBtn.disabled = false;
+            }
+        });
+    }
+})();
+</script>
+
+<style>
+#chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #ccc #f8f9fa;
+}
+
+#chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.streaming-cursor {
+    animation: blink 1s infinite;
+    color: #0d6efd;
+}
+</style>
+{% endblock %}

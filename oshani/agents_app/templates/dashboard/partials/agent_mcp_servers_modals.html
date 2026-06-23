@@ -1,0 +1,223 @@
+{% comment %}
+  MCP Add/Edit modals + JS. Requires: agent, ret (next_page token for redirects).
+{% endcomment %}
+<!-- Edit MCP Server Modal -->
+<div class="modal fade" id="editMcpServerModal" tabindex="-1" aria-labelledby="editMcpServerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMcpServerModalLabel"><i class="bi bi-pencil"></i> Edit MCP Server</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="" id="edit-mcp-server-form">
+                {% csrf_token %}
+                <input type="hidden" name="next_page" value="{{ ret }}">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_mcp_server_id" name="mcp_server_id">
+                    <div class="mb-3">
+                        <label for="edit_mcp_name" class="form-label">Server Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_mcp_name" name="name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_mcp_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_mcp_description" name="description" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_mcp_transport_type" class="form-label">Transport Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="edit_mcp_transport_type" name="transport_type" required onchange="toggleEditTransportFields()">
+                            <option value="stdio">STDIO (Standard I/O)</option>
+                            <option value="http">HTTP</option>
+                            <option value="sse">SSE (Server-Sent Events)</option>
+                        </select>
+                    </div>
+
+                    <div id="edit_stdio_fields">
+                        <div class="mb-3">
+                            <label for="edit_mcp_command" class="form-label">Command <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_mcp_command" name="command">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_mcp_args" class="form-label">Arguments (JSON array)</label>
+                            <textarea class="form-control font-monospace" id="edit_mcp_args" name="args" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="edit_http_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="edit_mcp_url" class="form-label">URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="edit_mcp_url" name="url">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_mcp_headers" class="form-label">Headers (JSON object)</label>
+                            <textarea class="form-control font-monospace" id="edit_mcp_headers" name="headers" rows="3"></textarea>
+                            <small class="text-muted">For HTTP transport, API key will be automatically added if not provided</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_mcp_auto_connect" name="auto_connect">
+                        <label class="form-check-label" for="edit_mcp_auto_connect">
+                            Auto-connect when agent is used
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Update MCP Server
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add MCP Server Modal -->
+<div class="modal fade" id="addMcpServerModal" tabindex="-1" aria-labelledby="addMcpServerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMcpServerModalLabel"><i class="bi bi-plug"></i> Add MCP Server</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'mcp_server_create' agent.slug %}">
+                {% csrf_token %}
+                <input type="hidden" name="next_page" value="{{ ret }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="mcp_name" class="form-label">Server Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="mcp_name" name="name" required
+                               placeholder="e.g., filesystem, fetch, github">
+                        <small class="text-muted">Unique name for this MCP server</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mcp_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="mcp_description" name="description" rows="2"
+                                  placeholder="What does this MCP server provide?"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mcp_transport_type" class="form-label">Transport Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="mcp_transport_type" name="transport_type" required onchange="toggleTransportFields()">
+                            <option value="stdio" selected>STDIO (Standard I/O)</option>
+                            <option value="http">HTTP</option>
+                            <option value="sse">SSE (Server-Sent Events)</option>
+                        </select>
+                    </div>
+
+                    <div id="stdio_fields">
+                        <div class="mb-3">
+                            <label for="mcp_command" class="form-label">Command <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="mcp_command" name="command"
+                                   placeholder="e.g., npx, uvx, python">
+                            <small class="text-muted">Command to run the MCP server</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mcp_args" class="form-label">Arguments (JSON array)</label>
+                            <textarea class="form-control font-monospace" id="mcp_args" name="args" rows="3"
+                                      placeholder='["-y", "@modelcontextprotocol/server-filesystem", "."]'></textarea>
+                            <small class="text-muted">JSON array of command arguments</small>
+                        </div>
+                    </div>
+
+                    <div id="http_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="mcp_url" class="form-label">URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="mcp_url" name="url"
+                                   placeholder="https://example.com/mcp">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mcp_headers" class="form-label">Headers (JSON object)</label>
+                            <textarea class="form-control font-monospace" id="mcp_headers" name="headers" rows="3"
+                                      placeholder='{"Authorization": "Bearer token"}'></textarea>
+                            <small class="text-muted">JSON object with HTTP headers. For HTTP transport, your user API key will be automatically added if not provided. Note: MCP uses user API keys, not agent API keys.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="mcp_auto_connect" name="auto_connect" checked>
+                        <label class="form-check-label" for="mcp_auto_connect">
+                            Auto-connect when agent is used
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create MCP Server
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleTransportFields() {
+    const transportType = document.getElementById('mcp_transport_type').value;
+    const stdioFields = document.getElementById('stdio_fields');
+    const httpFields = document.getElementById('http_fields');
+    const commandField = document.getElementById('mcp_command');
+    const urlField = document.getElementById('mcp_url');
+
+    if (transportType === 'stdio') {
+        stdioFields.style.display = 'block';
+        httpFields.style.display = 'none';
+        commandField.required = true;
+        urlField.required = false;
+    } else {
+        stdioFields.style.display = 'none';
+        httpFields.style.display = 'block';
+        commandField.required = false;
+        urlField.required = true;
+    }
+}
+
+function toggleEditTransportFields() {
+    const transportType = document.getElementById('edit_mcp_transport_type').value;
+    const stdioFields = document.getElementById('edit_stdio_fields');
+    const httpFields = document.getElementById('edit_http_fields');
+    const commandField = document.getElementById('edit_mcp_command');
+    const urlField = document.getElementById('edit_mcp_url');
+
+    if (transportType === 'stdio') {
+        stdioFields.style.display = 'block';
+        httpFields.style.display = 'none';
+        commandField.required = true;
+        urlField.required = false;
+    } else {
+        stdioFields.style.display = 'none';
+        httpFields.style.display = 'block';
+        commandField.required = false;
+        urlField.required = true;
+    }
+}
+
+function editMcpServer(id, name, description, transportType, command, args, url, headers, autoConnect) {
+    var tpl = "{% url 'mcp_server_update' agent.slug 999999 %}".replace(/999999/g, String(id));
+    document.getElementById('edit-mcp-server-form').action = tpl;
+
+    document.getElementById('edit_mcp_server_id').value = id;
+    document.getElementById('edit_mcp_name').value = name;
+    document.getElementById('edit_mcp_description').value = description || '';
+    document.getElementById('edit_mcp_transport_type').value = transportType;
+    document.getElementById('edit_mcp_command').value = command || '';
+    document.getElementById('edit_mcp_args').value = Array.isArray(args) ? JSON.stringify(args, null, 2) : (args || '[]');
+    document.getElementById('edit_mcp_url').value = url || '';
+    document.getElementById('edit_mcp_headers').value = typeof headers === 'object' ? JSON.stringify(headers, null, 2) : (headers || '{}');
+    document.getElementById('edit_mcp_auto_connect').checked = autoConnect === 'true';
+
+    toggleEditTransportFields();
+
+    var modalEl = document.getElementById('editMcpServerModal');
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+</script>

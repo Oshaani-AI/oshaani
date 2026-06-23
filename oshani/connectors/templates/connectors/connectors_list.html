@@ -1,0 +1,923 @@
+{% extends 'base.html' %}
+
+{% block title %}Connectors - AI Agents Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .connector-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .connector-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .status-disconnected { background-color: #e9ecef; color: #495057; }
+    .status-connecting { background-color: #fff3cd; color: #856404; }
+    .status-connected { background-color: #d1e7dd; color: #0f5132; }
+    .status-error { background-color: #f8d7da; color: #721c24; }
+    .modal-backdrop {
+        z-index: 1040;
+    }
+    .modal {
+        z-index: 1050;
+    }
+    .btn-link[data-bs-toggle="collapse"] .bi-chevron-down {
+        transition: transform 0.3s ease;
+    }
+    .btn-link[data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down {
+        transform: rotate(180deg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-plug"></i> Connectors</h1>
+        <p class="text-muted">Manage your external service integrations</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createConnectorModal">
+            <i class="bi bi-plus-circle"></i> Create Connector
+        </button>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+<div id="alertContainer"></div>
+
+<!-- OAuth Connectors Documentation -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#connectorDocs" aria-expanded="false" aria-controls="connectorDocs">
+                        <i class="bi bi-info-circle"></i> About OAuth Connectors
+                        <i class="bi bi-chevron-down float-end"></i>
+                    </button>
+                </h5>
+            </div>
+            <div class="collapse" id="connectorDocs">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="bi bi-question-circle"></i> What are OAuth Connectors?</h6>
+                    <p>OAuth connectors allow you to securely connect your AI agents to external services like JIRA, Confluence, GitLab, GitHub, Google Workspace, and Microsoft 365. Once connected, you can automatically sync data from these services to train your agents, enabling them to answer questions about your projects, documentation, and workflows.</p>
+                    
+                    <h6 class="mb-3 mt-4"><i class="bi bi-gear"></i> How to Configure OAuth Connectors</h6>
+                    <p class="mb-3">Follow these steps to set up each connector type:</p>
+                    
+                    <div class="accordion" id="connectorConfigAccordion">
+                        <!-- JIRA Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingJira">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJira">
+                                    <i class="bi bi-jira me-2"></i> JIRA Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseJira" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <a href="https://developer.atlassian.com/console/myapps/" target="_blank">Atlassian Developer Console</a></li>
+                                        <li>Click <strong>"Create"</strong> → <strong>"OAuth 2.0 integration"</strong></li>
+                                        <li>Fill in the application details:
+                                            <ul>
+                                                <li><strong>Name:</strong> Your app name (e.g., "Oshani AI Agent")</li>
+                                                <li><strong>Application type:</strong> Web application</li>
+                                                <li><strong>Authorization callback URL:</strong> Copy the callback URL shown after creating the connector</li>
+                                            </ul>
+                                        </li>
+                                        <li>Add the following scopes:
+                                            <ul>
+                                                <li><code>read:jira-work</code> - Read issues and work items</li>
+                                                <li><code>read:jira-user</code> - Read user information</li>
+                                                <li><code>read:issue-details:jira</code> - Read issue details</li>
+                                            </ul>
+                                        </li>
+                                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                                        <li>Create the connector in Oshani with:
+                                            <ul>
+                                                <li><strong>Base URL:</strong> Your JIRA instance URL (e.g., <code>https://your-domain.atlassian.net</code>)</li>
+                                                <li><strong>Client ID:</strong> From Atlassian Developer Console</li>
+                                                <li><strong>Client Secret:</strong> From Atlassian Developer Console</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Connect"</strong> to authorize the application</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Confluence Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingConfluence">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConfluence">
+                                    <i class="bi bi-file-text me-2"></i> Confluence Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseConfluence" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <a href="https://developer.atlassian.com/console/myapps/" target="_blank">Atlassian Developer Console</a></li>
+                                        <li>Click <strong>"Create"</strong> → <strong>"OAuth 2.0 integration"</strong></li>
+                                        <li>Fill in the application details:
+                                            <ul>
+                                                <li><strong>Name:</strong> Your app name</li>
+                                                <li><strong>Application type:</strong> Web application</li>
+                                                <li><strong>Authorization callback URL:</strong> Copy the callback URL shown after creating the connector</li>
+                                            </ul>
+                                        </li>
+                                        <li>Add the following scopes:
+                                            <ul>
+                                                <li><code>read:confluence-content.all</code> - Read all Confluence content</li>
+                                                <li><code>read:confluence-space.summary</code> - Read space summaries</li>
+                                            </ul>
+                                        </li>
+                                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                                        <li>Create the connector with your Confluence instance URL</li>
+                                        <li>Click <strong>"Connect"</strong> to authorize</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- GitLab Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGitLab">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGitLab">
+                                    <i class="bi bi-git me-2"></i> GitLab Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseGitLab" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to your GitLab instance → <strong>User Settings</strong> → <strong>Applications</strong></li>
+                                        <li>Or for GitLab.com: <a href="https://gitlab.com/-/profile/applications" target="_blank">https://gitlab.com/-/profile/applications</a></li>
+                                        <li>Click <strong>"New application"</strong></li>
+                                        <li>Fill in the details:
+                                            <ul>
+                                                <li><strong>Name:</strong> Your application name</li>
+                                                <li><strong>Redirect URI:</strong> Copy the callback URL shown after creating the connector</li>
+                                                <li><strong>Scopes:</strong> Select <code>read_api</code> and <code>read_repository</code></li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Save application"</strong></li>
+                                        <li>Copy the <strong>Application ID</strong> (Client ID) and <strong>Secret</strong></li>
+                                        <li>Create the connector with:
+                                            <ul>
+                                                <li><strong>Base URL:</strong> Your GitLab instance URL (e.g., <code>https://gitlab.com</code> or <code>https://gitlab.yourcompany.com</code>)</li>
+                                                <li><strong>Client ID:</strong> Application ID from GitLab</li>
+                                                <li><strong>Client Secret:</strong> Secret from GitLab</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Connect"</strong> to authorize</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- GitHub Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGitHub">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGitHub">
+                                    <i class="bi bi-github me-2"></i> GitHub Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseGitHub" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to GitHub → <strong>Settings</strong> → <strong>Developer settings</strong> → <strong>OAuth Apps</strong></li>
+                                        <li>Or visit: <a href="https://github.com/settings/developers" target="_blank">https://github.com/settings/developers</a></li>
+                                        <li>Click <strong>"New OAuth App"</strong></li>
+                                        <li>Fill in the details:
+                                            <ul>
+                                                <li><strong>Application name:</strong> Your app name</li>
+                                                <li><strong>Homepage URL:</strong> Your website URL</li>
+                                                <li><strong>Authorization callback URL:</strong> Copy the callback URL shown after creating the connector</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Register application"</strong></li>
+                                        <li>Copy the <strong>Client ID</strong> and generate a <strong>Client Secret</strong></li>
+                                        <li>Create the connector with:
+                                            <ul>
+                                                <li><strong>Base URL:</strong> <code>https://api.github.com</code> (or your GitHub Enterprise URL)</li>
+                                                <li><strong>Client ID:</strong> From GitHub</li>
+                                                <li><strong>Client Secret:</strong> From GitHub</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Connect"</strong> to authorize</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Google Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGoogle">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGoogle">
+                                    <i class="bi bi-google me-2"></i> Google Workspace Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseGoogle" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
+                                        <li>Select or create a project</li>
+                                        <li>Navigate to <strong>APIs & Services</strong> → <strong>Credentials</strong></li>
+                                        <li>Click <strong>"Create Credentials"</strong> → <strong>"OAuth client ID"</strong></li>
+                                        <li>If prompted, configure the OAuth consent screen first:
+                                            <ul>
+                                                <li>Choose <strong>External</strong> user type</li>
+                                                <li>Fill in app information</li>
+                                                <li>Add scopes: <code>https://www.googleapis.com/auth/drive.readonly</code>, <code>https://www.googleapis.com/auth/documents.readonly</code></li>
+                                            </ul>
+                                        </li>
+                                        <li>Create OAuth client:
+                                            <ul>
+                                                <li><strong>Application type:</strong> Web application</li>
+                                                <li><strong>Name:</strong> Your app name</li>
+                                                <li><strong>Authorized redirect URIs:</strong> Copy the callback URL shown after creating the connector</li>
+                                            </ul>
+                                        </li>
+                                        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+                                        <li>Create the connector with:
+                                            <ul>
+                                                <li><strong>Base URL:</strong> <code>https://www.googleapis.com</code></li>
+                                                <li><strong>Client ID:</strong> From Google Cloud Console</li>
+                                                <li><strong>Client Secret:</strong> From Google Cloud Console</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Connect"</strong> to authorize</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Microsoft Configuration -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMicrosoft">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMicrosoft">
+                                    <i class="bi bi-microsoft me-2"></i> Microsoft 365 Configuration
+                                </button>
+                            </h2>
+                            <div id="collapseMicrosoft" class="accordion-collapse collapse" data-bs-parent="#connectorConfigAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Go to <a href="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank">Azure Portal</a></li>
+                                        <li>Click <strong>"New registration"</strong></li>
+                                        <li>Fill in the details:
+                                            <ul>
+                                                <li><strong>Name:</strong> Your application name</li>
+                                                <li><strong>Supported account types:</strong> Choose based on your needs</li>
+                                                <li><strong>Redirect URI:</strong> Web → Copy the callback URL shown after creating the connector</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Register"</strong></li>
+                                        <li>Go to <strong>"API permissions"</strong> and add:
+                                            <ul>
+                                                <li><code>Files.Read.All</code> - Read all files</li>
+                                                <li><code>Sites.Read.All</code> - Read all site collections</li>
+                                                <li><code>User.Read</code> - Sign in and read user profile</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Grant admin consent"</strong> if required</li>
+                                        <li>Go to <strong>"Certificates & secrets"</strong> → Create a new client secret</li>
+                                        <li>Copy the <strong>Application (client) ID</strong> and <strong>Client secret value</strong></li>
+                                        <li>Create the connector with:
+                                            <ul>
+                                                <li><strong>Base URL:</strong> <code>https://graph.microsoft.com</code></li>
+                                                <li><strong>Client ID:</strong> Application ID from Azure</li>
+                                                <li><strong>Client Secret:</strong> Client secret from Azure</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click <strong>"Connect"</strong> to authorize</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3 mt-4"><i class="bi bi-lightbulb"></i> Use Cases for Connectors</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-jira text-primary"></i> JIRA Connector</h6>
+                                    <ul class="mb-0">
+                                        <li>Train agents on completed issues and resolutions</li>
+                                        <li>Answer questions about project status and workflows</li>
+                                        <li>Provide insights from historical issue data</li>
+                                        <li>Help with ticket creation and management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-file-text text-info"></i> Confluence Connector</h6>
+                                    <ul class="mb-0">
+                                        <li>Train agents on company documentation</li>
+                                        <li>Answer questions from knowledge base articles</li>
+                                        <li>Provide context from internal wikis</li>
+                                        <li>Help with documentation search and retrieval</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-git text-danger"></i> GitLab/GitHub Connectors</h6>
+                                    <ul class="mb-0">
+                                        <li>Train agents on code repositories and README files</li>
+                                        <li>Answer questions about project structure</li>
+                                        <li>Provide context from pull requests and issues</li>
+                                        <li>Help with code documentation and examples</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-cloud text-success"></i> Google/Microsoft Connectors</h6>
+                                    <ul class="mb-0">
+                                        <li>Train agents on documents and files</li>
+                                        <li>Answer questions from shared drives</li>
+                                        <li>Provide context from company documents</li>
+                                        <li>Help with document search and information retrieval</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3 mb-0">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle"></i> How It Works</h6>
+                        <ol class="mb-0">
+                            <li><strong>Create:</strong> Set up your connector with OAuth credentials</li>
+                            <li><strong>Connect:</strong> Authorize the connector via OAuth (you'll be redirected to the service provider)</li>
+                            <li><strong>Sync:</strong> Sync data from the connected service to your agent's training data</li>
+                            <li><strong>Train:</strong> Use the synced data to train your AI agent</li>
+                            <li><strong>Query:</strong> Your agent can now answer questions based on the synced data</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Connectors List -->
+<div class="row" id="connectorsList">
+    {% for connector in connectors %}
+    <div class="col-md-6 col-lg-4 mb-4" data-connector-id="{{ connector.id }}">
+        <div class="card connector-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title mb-0">{{ connector.name }}</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="editConnector({{ connector.id }})">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="viewConnector({{ connector.id }})">
+                                <i class="bi bi-eye"></i> View Details
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if connector.status == 'connected' %}
+                            <li><a class="dropdown-item" href="#" onclick="syncConnector({{ connector.id }})">
+                                <i class="bi bi-arrow-repeat"></i> Sync Data
+                            </a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteConnector({{ connector.id }}, '{{ connector.name }}')">
+                                <i class="bi bi-trash"></i> Delete
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-tag"></i> {{ connector.get_connector_type_display }}
+                </p>
+                <p class="mb-2">
+                    <span class="status-badge status-{{ connector.status }}">
+                        {{ connector.get_status_display }}
+                    </span>
+                </p>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-link-45deg"></i> {{ connector.base_url|truncatechars:40 }}
+                </p>
+                {% if connector.last_sync_at %}
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-clock"></i> Last sync: {{ connector.last_sync_at|date:"M d, Y H:i" }}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                {% if connector.status == 'disconnected' %}
+                <button class="btn btn-sm btn-success w-100" onclick="connectConnector({{ connector.id }})">
+                    <i class="bi bi-plug"></i> Connect
+                </button>
+                {% elif connector.status == 'connected' %}
+                <button class="btn btn-sm btn-primary w-100" onclick="syncConnector({{ connector.id }})">
+                    <i class="bi bi-arrow-repeat"></i> Sync Data
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-secondary w-100" disabled>
+                    <i class="bi bi-hourglass-split"></i> {{ connector.get_status_display }}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No connectors yet. Create your first connector to get started.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Create/Edit Connector Modal -->
+<div class="modal fade" id="createConnectorModal" tabindex="-1" aria-labelledby="createConnectorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createConnectorModalLabel">
+                    <i class="bi bi-plus-circle"></i> Create Connector
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="connectorForm">
+                    <input type="hidden" id="connectorId" name="connector_id">
+                    
+                    <div class="mb-3">
+                        <label for="connectorName" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="connectorName" name="name" required>
+                        <div class="form-text">A friendly name for this connector</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="connectorType" class="form-label">Connector Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="connectorType" name="connector_type" required>
+                            <option value="">Select a connector type</option>
+                            {% for value, label in connector_types %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="baseUrl" class="form-label">Base URL <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control" id="baseUrl" name="base_url" required>
+                        <div class="form-text">Base URL of the service (e.g., https://your-domain.atlassian.net)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="clientId" class="form-label">Client ID</label>
+                        <input type="text" class="form-control" id="clientId" name="client_id">
+                        <div class="form-text">OAuth Client ID (optional, can be set later)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="clientSecret" class="form-label">Client Secret</label>
+                        <input type="password" class="form-control" id="clientSecret" name="client_secret">
+                        <div class="form-text">OAuth Client Secret (optional, can be set later)</div>
+                    </div>
+                    
+                    <!-- Callback URL Information (shown after creation) -->
+                    <div id="callbackUrlSection" style="display: none;" class="mt-4">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Callback URL Information</h6>
+                            <p class="mb-2"><strong>Important:</strong> Register this callback URL in your OAuth provider settings:</p>
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">Callback URL:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="callbackUrlDisplay" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyCallbackUrl()">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="mb-0 small"><strong>Note:</strong> <span id="callbackUrlNote"></span></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveConnectorBtn" onclick="saveConnector()">
+                    <i class="bi bi-save"></i> Save Connector
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Connector Details Modal -->
+<div class="modal fade" id="viewConnectorModal" tabindex="-1" aria-labelledby="viewConnectorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewConnectorModalLabel">
+                    <i class="bi bi-eye"></i> Connector Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewConnectorContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editFromViewBtn" onclick="editConnectorFromView()">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Connector Modal -->
+<div class="modal fade" id="syncConnectorModal" tabindex="-1" aria-labelledby="syncConnectorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="syncConnectorModalLabel">
+                    <i class="bi bi-arrow-repeat"></i> Sync Connector Data
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="syncForm">
+                    <input type="hidden" id="syncConnectorId" name="connector_id">
+                    <div class="mb-3">
+                        <label for="syncAgentId" class="form-label">Select Agent <span class="text-danger">*</span></label>
+                        <select class="form-select" id="syncAgentId" name="agent_id" required>
+                            <option value="">Select an agent</option>
+                            {% for agent in agents %}
+                            <option value="{{ agent.id }}">{{ agent.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the agent to sync data to</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="startSync()">
+                    <i class="bi bi-arrow-repeat"></i> Start Sync
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const CSRF_TOKEN = '{{ csrf_token }}';
+    let currentConnectorId = null;
+
+    // Show alert message
+    function showAlert(message, type = 'success') {
+        const alertContainer = document.getElementById('alertContainer');
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        alertContainer.appendChild(alert);
+        setTimeout(() => alert.remove(), 5000);
+    }
+
+    // Get CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Create connector
+    function saveConnector() {
+        const form = document.getElementById('connectorForm');
+        const formData = new FormData(form);
+        const connectorId = document.getElementById('connectorId').value;
+        
+        const data = {
+            name: formData.get('name'),
+            connector_type: formData.get('connector_type'),
+            base_url: formData.get('base_url'),
+            client_id: formData.get('client_id'),
+            client_secret: formData.get('client_secret'),
+        };
+
+        const url = connectorId 
+            ? `/dashboard/connectors/ajax/${connectorId}/update/`
+            : '/dashboard/connectors/ajax/create/';
+        const method = connectorId ? 'POST' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (!connectorId && data.callback_url) {
+                    // New connector created - show callback URL information
+                    document.getElementById('callbackUrlDisplay').value = data.callback_url;
+                    document.getElementById('callbackUrlNote').textContent = data.note || 'Register this callback URL in your OAuth provider.';
+                    document.getElementById('callbackUrlSection').style.display = 'block';
+                    
+                    // Change button text and disable form fields
+                    document.getElementById('saveConnectorBtn').innerHTML = '<i class="bi bi-check-circle"></i> Done';
+                    document.getElementById('saveConnectorBtn').onclick = function() {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createConnectorModal'));
+                        modal.hide();
+                        form.reset();
+                        document.getElementById('connectorId').value = '';
+                        document.getElementById('callbackUrlSection').style.display = 'none';
+                        document.getElementById('saveConnectorBtn').innerHTML = '<i class="bi bi-save"></i> Save Connector';
+                        document.getElementById('saveConnectorBtn').onclick = saveConnector;
+                        location.reload();
+                    };
+                    
+                    // Disable form fields
+                    document.getElementById('connectorName').disabled = true;
+                    document.getElementById('connectorType').disabled = true;
+                    document.getElementById('baseUrl').disabled = true;
+                    document.getElementById('clientId').disabled = true;
+                    document.getElementById('clientSecret').disabled = true;
+                    
+                    showAlert('Connector created successfully! Please copy the callback URL above and register it in your OAuth provider.', 'success');
+                } else {
+                    // Update or no callback URL - normal flow
+                    showAlert(connectorId ? 'Connector updated successfully!' : 'Connector created successfully!');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createConnectorModal'));
+                    modal.hide();
+                    form.reset();
+                    document.getElementById('connectorId').value = '';
+                    document.getElementById('callbackUrlSection').style.display = 'none';
+                    location.reload();
+                }
+            } else {
+                showAlert(data.error || 'Failed to save connector', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while saving the connector', 'danger');
+        });
+    }
+
+    // Edit connector
+    function editConnector(id) {
+        currentConnectorId = id;
+        fetch(`/dashboard/connectors/ajax/${id}/get/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const connector = data.connector;
+                    document.getElementById('connectorId').value = connector.id;
+                    document.getElementById('connectorName').value = connector.name;
+                    document.getElementById('connectorType').value = connector.connector_type;
+                    document.getElementById('baseUrl').value = connector.base_url;
+                    document.getElementById('clientId').value = connector.client_id;
+                    document.getElementById('clientSecret').value = connector.client_secret || '';
+                    
+                    document.getElementById('createConnectorModalLabel').innerHTML = '<i class="bi bi-pencil"></i> Edit Connector';
+                    const modal = new bootstrap.Modal(document.getElementById('createConnectorModal'));
+                    modal.show();
+                } else {
+                    showAlert(data.error || 'Failed to load connector', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while loading the connector', 'danger');
+            });
+    }
+
+    function editConnectorFromView() {
+        if (currentConnectorId) {
+            const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewConnectorModal'));
+            viewModal.hide();
+            editConnector(currentConnectorId);
+        }
+    }
+
+    // View connector details
+    function viewConnector(id) {
+        currentConnectorId = id;
+        const content = document.getElementById('viewConnectorContent');
+        content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        fetch(`/dashboard/connectors/ajax/${id}/get/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const connector = data.connector;
+                    content.innerHTML = `
+                        <dl class="row">
+                            <dt class="col-sm-4">Name</dt>
+                            <dd class="col-sm-8">${connector.name}</dd>
+                            
+                            <dt class="col-sm-4">Type</dt>
+                            <dd class="col-sm-8">${connector.connector_type_display}</dd>
+                            
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">
+                                <span class="status-badge status-${connector.status}">${connector.status_display}</span>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Base URL</dt>
+                            <dd class="col-sm-8"><code>${connector.base_url}</code></dd>
+                            
+                            <dt class="col-sm-4">Client ID</dt>
+                            <dd class="col-sm-8">${connector.client_id || '<em>Not set</em>'}</dd>
+                            
+                            <dt class="col-sm-4">Connected At</dt>
+                            <dd class="col-sm-8">${connector.connected_at ? new Date(connector.connected_at).toLocaleString() : '<em>Never</em>'}</dd>
+                            
+                            <dt class="col-sm-4">Last Sync</dt>
+                            <dd class="col-sm-8">${connector.last_sync_at ? new Date(connector.last_sync_at).toLocaleString() : '<em>Never</em>'}</dd>
+                            
+                            <dt class="col-sm-4">Created</dt>
+                            <dd class="col-sm-8">${new Date(connector.created_at).toLocaleString()}</dd>
+                        </dl>
+                    `;
+                    document.getElementById('editFromViewBtn').setAttribute('onclick', `editConnectorFromView()`);
+                } else {
+                    content.innerHTML = `<div class="alert alert-danger">${data.error || 'Failed to load connector'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                content.innerHTML = '<div class="alert alert-danger">An error occurred while loading the connector</div>';
+            });
+        
+        const modal = new bootstrap.Modal(document.getElementById('viewConnectorModal'));
+        modal.show();
+    }
+
+    // Delete connector
+    function deleteConnector(id, name) {
+        if (!confirm(`Are you sure you want to delete connector "${name}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        fetch(`/dashboard/connectors/ajax/${id}/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message || 'Connector deleted successfully!');
+                document.querySelector(`[data-connector-id="${id}"]`).remove();
+            } else {
+                showAlert(data.error || 'Failed to delete connector', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while deleting the connector', 'danger');
+        });
+    }
+
+    // Connect connector (OAuth)
+    function connectConnector(id) {
+        fetch(`/dashboard/connectors/ajax/${id}/connect/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.authorization_url;
+            } else {
+                showAlert(data.error || 'Failed to initiate connection', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while connecting', 'danger');
+        });
+    }
+
+    // Sync connector
+    function syncConnector(id) {
+        document.getElementById('syncConnectorId').value = id;
+        document.getElementById('syncAgentId').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('syncConnectorModal'));
+        modal.show();
+    }
+
+    function startSync() {
+        const connectorId = document.getElementById('syncConnectorId').value;
+        const agentId = document.getElementById('syncAgentId').value;
+
+        if (!agentId) {
+            showAlert('Please select an agent', 'warning');
+            return;
+        }
+
+        fetch(`/dashboard/connectors/ajax/${connectorId}/sync/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ agent_id: agentId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message || 'Sync started successfully!');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('syncConnectorModal'));
+                modal.hide();
+            } else {
+                showAlert(data.error || 'Failed to start sync', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while starting sync', 'danger');
+        });
+    }
+
+    // Reset form when modal is closed
+    document.getElementById('createConnectorModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('connectorForm').reset();
+        document.getElementById('connectorId').value = '';
+        document.getElementById('createConnectorModalLabel').innerHTML = '<i class="bi bi-plus-circle"></i> Create Connector';
+        document.getElementById('callbackUrlSection').style.display = 'none';
+        
+        // Re-enable form fields
+        document.getElementById('connectorName').disabled = false;
+        document.getElementById('connectorType').disabled = false;
+        document.getElementById('baseUrl').disabled = false;
+        document.getElementById('clientId').disabled = false;
+        document.getElementById('clientSecret').disabled = false;
+        
+        // Reset button
+        document.getElementById('saveConnectorBtn').innerHTML = '<i class="bi bi-save"></i> Save Connector';
+        document.getElementById('saveConnectorBtn').onclick = saveConnector;
+    });
+    
+    // Copy callback URL to clipboard
+    function copyCallbackUrl() {
+        const callbackUrlInput = document.getElementById('callbackUrlDisplay');
+        callbackUrlInput.select();
+        callbackUrlInput.setSelectionRange(0, 99999); // For mobile devices
+        navigator.clipboard.writeText(callbackUrlInput.value).then(function() {
+            showAlert('Callback URL copied to clipboard!', 'success');
+        }, function() {
+            // Fallback for older browsers
+            try {
+                document.execCommand('copy');
+                showAlert('Callback URL copied to clipboard!', 'success');
+            } catch (err) {
+                showAlert('Failed to copy. Please select and copy manually.', 'warning');
+            }
+        });
+    }
+</script>
+{% endblock %}
+

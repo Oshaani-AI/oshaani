@@ -1,0 +1,815 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Analytics Dashboard - AI Agents{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Animated Background */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        z-index: -2;
+        opacity: 0.08;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Header */
+    .page-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        background: linear-gradient(135deg, #0d6efd 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+    }
+    
+    /* Stat Cards */
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(13, 110, 253, 0.15);
+    }
+    
+    .stat-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #0d6efd 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon.primary { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+    .stat-icon.success { background: rgba(25, 135, 84, 0.1); color: #198754; }
+    .stat-icon.warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .stat-icon.info { background: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
+    .stat-icon.purple { background: rgba(118, 75, 162, 0.1); color: #764ba2; }
+    
+    /* Section Cards */
+    .section-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .section-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #212529;
+    }
+    
+    /* Agent Analytics Table */
+    .analytics-table {
+        margin: 0;
+    }
+    
+    .analytics-table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        font-weight: 600;
+        color: #495057;
+        padding: 1rem;
+    }
+    
+    .analytics-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-color: rgba(0,0,0,0.05);
+    }
+    
+    .analytics-table tbody tr:hover {
+        background: rgba(13, 110, 253, 0.03);
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    
+    .status-draft { background: #6c757d; color: white; }
+    .status-training { background: #0dcaf0; color: white; }
+    .status-testing { background: #ffc107; color: #212529; }
+    .status-published { background: #198754; color: white; }
+    
+    /* User Stats Cards */
+    .user-stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-left: 4px solid #0d6efd;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .user-stat-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Filter Buttons */
+    .filter-btn-group {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    
+    .filter-btn-group .btn {
+        border-radius: 0.5rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+    
+    .filter-btn-group .btn.active {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+    }
+    
+    /* Progress indicator for shares */
+    .share-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .share-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    
+    .share-dot.email { background: #0dcaf0; }
+    .share-dot.public { background: #ffc107; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stat-value { font-size: 1.75rem; }
+        .page-header { padding: 1.5rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="bi bi-graph-up-arrow"></i> Analytics Dashboard</h1>
+                <p class="text-muted mb-0">Comprehensive analytics for all your AI agents and shared usage</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="filter-btn-group" role="group">
+                    <a href="?days=7" class="btn btn-outline-secondary {% if days == 7 %}active{% endif %}">7 Days</a>
+                    <a href="?days=30" class="btn btn-outline-secondary {% if days == 30 %}active{% endif %}">30 Days</a>
+                    <a href="?days=90" class="btn btn-outline-secondary {% if days == 90 %}active{% endif %}">90 Days</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overview Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ total_agents }}</div>
+                            <div class="stat-label">Total Agents</div>
+                        </div>
+                        <div class="stat-icon primary">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-success"><i class="bi bi-check-circle"></i> {{ published_agents }} Published</small>
+                        <small class="text-muted ms-2">{{ draft_agents }} Draft</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ recent_messages|intcomma }}</div>
+                            <div class="stat-label">Messages ({{ days }} days)</div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="bi bi-chat-dots"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted"><i class="bi bi-collection"></i> {{ total_messages|intcomma }} total all time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ recent_conversations|intcomma }}</div>
+                            <div class="stat-label">Conversations ({{ days }} days)</div>
+                        </div>
+                        <div class="stat-icon info">
+                            <i class="bi bi-chat-left-text"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted"><i class="bi bi-collection"></i> {{ total_conversations|intcomma }} total all time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value">{{ unique_users_count }}</div>
+                            <div class="stat-label">Unique Users</div>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-info"><i class="bi bi-share"></i> {{ shared_out_count }} email shares</small>
+                        <small class="text-warning ms-2"><i class="bi bi-globe"></i> {{ public_shares_count }} public</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Public Access Stats -->
+    {% if total_public_access > 0 %}
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="stat-card" style="border-left: 4px solid #ffc107;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value" style="color: #ffc107;">{{ total_public_access|intcomma }}</div>
+                            <div class="stat-label">Total Public Link Accesses</div>
+                        </div>
+                        <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                            <i class="bi bi-globe"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-link-45deg"></i> From {{ public_shares_count }} active public share link(s)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="stat-card" style="border-left: 4px solid #20c997;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-value" style="color: #20c997;">{{ recent_public_access|intcomma }}</div>
+                            <div class="stat-label">Public Accesses ({{ days }} Days)</div>
+                        </div>
+                        <div class="stat-icon" style="background: rgba(32, 201, 151, 0.1); color: #20c997;">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Recent activity on public links
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Shared Usage Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-share-fill me-2"></i>Shared Agent Usage ({{ days }} Days)</h5>
+                    <span class="badge bg-primary">Usage by others on your agents</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="stat-value">{{ shared_messages_count|intcomma }}</div>
+                            <div class="stat-label">Messages from Shared Users</div>
+                        </div>
+                        <div class="col-md-4 text-center border-end">
+                            <div class="stat-value">{{ shared_conversations_count|intcomma }}</div>
+                            <div class="stat-label">Conversations from Shared Users</div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="stat-value">{{ unique_users_count }}</div>
+                            <div class="stat-label">Unique Users Using Your Agents</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Public Share Analytics -->
+    {% if public_share_analytics %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-globe me-2"></i>Public Agent Shares</h5>
+                    <span class="badge bg-warning text-dark">{{ public_shares_count }} active public links</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6 text-center border-end">
+                            <div class="stat-value">{{ total_public_access|intcomma }}</div>
+                            <div class="stat-label">Total Public Link Accesses</div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <div class="stat-value">{{ recent_public_access|intcomma }}</div>
+                            <div class="stat-label">Recent Accesses ({{ days }} days)</div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="table-responsive">
+                        <table class="table analytics-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Agent</th>
+                                    <th>Public Link Token</th>
+                                    <th class="text-center">Access Count</th>
+                                    <th>Last Accessed</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in public_share_analytics %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'agent_detail' item.agent.slug %}" class="text-decoration-none fw-bold">
+                                            {{ item.agent.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <code class="bg-light px-2 py-1 rounded">{{ item.token }}</code>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning text-dark">{{ item.access_count|intcomma }}</span>
+                                    </td>
+                                    <td>
+                                        {% if item.last_accessed %}
+                                        <small class="text-muted">{{ item.last_accessed|date:"M d, Y H:i" }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ item.created_at|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if item.is_expired %}
+                                        <span class="badge bg-danger">Expired</span>
+                                        {% elif item.expires_at %}
+                                        <span class="badge bg-info">Expires {{ item.expires_at|date:"M d" }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'share_agent' item.agent.slug %}" class="btn btn-sm btn-outline-info" title="Manage Share">
+                                            <i class="bi bi-gear"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Public Share User Stats -->
+    {% if public_user_stats %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-people-fill me-2" style="color: #ffc107;"></i>Public Agent Users</h5>
+                    <span class="badge bg-warning text-dark">{{ public_unique_users }} users via public links</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="stat-value" style="font-size: 1.75rem; color: #ffc107;">{{ public_unique_users }}</div>
+                            <div class="stat-label">Unique Users (Public)</div>
+                        </div>
+                        <div class="col-md-4 text-center border-end">
+                            <div class="stat-value" style="font-size: 1.75rem; color: #ffc107;">{{ public_messages_count|intcomma }}</div>
+                            <div class="stat-label">Messages (Public)</div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="stat-value" style="font-size: 1.75rem; color: #ffc107;">{{ public_conversations_count|intcomma }}</div>
+                            <div class="stat-label">Conversations (Public)</div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6 class="mb-3"><i class="bi bi-person-lines-fill me-2"></i>Who's Using Your Public Agents</h6>
+                    
+                    <div class="table-responsive">
+                        <table class="table analytics-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th class="text-center">Messages</th>
+                                    <th class="text-center">Conversations</th>
+                                    <th class="text-center">Agents Used</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_stat in public_user_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user_stat.used_by__username }}</strong>
+                                        <span class="badge bg-warning text-dark ms-1" title="Accessed via public link">
+                                            <i class="bi bi-globe"></i>
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">{{ user_stat.used_by__email }}</small></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning text-dark">{{ user_stat.total_messages|intcomma }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ user_stat.total_conversations|intcomma }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ user_stat.agents_used }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user_stat.last_used %}
+                                        <small class="text-muted">{{ user_stat.last_used|date:"M d, Y H:i" }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'chat_home' %}?view_user_id={{ user_stat.used_by__id }}" 
+                                           class="btn btn-sm btn-outline-warning" title="View conversations">
+                                            <i class="bi bi-chat-dots"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Per-Agent Analytics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bar-chart-line me-2"></i>Agent-by-Agent Analytics</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if agent_analytics %}
+                    <div class="table-responsive">
+                        <table class="table analytics-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Agent</th>
+                                    <th>Status</th>
+                                    <th class="text-center">My Messages</th>
+                                    <th class="text-center">My Conversations</th>
+                                    <th class="text-center">Shared Messages</th>
+                                    <th class="text-center">Shared Users</th>
+                                    <th class="text-center">Shares</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in agent_analytics %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'agent_detail' item.agent.slug %}" class="text-decoration-none fw-bold">
+                                            {{ item.agent.name }}
+                                        </a>
+                                        {% if item.agent.model %}
+                                        <br><small class="text-muted">{{ item.agent.model.model_name }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ item.agent.status }}">
+                                            {{ item.agent.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ item.recent_messages|intcomma }}</span>
+                                        <br><small class="text-muted">{{ item.total_messages|intcomma }} total</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ item.recent_conversations|intcomma }}</span>
+                                        <br><small class="text-muted">{{ item.total_conversations|intcomma }} total</small>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.shared_messages > 0 %}
+                                        <span class="badge bg-success">{{ item.shared_messages|intcomma }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.unique_users > 0 %}
+                                        <span class="badge bg-purple" style="background: #764ba2;">{{ item.unique_users }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="share-indicator justify-content-center">
+                                            {% if item.email_shares > 0 %}
+                                            <span class="share-dot email" title="{{ item.email_shares }} email shares"></span>
+                                            <small>{{ item.email_shares }}</small>
+                                            {% endif %}
+                                            {% if item.has_public_share %}
+                                            <span class="share-dot public ms-1" title="Public share"></span>
+                                            <small class="text-warning">{{ item.public_share_views }} views</small>
+                                            {% endif %}
+                                            {% if not item.email_shares and not item.has_public_share %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if item.agent.status == 'published' %}
+                                            <a href="{% url 'agent_chat' item.agent.slug %}" class="btn btn-outline-success" title="Chat">
+                                                <i class="bi bi-chat"></i>
+                                            </a>
+                                            <a href="{% url 'share_agent' item.agent.slug %}" class="btn btn-outline-info" title="Share">
+                                                <i class="bi bi-share"></i>
+                                            </a>
+                                            {% endif %}
+                                            <a href="{% url 'agent_detail' item.agent.slug %}" class="btn btn-outline-primary" title="Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-robot display-4 text-muted"></i>
+                        <p class="text-muted mt-3">No agents yet. <a href="{% url 'agent_create' %}">Create your first agent</a></p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Per-User Stats -->
+    {% if per_user_stats %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header">
+                    <h5><i class="bi bi-people-fill me-2"></i>Usage by User (Who's Using Your Shared Agents)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table analytics-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th class="text-center">Messages</th>
+                                    <th class="text-center">Conversations</th>
+                                    <th class="text-center">Agents Used</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_stat in per_user_stats %}
+                                <tr>
+                                    <td><strong>{{ user_stat.used_by__username }}</strong></td>
+                                    <td><small class="text-muted">{{ user_stat.used_by__email }}</small></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ user_stat.total_messages|intcomma }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ user_stat.total_conversations|intcomma }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ user_stat.agents_used }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user_stat.last_used %}
+                                        <small class="text-muted">{{ user_stat.last_used|date:"M d, Y H:i" }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'chat_home' %}?view_user_id={{ user_stat.used_by__id }}" 
+                                           class="btn btn-sm btn-outline-primary" title="View conversations">
+                                            <i class="bi bi-chat-dots"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Shared With Me Section -->
+    {% if shared_with_me_analytics %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-inbox-fill me-2"></i>Agents Shared With Me</h5>
+                    <span class="badge bg-info">{{ shared_with_me_count }} agents</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6 text-center border-end">
+                            <div class="stat-value" style="font-size: 1.75rem;">{{ my_shared_messages|intcomma }}</div>
+                            <div class="stat-label">My Messages on Shared Agents</div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <div class="stat-value" style="font-size: 1.75rem;">{{ my_shared_conversations|intcomma }}</div>
+                            <div class="stat-label">My Conversations on Shared Agents</div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="table-responsive">
+                        <table class="table analytics-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Agent</th>
+                                    <th>Owner</th>
+                                    <th class="text-center">My Messages</th>
+                                    <th class="text-center">My Conversations</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in shared_with_me_analytics %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'agent_chat' item.agent.slug %}" class="text-decoration-none fw-bold">
+                                            {{ item.agent.name }}
+                                        </a>
+                                        <span class="status-badge status-{{ item.agent.status }} ms-2">
+                                            {{ item.agent.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted">{{ item.owner }}</small></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ item.messages|intcomma }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ item.conversations|intcomma }}</span>
+                                    </td>
+                                    <td>
+                                        {% if item.agent.status == 'published' %}
+                                        <a href="{% url 'agent_chat' item.agent.slug %}" class="btn btn-sm btn-success">
+                                            <i class="bi bi-chat"></i> Chat
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-body text-center py-4">
+                    <p class="text-muted mb-3">Quick Actions</p>
+                    <a href="{% url 'agents_list' %}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-robot"></i> My Agents
+                    </a>
+                    <a href="{% url 'agent_create' %}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Create Agent
+                    </a>
+                    <a href="{% url 'public_agents_list' %}" class="btn btn-outline-info">
+                        <i class="bi bi-globe"></i> Public Agents
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

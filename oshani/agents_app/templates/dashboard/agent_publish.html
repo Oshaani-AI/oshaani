@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Publish {{ agent.name }} - AI Agents Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-check-circle"></i> Publish Agent: {{ agent.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'agent_detail' agent.slug %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Agent
+        </a>
+    </div>
+</div>
+
+{% if agent.status != 'testing' and agent.status != 'published' %}
+<div class="alert alert-info">
+    <h5><i class="bi bi-info-circle"></i> Agent Status: {{ agent.get_status_display }}</h5>
+    <p>Your agent is currently in <strong>{{ agent.get_status_display }}</strong> status. You can publish it directly, and it will be automatically moved to testing status before publishing.</p>
+    <p class="mb-0"><strong>Note:</strong> It's recommended to test your agent first before publishing to ensure optimal performance.</p>
+</div>
+{% endif %}
+
+{% if agent.status == 'testing' or agent.status == 'published' or agent.status == 'draft' or agent.status == 'training' %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Agent Summary</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Name</dt>
+                    <dd class="col-sm-8">{{ agent.name }}</dd>
+                    
+                    <dt class="col-sm-4">Type</dt>
+                    <dd class="col-sm-8">{{ agent.get_agent_type_display }}</dd>
+                    
+                    <dt class="col-sm-4">Training Data</dt>
+                    <dd class="col-sm-8">{{ agent.training_data_count }} items</dd>
+                    
+                    <dt class="col-sm-4">Feedback</dt>
+                    <dd class="col-sm-8">
+                        Total: {{ feedback_summary.total }}, 
+                        Positive: {{ feedback_summary.positive }}, 
+                        Negative: {{ feedback_summary.negative }}, 
+                        Neutral: {{ feedback_summary.neutral }}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        
+        {% if feedback_summary.total > 0 %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-star"></i> Feedback Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 30px;">
+                    {% if feedback_summary.total > 0 %}
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {% widthratio feedback_summary.positive feedback_summary.total 100 %}%">
+                        Positive: {{ feedback_summary.positive }}
+                    </div>
+                    <div class="progress-bar bg-warning" role="progressbar" 
+                         style="width: {% widthratio feedback_summary.neutral feedback_summary.total 100 %}%">
+                        Neutral: {{ feedback_summary.neutral }}
+                    </div>
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {% widthratio feedback_summary.negative feedback_summary.total 100 %}%">
+                        Negative: {{ feedback_summary.negative }}
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="mb-0">
+                    <strong>Positive Rate:</strong> 
+                    {% if feedback_summary.total > 0 %}
+                        {% widthratio feedback_summary.positive feedback_summary.total 100 %}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if has_unpublished_changes %}
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Unpublished Changes</h5>
+            </div>
+            <div class="card-body">
+                <p>The following changes have been made since the last publication:</p>
+                <ul>
+                    {% for change in change_summary %}
+                    <li>{{ change }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="mb-0"><strong>Publishing will update the agent with these new changes.</strong></p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> {% if has_unpublished_changes %}Publish with New Configuration{% else %}Ready to Publish{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                <p>Publishing your agent will:</p>
+                <ul>
+                    <li>Make it available via API</li>
+                    {% if not agent.api_key_hash %}
+                    <li>Generate a unique API key for authentication</li>
+                    {% else %}
+                    <li>Keep existing API key (no new key will be generated)</li>
+                    {% endif %}
+                    <li>Enable external system integration</li>
+                    {% if has_unpublished_changes %}
+                    <li><strong>Apply the new configuration and training data changes</strong></li>
+                    {% endif %}
+                </ul>
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn {% if has_unpublished_changes %}btn-info{% else %}btn-success{% endif %} btn-lg" data-tour="publish-submit-btn">
+                        <i class="bi bi-check-circle"></i> {% if has_unpublished_changes %}Publish with New Configuration{% else %}Publish Agent{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Recent Feedback</h5>
+            </div>
+            <div class="card-body">
+                {% if feedbacks %}
+                <div class="list-group">
+                    {% for feedback in feedbacks|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            {% if feedback.feedback_type == 'positive' %}
+                            <span class="badge bg-success">Positive</span>
+                            {% elif feedback.feedback_type == 'negative' %}
+                            <span class="badge bg-danger">Negative</span>
+                            {% else %}
+                            <span class="badge bg-warning">Neutral</span>
+                            {% endif %}
+                            <small>{{ feedback.created_at|date:"M d" }}</small>
+                        </div>
+                        <p class="mb-0 mt-1"><small>{{ feedback.query|truncatewords:10 }}</small></p>
+                        {% if feedback.feedback_text %}
+                        <p class="mb-0 mt-1 text-muted"><small><em>{{ feedback.feedback_text|truncatewords:15 }}</em></small></p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No feedback available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
