@@ -10,29 +10,18 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import UserProfile
 from .linkedin_oauth import (
-    get_authorization_url,
     verify_state,
-    exchange_code_for_token,
     get_user_info,
     get_or_create_user,
-    store_state,
-    LINKEDIN_AUTHORIZATION_URL,
-    LINKEDIN_SCOPES,
 )
 from .google_oauth import (
-    get_authorization_url as get_google_authorization_url,
     verify_state as verify_google_state,
-    exchange_code_for_token as exchange_google_code_for_token,
     get_user_info as get_google_user_info,
     get_or_create_user as get_or_create_google_user,
-    store_state as store_google_state,
-    GOOGLE_AUTHORIZATION_URL,
-    GOOGLE_SCOPES,
 )
 
 logger = logging.getLogger(__name__)
@@ -319,7 +308,6 @@ def api_linkedin_oauth_callback(request):
             if origin and 'oshaani.pro' in origin:
                 # Redirect back to oshaani.pro with success indicator
                 from django.shortcuts import redirect
-                from urllib.parse import urlencode
                 next_url = request.session.pop('linkedin_oauth_next', '/')
                 redirect_url = f"https://oshaani.pro{next_url}?linkedin_success=1&username={user.username}"
                 return redirect(redirect_url)
@@ -520,7 +508,6 @@ def api_google_oauth_callback(request):
             if origin and 'oshaani.pro' in origin:
                 # Redirect back to oshaani.pro with success indicator
                 from django.shortcuts import redirect
-                from urllib.parse import urlencode
                 next_url = request.session.pop('google_oauth_next', '/')
                 redirect_url = f"https://oshaani.pro{next_url}?google_success=1&username={user.username}"
                 return redirect(redirect_url)

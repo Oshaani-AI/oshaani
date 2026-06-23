@@ -1,7 +1,7 @@
 """Connector validation and status checking."""
 import logging
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from django.utils import timezone
 from .models import Connector, ConnectorType
 from .jira_oauth import JIRAOAuthClient, ConfluenceOAuthClient

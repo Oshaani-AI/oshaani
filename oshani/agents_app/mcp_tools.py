@@ -1,6 +1,6 @@
 """MCP tool integration for the tool system."""
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from .tools import Tool
 from .mcp_client import MCPClient, MCPClientManager
 from .models import MCPServer

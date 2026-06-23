@@ -1,7 +1,7 @@
 """Django management command to verify an agent API key."""
 from django.core.management.base import BaseCommand, CommandError
 from agents_app.models import Agent
-from agents_app.utils import hash_api_key, verify_api_key
+from agents_app.utils import hash_api_key
 
 
 class Command(BaseCommand):

@@ -205,7 +205,6 @@
     function renderAgentList(data) {
         const agents = data.agents || [];
         const count = data.count || agents.length;
-        const user = data.user || '';
         
         if (agents.length === 0) {
             return '<p><em>No agents found.</em></p>';
@@ -622,7 +621,6 @@
             if (sendButton) sendButton.disabled = false;
             if (micButton && speechRecognitionSupported) micButton.disabled = false;
             const attachFileBtn = document.getElementById('attachFileBtn');
-            const fileUploadArea = document.getElementById('fileUploadArea');
             if (attachFileBtn) attachFileBtn.disabled = false;
             // Show upload area only when there are attached files (managed by updateFileDisplay)
             if (typeof updateFileDisplay === 'function') updateFileDisplay();
@@ -857,7 +855,6 @@
             const sendButton = document.getElementById('sendButton');
             const micButton = document.getElementById('micButton');
             const attachFileBtn = document.getElementById('attachFileBtn');
-            const fileUploadArea = document.getElementById('fileUploadArea');
             
             if (messageInput) messageInput.disabled = false;
             if (sendButton) sendButton.disabled = false;

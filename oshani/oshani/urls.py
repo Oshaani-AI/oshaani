@@ -29,7 +29,7 @@ from agents_app.views_chat import (
     upload_chat_file, submit_feedback, get_conversation_messages_paginated, download_conversation,
     get_conversation_tool_calls, delete_conversation
 )
-from agents_app.views import handler404, serve_media_file
+from agents_app.views import serve_media_file
 from agents_app.views_health import health_check
 from agents_app.views_intro import intro_page
 import agents_app.views_linkedin
@@ -168,5 +168,5 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# Custom 404 handler
-handler404 = handler404
+# Custom 404 handler (Django resolves this dotted path at module level)
+handler404 = 'agents_app.views.handler404'

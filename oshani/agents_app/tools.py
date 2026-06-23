@@ -122,7 +122,7 @@ class WebSearchTool(Tool):
                 "total_results": len(results),
                 "source": "duckduckgo"
             }
-        except ImportError as e:
+        except ImportError:
             logger.warning("Web search fallback not available: pip install duckduckgo-search (or ddgs)")
             return {"error": "Web search library not available. Install duckduckgo-search or ddgs."}
         except Exception as e:
@@ -558,7 +558,6 @@ class CodeExecutorTool(Tool):
             # Create a temporary isolated directory for execution
             import tempfile
             import pathlib
-            from django.conf import settings
             
             # Create temporary directory for this execution
             temp_dir = tempfile.mkdtemp(prefix='code_exec_')
@@ -680,7 +679,7 @@ class TranscriptionTool(Tool):
             # Try AWS Transcribe if available
             try:
                 from .aws_utils import create_boto3_client
-                transcribe_client = create_boto3_client('transcribe')
+                create_boto3_client('transcribe')
                 
                 # For now, return a note that AWS Transcribe requires async job processing
                 # In production, implement async transcription job handling
@@ -1337,9 +1336,6 @@ class TextToImageTool(Tool):
             raise Exception("OpenAI library not installed. Install with: pip install openai")
         except Exception as e:
             raise Exception(f"OpenAI DALL-E error: {str(e)}")
-        except Exception as e:
-            logger.error(f"Error in image generation: {str(e)}", exc_info=True)
-            return {"error": f"Image generation failed: {str(e)}"}
 
 
 def _enhance_video_prompt(prompt: str, min_length: int = 60, max_chars: int = 512) -> str:
@@ -1846,7 +1842,6 @@ class ImageToVideoTool(Tool):
             
             region = get_aws_region()
             bedrock_runtime = create_boto3_client('bedrock-runtime', region_name=region)
-            bedrock_client = create_boto3_client('bedrock', region_name=region)
             s3_client = create_boto3_client('s3', region_name=region)
             
             # Resolve image path
@@ -1898,12 +1893,12 @@ class ImageToVideoTool(Tool):
             if duration.endswith('s'):
                 try:
                     duration_seconds = int(duration[:-1])
-                except:
+                except Exception:
                     duration_seconds = 6
             else:
                 try:
                     duration_seconds = int(duration)
-                except:
+                except Exception:
                     duration_seconds = 6
             
             # Clamp duration (6-120 seconds)
@@ -2328,7 +2323,7 @@ class OCRTool(Tool):
                     if header == b'PK\x03\x04':
                         # It's actually a .docx file with wrong extension
                         return self._extract_from_word(resolved_path, original_path.replace('.doc', '.docx'))
-                except:
+                except Exception:
                     pass
                 
                 return {
@@ -2753,7 +2748,7 @@ class OCRTool(Tool):
             from .aws_utils import create_boto3_client
             create_boto3_client('textract')
             aws_configured = True
-        except:
+        except Exception:
             pass
         
         # Method 1: Try PyPDF2 (for text-based PDFs - fastest and most common)
@@ -2820,7 +2815,6 @@ class OCRTool(Tool):
         try:
             from pdf2image import convert_from_bytes
             import pytesseract
-            from PIL import Image
             
             if default_storage.exists(resolved_path):
                 file_obj = default_storage.open(resolved_path, 'rb')
@@ -4035,11 +4029,11 @@ Example of CORRECT usage: {"file_name": "essay.txt", "content": "This is the ful
         try:
             # Try reportlab first (better for programmatic PDF generation)
             try:
-                from reportlab.lib.pagesizes import letter, A4
+                from reportlab.lib.pagesizes import A4
                 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
                 from reportlab.lib.units import inch
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
-                from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.enums import TA_LEFT, TA_CENTER
                 from io import BytesIO
                 import re
                 
@@ -4191,7 +4185,7 @@ Example of CORRECT usage: {"file_name": "essay.txt", "content": "This is the ful
                 # Fallback to weasyprint if reportlab not available
                 logger.info("reportlab not available, trying weasyprint for PDF generation")
                 try:
-                    from weasyprint import HTML, CSS
+                    from weasyprint import HTML
                     from io import BytesIO
                     
                     # Convert text to HTML for PDF generation
@@ -4500,7 +4494,7 @@ class SVGDiagramTool(Tool):
             # Parse features (merge inferred from description with explicit params)
             try:
                 features = json.loads(features_str) if features_str else []
-            except:
+            except Exception:
                 features = []
             if inferred.get('features'):
                 features = inferred['features'] + features
@@ -4617,7 +4611,6 @@ class SVGDiagramTool(Tool):
         draw_h = canvas_h - 2 * margin - 80  # Extra space for title
         
         # Scale factor to fit building in drawing area
-        max_dim = max(width, height, depth)
         scale = min(draw_w / (width + depth * 0.5), draw_h / (height + depth * 0.3)) * 0.6
         
         # Isometric projection angles
@@ -4640,7 +4633,6 @@ class SVGDiagramTool(Tool):
         p100 = iso_point(width, 0, 0)
         p010 = iso_point(0, height, 0)
         p110 = iso_point(width, height, 0)
-        p001 = iso_point(0, 0, depth)
         p101 = iso_point(width, 0, depth)
         p011 = iso_point(0, height, depth)
         p111 = iso_point(width, height, depth)

@@ -442,7 +442,7 @@ def index_training_data_for_rag(agent_id, training_data_id=None):
                                 # Clean up temp file
                                 try:
                                     os.unlink(tmp_path)
-                                except:
+                                except Exception:
                                     pass
                             else:
                                 logger.warning(f"File not found in storage: {td.file_path.name}")
@@ -512,7 +512,6 @@ def index_training_data_for_rag(agent_id, training_data_id=None):
             # Send notification to user
             try:
                 from .models import Notification
-                from django.utils import timezone
                 
                 # chunks_count, total_chunks, failed_embeddings already retrieved above
                 

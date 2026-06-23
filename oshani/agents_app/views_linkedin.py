@@ -6,7 +6,6 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth import login
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .linkedin_oauth import (
     get_authorization_url,
@@ -126,7 +125,6 @@ def linkedin_oauth_callback(request):
             # Redirect back to oshaani.pro with success parameters
             next_url = request.session.pop('linkedin_oauth_next', None) or '/'
             # Build redirect URL with success indicator
-            from urllib.parse import urlencode
             redirect_url = f"https://oshaani.pro{next_url}?linkedin_success=1&username={user.username}"
             return redirect(redirect_url)
         

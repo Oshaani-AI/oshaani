@@ -349,7 +349,6 @@ class ToolExecutor:
             file_path = None
             file_name = None
             file_content = None
-            file_content_is_binary = False
             
             # Priority 1: Check for file_content (explicit content to save as file)
             # This allows tools and LLM models to provide content that should be saved as downloadable files
@@ -358,17 +357,11 @@ class ToolExecutor:
                 if file_content_value:
                     file_content = file_content_value
                     file_name = result.get('file_name', f'generated_{tool_name}_{abs(hash(str(file_content)))}.txt')
-                    # Check if content is binary (bytes) or text (str)
-                    if isinstance(file_content, bytes):
-                        file_content_is_binary = True
-                    elif isinstance(file_content, str):
-                        # Convert text to bytes for storage
+                    # Normalize content to bytes for storage (bytes are left as-is)
+                    if isinstance(file_content, str):
                         file_content = file_content.encode('utf-8')
-                        file_content_is_binary = False
-                    else:
-                        # Convert other types to string
+                    elif not isinstance(file_content, bytes):
                         file_content = str(file_content).encode('utf-8')
-                        file_content_is_binary = False
             
             # Priority 2: Check for image_url (from text_to_image tool)
             elif 'image_url' in result:
@@ -427,7 +420,6 @@ class ToolExecutor:
                         if isinstance(content_value, (str, bytes)):
                             file_content = content_value if isinstance(content_value, bytes) else content_value.encode('utf-8')
                             file_name = result.get('file_name', f'generated_{tool_name}_{field}.txt')
-                            file_content_is_binary = isinstance(content_value, bytes)
                             break
             
             # Register file if we found one
@@ -530,7 +522,7 @@ class ToolExecutor:
                         file_type = result.get('file_type') or self._guess_file_type(file_name)
                         
                         # Create ConversationFile record
-                        conversation_file = ConversationFile.objects.create(
+                        ConversationFile.objects.create(
                             agent=self.agent,
                             conversation=conversation,
                             file_name=file_name,

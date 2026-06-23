@@ -3,9 +3,6 @@ Unit tests for Agent model methods.
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.utils import timezone
-from datetime import timedelta
-import json
 
 from .models import Agent, AIModel, TrainingData
 

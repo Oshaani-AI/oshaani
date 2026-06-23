@@ -3,7 +3,6 @@ Unit tests for tools and tool executor functionality.
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from unittest.mock import Mock, patch
 import os
@@ -171,7 +170,7 @@ class ToolExecutorFileRegistrationTestCase(TestCase):
             self.tool_executor.tool_manager.get_tool = Mock(return_value=mock_tool)
             
             # Execute tool
-            result = self.tool_executor.execute_tool(
+            self.tool_executor.execute_tool(
                 'code_executor',
                 {'code': 'print("Hello, World!")'},
                 conversation_id=self.conversation.conversation_id

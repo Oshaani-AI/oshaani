@@ -1,10 +1,9 @@
 """GitLab OAuth implementation for fetching training data."""
 import logging
 import requests
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from django.utils import timezone
-from datetime import timedelta
-from .models import Connector, ConnectorSync
+from .models import Connector
 
 logger = logging.getLogger(__name__)
 

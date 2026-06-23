@@ -66,7 +66,6 @@ class AgentAdmin(admin.ModelAdmin):
     def get_urls(self):
         """Add custom URL for API key table view."""
         urls = super().get_urls()
-        from django.urls import path
         custom_urls = [
             path('api-keys-table/', self.admin_site.admin_view(self.api_keys_table_view), name='agents_app_agent_apikeys_table'),
         ]

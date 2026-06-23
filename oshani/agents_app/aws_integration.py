@@ -44,7 +44,7 @@ class BedrockClient:
                         if region_response.status == 200:
                             ec2_region = region_response.read().decode('utf-8').strip()
                             logger.info(f"Detected EC2 region from metadata: {ec2_region}")
-                    except:
+                    except Exception:
                         # Method 2: Try availability zone and extract region
                         try:
                             az_response = urllib.request.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone', timeout=2)
@@ -54,7 +54,7 @@ class BedrockClient:
                                 ec2_region = az[:-1] if len(az) > 1 else None
                                 if ec2_region:
                                     logger.info(f"Detected EC2 region from availability zone: {ec2_region}")
-                        except:
+                        except Exception:
                             pass
                     
                     # Method 3: Use instance identity document (requires token)
@@ -103,11 +103,11 @@ class BedrockClient:
                                     # The region is determined by the endpoint used
                                     # We can infer it from the response or use a default
                                     logger.debug("Using boto3's automatic region detection for IAM role")
-                                except:
+                                except Exception:
                                     pass
                         except Exception as e:
                             logger.debug(f"Could not get region from boto3 session: {str(e)}")
-            except:
+            except Exception:
                 pass
             
             # Determine which region to use
@@ -597,7 +597,6 @@ class BedrockClient:
                     except Exception as e:
                         # Agent not found or error, use original user
                         logger.debug(f"Could not find agent for ID {agent_id}: {str(e)}, using user's subscription")
-                        pass
                 
                 # If trying to use Bedrock, check if subscription_user has access
                 if model_provider == 'bedrock' or (model_provider is None and not self.use_ollama):
@@ -733,13 +732,6 @@ class BedrockClient:
             if bedrock_model.startswith('anthropic.claude-3') or 'claude-3' in bedrock_model.lower():
                 # Claude 3+ models use Messages API format
                 messages = []
-                
-                # Add system message if provided
-                if system_prompt:
-                    # Claude 3 supports system messages
-                    system_message = {"role": "system", "content": system_prompt}
-                    # Note: Some Claude 3 models support system in messages, others need it as a separate field
-                    # We'll include it in the body as a separate field if supported
                 
                 # Add user query
                 user_content = query
@@ -1390,7 +1382,7 @@ class BedrockClient:
                     'output_modalities': model_summary.get('outputModalities', []),
                 })
             return models
-        except Exception as e:
+        except Exception:
             # Return empty list on error
             return []
     

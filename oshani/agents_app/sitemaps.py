@@ -1,14 +1,11 @@
 """Sitemaps for SEO."""
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
-from django.utils import timezone
-from .models import Agent, AgentPublicShare
+from .models import Agent
 
 
 class StaticViewSitemap(Sitemap):
     """Sitemap for static pages."""
-    priority = 0.5
-    changefreq = 'weekly'
     protocol = 'https'
 
     def items(self):
@@ -52,8 +49,6 @@ class StaticViewSitemap(Sitemap):
 class PublicAgentSitemap(Sitemap):
     """Sitemap for individual public agent chat pages."""
     protocol = 'https'
-    changefreq = 'weekly'
-    priority = 0.7
 
     def items(self):
         """Return all published agents with active public shares."""

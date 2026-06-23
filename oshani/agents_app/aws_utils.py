@@ -1,7 +1,6 @@
 """Utility functions for AWS operations with IAM role support."""
 import boto3
 import logging
-import os
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -74,7 +73,7 @@ def get_ec2_region():
             token_response = urllib.request.urlopen(token_request, timeout=2)
             if token_response.status == 200:
                 token = token_response.read().decode('utf-8')
-        except:
+        except Exception:
             pass  # Fall back to IMDSv1
         
         headers = {}
@@ -90,7 +89,7 @@ def get_ec2_region():
             region_response = urllib.request.urlopen(region_request, timeout=2)
             if region_response.status == 200:
                 return region_response.read().decode('utf-8').strip()
-        except:
+        except Exception:
             # Method 2: Try availability zone and extract region
             try:
                 az_request = urllib.request.Request(
@@ -102,7 +101,7 @@ def get_ec2_region():
                     az = az_response.read().decode('utf-8').strip()
                     # Extract region from AZ (e.g., "us-east-1a" -> "us-east-1")
                     return az[:-1] if len(az) > 1 else None
-            except:
+            except Exception:
                 pass
     except Exception as e:
         logger.debug(f"Error getting EC2 region: {str(e)}")

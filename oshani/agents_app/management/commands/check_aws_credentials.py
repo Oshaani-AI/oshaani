@@ -56,13 +56,13 @@ class Command(BaseCommand):
                 if token_response.status == 200:
                     token = token_response.read().decode('utf-8')
                     self.stdout.write(self.style.SUCCESS('  EC2 instance detected (IMDSv2)'))
-            except:
+            except Exception:
                 # Fall back to IMDSv1
                 try:
                     response = urllib.request.urlopen('http://169.254.169.254/latest/meta-data/', timeout=2)
                     if response.status == 200:
                         self.stdout.write(self.style.SUCCESS('  EC2 instance detected (IMDSv1)'))
-                except:
+                except Exception:
                     self.stdout.write(self.style.WARNING('  Not running on EC2 or metadata service unavailable'))
                     self.stdout.write('')
                     return
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                 if region_response.status == 200:
                     ec2_region = region_response.read().decode('utf-8').strip()
                     self.stdout.write(self.style.SUCCESS(f'  EC2 region: {ec2_region}'))
-            except:
+            except Exception:
                 pass
             
             # Get IAM role name
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 if role_response.status == 200:
                     role_name = role_response.read().decode('utf-8').strip()
                     self.stdout.write(self.style.SUCCESS(f'  IAM role: {role_name}'))
-            except:
+            except Exception:
                 pass
             
             self.stdout.write('')

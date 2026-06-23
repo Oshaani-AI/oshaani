@@ -4,7 +4,7 @@ import logging
 import re
 import os
 from typing import Dict, Any, List, Optional
-from .models import Agent, Conversation, ConversationMessage, ToolCall
+from .models import Agent, Conversation, ConversationMessage
 from .tool_executor import ToolExecutor
 from .conversation_memory import get_conversation_memory
 from .conversation_session_state import (
@@ -787,18 +787,6 @@ class AgentLoop:
             tool_result=tool_result or {}
         )
         return message
-        
-        # Update LangChain memory (only for user and agent messages)
-        # This ensures memory is synced immediately after saving to database
-        try:
-            if message_type == 'user' and hasattr(self.memory, 'chat_memory'):
-                self.memory.chat_memory.add_user_message(content)
-                logger.debug(f"Added user message to memory: {content[:50]}...")
-            elif message_type == 'agent' and hasattr(self.memory, 'chat_memory'):
-                self.memory.chat_memory.add_ai_message(content)
-                logger.debug(f"Added agent message to memory: {content[:50]}...")
-        except Exception as e:
-            logger.warning(f"Failed to update memory after saving {message_type} message: {str(e)}", exc_info=True)
     
     def _get_agent_response(self, query: str, system_prompt: str, tool_results: List[Dict]) -> str:
         """Get response from agent (sync operation - will be wrapped in async context)."""
@@ -1205,8 +1193,6 @@ class AgentLoop:
         # If prompt exceeds token budget, summarize content efficiently instead of truncating (preserve context)
         if estimated_tokens > max_tokens_for_content:
             logger.warning(f"[LLM Optimization] Prompt too large ({estimated_tokens} tokens > {max_tokens_for_content}), summarizing content to preserve context")
-            excess_tokens = estimated_tokens - max_tokens_for_content
-            excess_chars = int(excess_tokens * 3.5)
 
             if "Previous Conversation:" in final_query:
                 parts = final_query.split("Previous Conversation:")
@@ -1300,7 +1286,6 @@ class AgentLoop:
         from .rag_service import get_rag_service
         
         # Get conversation history (same as non-streaming)
-        history_start = time.time()
         conversation_history = ""
         
         # Method 1: Try to get from LangChain memory
@@ -1349,8 +1334,6 @@ class AgentLoop:
             except Exception as e:
                 logger.warning(f"Error loading conversation history from database: {str(e)}", exc_info=True)
         
-        history_duration = time.time() - history_start
-        
         # Build query with tool results if any
         if tool_results:
             query_with_context = f"{query}\n\nTool Results:\n"
@@ -1374,7 +1357,6 @@ class AgentLoop:
         model_id = model.model_id
         
         # Use RAG to retrieve relevant context
-        rag_start = time.time()
         rag_context = ""
         use_rag = self.agent.configuration.get('use_rag', True)
         
@@ -1399,8 +1381,6 @@ class AgentLoop:
             except Exception as e:
                 logger.warning(f"RAG retrieval failed: {str(e)}")
                 use_rag = False
-        
-        rag_duration = time.time() - rag_start
         
         # Build final query with RAG context if available
         final_query = query
@@ -1591,7 +1571,6 @@ class AgentLoop:
                     except json.JSONDecodeError as e:
                         logger.debug(f"Failed to parse JSON at position {start_pos}: {str(e)}")
                         # Try to extract tool calls from malformed JSON
-                        pass
                 
                 start_idx = end_pos if end_pos > start_pos else start_pos + 1
         except Exception as e:

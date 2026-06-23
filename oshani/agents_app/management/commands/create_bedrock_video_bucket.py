@@ -9,12 +9,10 @@ This command creates an S3 bucket with:
 - Bucket policy allowing Bedrock service access
 - Optional: Enable bucket logging
 """
-import boto3
 import json
 import logging
 from botocore.exceptions import ClientError
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from agents_app.aws_utils import get_aws_region, create_boto3_client
 
 logger = logging.getLogger(__name__)

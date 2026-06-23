@@ -11,7 +11,6 @@ import uuid
 
 from .models import Agent, Conversation, ConversationMessage, ConversationFile, AIModel
 from .tool_executor import ToolExecutor
-from .agent_loop import AgentLoop
 
 
 class WriteFileWorkflowTestCase(TestCase):
@@ -150,7 +149,7 @@ class FileRegistrationWorkflowTestCase(TestCase):
         }
         tool_executor.tool_manager.get_tool = Mock(return_value=mock_tool)
         
-        result = tool_executor.execute_tool(
+        tool_executor.execute_tool(
             'write_file',
             {'file_name': 'test.txt', 'content': 'Test content'},
             conversation_id=self.conversation.conversation_id
@@ -240,22 +239,12 @@ class ChatWorkflowTestCase(TestCase):
         self.agent.model = self.model
         self.agent.save()
     
-    @patch('agents_app.views_chat.AgentLoop')
     @patch('django.core.files.storage.default_storage')
-    def test_chat_message_with_file_generation(self, mock_storage, mock_agent_loop):
+    def test_chat_message_with_file_generation(self, mock_storage):
         """Test that chat messages include generated files."""
         # Mock storage
         mock_storage.save.return_value = 'conversation_files/1/test-id.txt'
         mock_storage.url.return_value = '/media/conversation_files/1/test-id.txt'
-        
-        # Mock agent loop
-        mock_loop_instance = Mock()
-        mock_loop_instance.execute.return_value = {
-            'response': 'I created the file for you.',
-            'message_id': 1,
-            'user_message_id': 2
-        }
-        mock_agent_loop.return_value = mock_loop_instance
         
         # Create conversation
         conversation = Conversation.objects.create(
@@ -266,7 +255,7 @@ class ChatWorkflowTestCase(TestCase):
         )
         
         # Create user message
-        user_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=conversation,
             message_type='user',
             content='Create a file',
@@ -274,7 +263,7 @@ class ChatWorkflowTestCase(TestCase):
         )
         
         # Create agent message
-        agent_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=conversation,
             message_type='agent',
             content='File created',
@@ -282,7 +271,7 @@ class ChatWorkflowTestCase(TestCase):
         )
         
         # Create generated file
-        generated_file = ConversationFile.objects.create(
+        ConversationFile.objects.create(
             agent=self.agent,
             conversation=conversation,
             file_name='generated.txt',

@@ -510,15 +510,16 @@ class OllamaClient:
                         try:
                             error_response = e.response.json()
                             error_detail = f" - {error_response.get('error', '')}"
-                        except:
+                        except Exception:
                             error_detail = f" - {e.response.text[:200]}"
-                except:
+                except Exception:
                     pass
                 raise Exception(f"Failed to invoke Ollama agent: {str(e)}{error_detail}")
         
         # If we exhausted retries, raise the last exception
         if last_exception:
             raise Exception(f"Failed to invoke Ollama agent after {self.max_retries + 1} attempts: {str(last_exception)}")
+        raise Exception("Failed to invoke Ollama agent: no response received from the server.")
     
     def test_agent(self, agent_id: str, query: str, model: Optional[str] = None, training_data: Optional[list] = None, system_prompt: Optional[str] = None) -> Dict[str, Any]:
         """Test agent with a query."""

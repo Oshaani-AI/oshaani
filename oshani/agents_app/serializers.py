@@ -1,7 +1,7 @@
 """Serializers for agents_app."""
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Agent, TrainingData, TestResult, AIModel, AgentFeedback, CustomTool, Conversation, ConversationMessage, ToolCall, MCPServer, Notification, UserProfile, InferenceProfile
+from .models import Agent, TrainingData, TestResult, AIModel, AgentFeedback, CustomTool, MCPServer, Notification, UserProfile, InferenceProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -201,7 +201,7 @@ class AgentCreateSerializer(serializers.ModelSerializer):
     def validate_model_id(self, value):
         """Validate that the model exists and is available."""
         try:
-            model = AIModel.objects.get(id=value, is_available=True)
+            AIModel.objects.get(id=value, is_available=True)
             return value
         except AIModel.DoesNotExist:
             raise serializers.ValidationError(f"Model with ID {value} not found or not available. Please select a valid model.")

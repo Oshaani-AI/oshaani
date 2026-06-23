@@ -2,7 +2,7 @@
 import os
 import logging
 from celery import Celery
-from celery.signals import task_failure, task_retry
+from celery.signals import task_failure
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'oshani.settings')
@@ -33,16 +33,6 @@ def send_celery_error_email(task_name, error_message, traceback_info, task_id=No
         recipient_email = 'support@oshaani.com'
         
         subject = f"⚠️ Celery Task Failure: {task_name}"
-        
-        # Prepare context for email template
-        context = {
-            'task_name': task_name,
-            'task_id': task_id or 'N/A',
-            'error_message': str(error_message),
-            'traceback_info': traceback_info or 'No traceback available',
-            'retries': retries,
-            'site_url': site_url,
-        }
         
         html_message = None
 

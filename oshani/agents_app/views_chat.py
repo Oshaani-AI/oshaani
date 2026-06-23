@@ -7,12 +7,10 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.db.models import Q, OuterRef, Subquery
 from .models import Agent, Conversation, ConversationMessage, ConversationFile, AgentFeedback
-from .agent_loop import AgentLoop
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +43,6 @@ def user_has_agent_access(user, agent):
 def chat_home(request, slug=None):
     """Chat home page with agent selection and conversation list."""
     from django.shortcuts import redirect
-    from .models import AgentShare
     from django.contrib.auth import get_user_model
     User = get_user_model()
     
@@ -317,7 +314,6 @@ def send_chat_message(request):
         # Get or create conversation
         # For testing status agents, always create a new conversation (start fresh)
         conversation = None
-        is_new_conversation = False
         
         if agent.status == 'testing':
             # Testing agents always start fresh - create new conversation
@@ -327,7 +323,6 @@ def send_chat_message(request):
                 conversation_id=str(uuid.uuid4()),
                 status='active'
             )
-            is_new_conversation = True
         elif conversation_id:
             # Try to get existing conversation if conversation_id provided
             try:
@@ -348,7 +343,6 @@ def send_chat_message(request):
                 conversation_id=str(uuid.uuid4()),
                 status='active'
             )
-            is_new_conversation = True
         
         # Handle file uploads if provided
         file_ids = data.get('file_ids', [])
@@ -460,7 +454,6 @@ def get_chat_task_status(request, task_id):
     """Return status and result of a background chat task. Poll until status is 'success' or 'failure'."""
     from django.core.cache import cache
     from celery.result import AsyncResult
-    from django.conf import settings
 
     # Ensure only the user who started the task can poll it
     allowed_user_id = cache.get(f"chat_task_user_{task_id}")
@@ -520,7 +513,6 @@ def get_conversation(request, conversation_id):
     """Get conversation messages via AJAX - returns last 10 messages."""
     try:
         # Try to get conversation - either owned by user OR owned by agent owner viewing shared agent user
-        from django.db.models import Q
         
         conversation = None
         try:
@@ -753,7 +745,6 @@ def get_conversation_messages_paginated(request, conversation_id):
     """Get conversation messages with pagination."""
     try:
         # Try to get conversation - either owned by user OR owned by agent owner viewing shared agent user
-        from django.db.models import Q
         
         conversation = None
         try:
@@ -1293,7 +1284,6 @@ def submit_feedback(request):
         message_id = data.get('message_id')
         feedback_type = data.get('feedback_type')  # 'positive' or 'negative'
         feedback_text = data.get('feedback_text', '').strip()
-        conversation_id = data.get('conversation_id')
         
         if not message_id:
             return JsonResponse({

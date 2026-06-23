@@ -96,7 +96,7 @@ def health_check(request):
                     }
                 else:
                     raise Exception("Celery broker connection failed: no response from ping")
-            except Exception as e:
+            except Exception:
                 # Fallback: check Redis broker connection directly
                 try:
                     import redis

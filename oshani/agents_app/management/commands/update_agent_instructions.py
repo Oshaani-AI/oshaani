@@ -1,7 +1,6 @@
 """Django management command to update agent instructions."""
 from django.core.management.base import BaseCommand, CommandError
 from agents_app.models import Agent
-import json
 
 
 class Command(BaseCommand):

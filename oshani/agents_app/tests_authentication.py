@@ -5,7 +5,7 @@ from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from rest_framework import exceptions
 
-from .models import Agent, UserProfile, UserAPIKey
+from .models import Agent, UserAPIKey
 from .authentication import (
     AgentAPIKeyAuthentication,
     UserAPIKeyAuthentication,

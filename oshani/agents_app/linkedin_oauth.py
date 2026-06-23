@@ -5,11 +5,8 @@ import os
 import secrets
 import requests
 import logging
-from urllib.parse import urlencode, urlparse, parse_qs
-from django.conf import settings
-from django.contrib.auth import login
+from urllib.parse import urlencode
 from django.contrib.auth.models import User
-from django.shortcuts import redirect
 from django.urls import reverse
 from django.core.cache import cache
 
@@ -130,7 +127,6 @@ def get_or_create_user(user_data):
     """
     # OIDC returns: sub, name, given_name, family_name, email, picture
     email = user_data.get('email', '')
-    sub = user_data.get('sub', '')
     given_name = user_data.get('given_name', '')
     family_name = user_data.get('family_name', '')
     

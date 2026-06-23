@@ -1,10 +1,8 @@
 """OAuth utilities for social media platforms."""
-import os
 import secrets
 import requests
 import logging
 from urllib.parse import urlencode
-from django.conf import settings
 from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
@@ -386,8 +384,6 @@ class InstagramPublishOAuth:
         """Publish a post to Instagram (requires image)."""
         # Instagram API requires a Facebook Page connected to Instagram Business account
         # This is more complex - for now, we'll return instructions
-        headers = {'Authorization': f'Bearer {access_token}'}
-        
         # Get user's Instagram Business Account ID (requires Facebook Page)
         # This is a simplified version - full implementation needs page selection
         raise NotImplementedError("Instagram publishing requires Facebook Page setup. Use the share link feature instead.")

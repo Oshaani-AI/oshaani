@@ -125,7 +125,6 @@ def google_oauth_callback(request):
             # Redirect back to oshaani.pro with success parameters
             next_url = request.session.pop('google_oauth_next', None) or '/'
             # Build redirect URL with success indicator
-            from urllib.parse import urlencode
             redirect_url = f"https://oshaani.pro{next_url}?google_success=1&username={user.username}"
             return redirect(redirect_url)
         

@@ -2,14 +2,10 @@
 Django management command to validate all tools are working correctly.
 """
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from agents_app.tools import ToolManager
-from agents_app.models import Agent, Conversation
-import json
 import traceback
-import os
 
 
 class Command(BaseCommand):
@@ -311,7 +307,7 @@ class Command(BaseCommand):
         try:
             default_storage.save(test_file_path, ContentFile(test_content.encode('utf-8')))
             return {'file_path': test_file_path}
-        except Exception as e:
+        except Exception:
             return {'file_path': 'nonexistent.txt'}
     
     def _test_read_file(self, tool, params):
@@ -324,7 +320,7 @@ class Command(BaseCommand):
             if test_file_path and default_storage.exists(test_file_path):
                 try:
                     default_storage.delete(test_file_path)
-                except:
+                except Exception:
                     pass
             
             if 'error' in result:
@@ -383,7 +379,7 @@ class Command(BaseCommand):
                     return None, "Requires file"
                 return False, result['error']
             return True, "Tool executed"
-        except Exception as e:
+        except Exception:
             return None, "Requires file"
     
     def _test_text_to_image(self, tool, params):
@@ -445,7 +441,7 @@ class Command(BaseCommand):
                     return None, "Requires AWS Bedrock and image file"
                 return False, result['error']
             return True, "Tool executed"
-        except Exception as e:
+        except Exception:
             return None, "Requires AWS Bedrock and image file"
     
     def _test_transcription(self, tool, params):
@@ -460,7 +456,7 @@ class Command(BaseCommand):
                     return None, "Requires AWS Transcribe and audio file"
                 return False, result['error']
             return True, "Tool executed"
-        except Exception as e:
+        except Exception:
             return None, "Requires AWS Transcribe and audio file"
     
     def _test_summarization(self, tool, params):

@@ -3,9 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.utils import timezone
-from django.http import JsonResponse
-from django.views.decorators.cache import cache_page
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import BlogPost, BlogCategory, BlogTag, BlogComment

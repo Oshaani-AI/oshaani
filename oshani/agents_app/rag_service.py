@@ -17,9 +17,8 @@ Data Isolation Guarantees:
 import json
 import logging
 import re
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from django.conf import settings
-from django.core.files.storage import default_storage
 
 logger = logging.getLogger(__name__)
 
@@ -577,12 +576,11 @@ class VectorStore:
         """Initialize Qdrant client."""
         try:
             from qdrant_client import QdrantClient
-            from qdrant_client.models import Distance, VectorParams
             
             if not url:
                 try:
                     url = getattr(settings, 'QDRANT_URL', 'http://localhost:6333')
-                except:
+                except Exception:
                     url = 'http://localhost:6333'
             
             if api_key:
@@ -681,7 +679,7 @@ class VectorStore:
                 collection_info = self.qdrant_client.get_collection(collection_name)
                 current_count = collection_info.points_count
                 logger.debug(f"[RAG Vector Store] Qdrant collection {collection_name} currently has {current_count} points")
-            except:
+            except Exception:
                 current_count = 0
                 logger.debug(f"[RAG Vector Store] Starting with 0 points for new collection {collection_name}")
             
@@ -878,7 +876,7 @@ class VectorStore:
                 try:
                     collection_info = self.qdrant_client.get_collection(collection_name)
                     vector_count = collection_info.points_count
-                except:
+                except Exception:
                     vector_count = 0
                 
                 # Delete collection
@@ -948,19 +946,19 @@ class RAGService:
         if vector_store_backend is None:
             try:
                 vector_store_backend = getattr(settings, 'RAG_VECTOR_STORE_BACKEND', 'qdrant')
-            except:
+            except Exception:
                 vector_store_backend = 'qdrant'
         
         if qdrant_url is None:
             try:
                 qdrant_url = getattr(settings, 'QDRANT_URL', None)
-            except:
+            except Exception:
                 qdrant_url = None
         
         if qdrant_api_key is None:
             try:
                 qdrant_api_key = getattr(settings, 'QDRANT_API_KEY', None)
-            except:
+            except Exception:
                 qdrant_api_key = None
         
         self.vector_store = VectorStore(

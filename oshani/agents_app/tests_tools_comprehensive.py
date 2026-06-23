@@ -3,16 +3,15 @@ Comprehensive unit tests for all tools.
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import json
 
-from .models import Agent, AIModel
+from .models import Agent
 from .tools import (
     WriteFileTool, ReadFileTool, WebSearchTool, URLResolverTool,
     CodeExecutorTool, TextToImageTool, OCRTool, SummarizationTool,
     QuestionAnsweringTool, TranslationTool, ToolManager
 )
-from .tool_executor import ToolExecutor
 
 
 class ReadFileToolTestCase(TestCase):

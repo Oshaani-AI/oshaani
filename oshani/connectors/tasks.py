@@ -2,7 +2,6 @@
 import logging
 from celery import shared_task
 from django.utils import timezone
-from datetime import datetime
 from .models import Connector, ConnectorSync
 from .jira_oauth import JIRAOAuthClient, ConfluenceOAuthClient
 from .gitlab_oauth import GitLabOAuthClient
@@ -10,10 +9,7 @@ from .github_oauth import GitHubOAuthClient
 from .google_oauth import GoogleOAuthClient
 from .microsoft_oauth import MicrosoftOAuthClient
 from .validator import ConnectorValidator
-from agents_app.models import Agent, TrainingData
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-import json
+from agents_app.models import TrainingData
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +131,7 @@ def sync_connector_data(self, sync_id):
                             break
                         
                         # Create training data entry
-                        training_data = TrainingData.objects.create(
+                        TrainingData.objects.create(
                             agent=agent,
                             data_type='text',
                             content=content,
@@ -202,7 +198,7 @@ def sync_connector_data(self, sync_id):
                             break
                         
                         # Create training data entry
-                        training_data = TrainingData.objects.create(
+                        TrainingData.objects.create(
                             agent=agent,
                             data_type='text',
                             content=content,
@@ -270,7 +266,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -312,7 +308,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'gitlab_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -350,7 +346,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'gitlab_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -396,7 +392,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'gitlab_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -465,7 +461,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -524,7 +520,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -579,7 +575,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'google_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -626,7 +622,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -673,7 +669,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -709,7 +705,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'google_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -765,7 +761,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'microsoft_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -801,7 +797,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'microsoft_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -850,7 +846,7 @@ def sync_connector_data(self, sync_id):
                                 logger.warning(f"Agent {agent.id} training data limit reached. Stopping sync.")
                                 break
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -884,7 +880,7 @@ def sync_connector_data(self, sync_id):
                                 'source': f'microsoft_connector_{connector.id}',  # Store source in content
                             }
                             
-                            training_data = TrainingData.objects.create(
+                            TrainingData.objects.create(
                                 agent=agent,
                                 data_type='text',
                                 content=content,
@@ -955,7 +951,7 @@ def sync_connector_data(self, sync_id):
             sync.error_message = str(e)
             sync.completed_at = timezone.now()
             sync.save()
-        except:
+        except Exception:
             pass
         
         # Retry if not exceeded max retries

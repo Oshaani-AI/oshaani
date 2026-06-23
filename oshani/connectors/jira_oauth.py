@@ -3,8 +3,7 @@ import logging
 import requests
 from typing import Dict, Any, Optional, List
 from django.utils import timezone
-from datetime import timedelta
-from .models import Connector, ConnectorSync
+from .models import Connector
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class JIRAOAuthClient:
                     server_info = api_response.json()
                     jira_version = server_info.get('version', 'Unknown')
                     is_jira = True
-            except:
+            except Exception:
                 pass
             
             return {

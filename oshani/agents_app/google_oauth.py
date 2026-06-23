@@ -6,7 +6,6 @@ import secrets
 import requests
 import logging
 from urllib.parse import urlencode
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.cache import cache
@@ -130,7 +129,6 @@ def get_or_create_user(user_data):
     """
     # Google returns: id, email, verified_email, name, given_name, family_name, picture, locale
     email = user_data.get('email', '')
-    google_id = user_data.get('id', '')
     given_name = user_data.get('given_name', '')
     family_name = user_data.get('family_name', '')
     name = user_data.get('name', '')

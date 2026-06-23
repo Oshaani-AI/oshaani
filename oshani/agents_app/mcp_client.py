@@ -5,7 +5,7 @@ import subprocess
 import threading
 import queue
 import time
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional
 from enum import Enum
 
 try:

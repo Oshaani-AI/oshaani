@@ -234,7 +234,6 @@ def send_email_via_ses(subject, message, from_email, recipient_list,
         bool: True if email was sent successfully, False otherwise
     """
     try:
-        import boto3
         from botocore.exceptions import ClientError, BotoCoreError
         
         # Get AWS region from settings or use default

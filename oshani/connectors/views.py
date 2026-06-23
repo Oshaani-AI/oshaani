@@ -2,10 +2,7 @@
 import logging
 import requests
 from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -17,8 +14,7 @@ from .gitlab_oauth import GitLabOAuthClient
 from .github_oauth import GitHubOAuthClient
 from .google_oauth import GoogleOAuthClient
 from .microsoft_oauth import MicrosoftOAuthClient
-from agents_app.models import Agent, TrainingData
-from django.conf import settings
+from agents_app.models import Agent
 
 logger = logging.getLogger(__name__)
 

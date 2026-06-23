@@ -1,14 +1,13 @@
 """Analytics views for agent usage and sharing statistics."""
-import json
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, F, Max
-from django.db.models.functions import TruncDate, TruncDay
+from django.db.models import Sum, Count, Max
+from django.db.models.functions import TruncDate
 from .models import Agent, SharedAgentUsage, AgentShare, Conversation, ConversationMessage, AgentPublicShare
 
 logger = logging.getLogger(__name__)
@@ -322,7 +321,6 @@ def shared_agent_usage_analytics(request, slug=None):
     Otherwise, returns analytics for all agents owned by the user.
     """
     try:
-        from django.utils.dateparse import parse_date
         
         # Get date range from query params
         # Support both 'days' (backward compatibility) and explicit start/end dates

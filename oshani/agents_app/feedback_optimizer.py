@@ -1,7 +1,6 @@
 """Agent optimization using feedback loop."""
 import logging
-from django.db.models import Q, Count, Avg
-from .models import Agent, AgentFeedback
+from .models import AgentFeedback
 
 logger = logging.getLogger(__name__)
 

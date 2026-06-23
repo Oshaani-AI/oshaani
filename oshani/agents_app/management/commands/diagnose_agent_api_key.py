@@ -1,6 +1,4 @@
 """Diagnose agent API key issues."""
-import os
-import sys
 from django.core.management.base import BaseCommand
 from agents_app.models import Agent
 from agents_app.utils import hash_api_key, verify_api_key

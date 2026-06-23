@@ -1,9 +1,6 @@
 """SOP documentation views."""
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
-from django.conf import settings
-import os
-import markdown
+from django.http import HttpResponse
 import logging
 
 logger = logging.getLogger(__name__)

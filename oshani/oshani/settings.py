@@ -145,7 +145,7 @@ try:
     import django_redis
     # Configure Redis cache with optional HiredisParser
     cache_options = {
-        'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        'CLIENT_CLASS': f'{django_redis.__name__}.client.DefaultClient',
         'CONNECTION_POOL_KWARGS': {
             'max_connections': 50,
             'retry_on_timeout': True,
@@ -155,7 +155,7 @@ try:
     # Try to use HiredisParser if available (faster), otherwise use default parser
     try:
         from redis.connection import HiredisParser
-        cache_options['PARSER_CLASS'] = 'redis.connection.HiredisParser'
+        cache_options['PARSER_CLASS'] = f'{HiredisParser.__module__}.HiredisParser'
     except (ImportError, AttributeError):
         # Fallback: don't specify parser, let django-redis use default
         # For newer redis-py versions, parser is auto-selected
@@ -469,7 +469,6 @@ CHANNEL_LAYERS = {
 # Celery Beat Schedule (for periodic tasks)
 # Note: Model sync is on-demand only (manual trigger via API or management command)
 # No automatic periodic tasks are scheduled
-from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     # Model sync is available on-demand via:

@@ -3,7 +3,6 @@ Custom adapters for django-allauth to integrate with existing user model.
 """
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.socialaccount.providers.linkedin_oauth2.provider import LinkedInOAuth2Provider
 from allauth.socialaccount.providers.linkedin_oauth2.views import LinkedInOAuth2Adapter
 
 
@@ -79,7 +78,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         """Handle authentication errors with better user feedback."""
         from django.contrib import messages
         from django.shortcuts import redirect
-        from django.urls import reverse
         import traceback
         
         error_message = "LinkedIn authentication failed. Please try again."

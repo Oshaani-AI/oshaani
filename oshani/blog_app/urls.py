@@ -27,7 +27,7 @@ router.register(r'comments', BlogCommentViewSet, basename='comment')
 
 urlpatterns = [
     # Public pages → production blog
-    path('', lambda request: redirect_to_oshaani_blog(request), name='list'),
+    path('', redirect_to_oshaani_blog, name='list'),
     path('post/<slug:slug>/', lambda request, slug: redirect_to_oshaani_blog(request, f'post/{slug}/'), name='post_detail'),
     path('category/<slug:slug>/', lambda request, slug: redirect_to_oshaani_blog(request, f'category/{slug}/'), name='category_detail'),
     path('tag/<slug:slug>/', lambda request, slug: redirect_to_oshaani_blog(request, f'tag/{slug}/'), name='tag_detail'),

@@ -1,6 +1,5 @@
 """Caching utilities for agent responses using Redis."""
 import hashlib
-import json
 import logging
 from typing import Dict, Any, Optional
 from django.core.cache import cache

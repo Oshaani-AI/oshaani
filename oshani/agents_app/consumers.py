@@ -4,9 +4,7 @@ import logging
 import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
 from .models import Agent, TestResult, AgentFeedback, Conversation
-from .aws_integration import get_bedrock_client
 from .ollama_integration import OllamaClient
 from .feedback_optimizer import FeedbackOptimizer
 from .agent_loop import AgentLoop
@@ -348,7 +346,7 @@ class AgentChatConsumer(AsyncWebsocketConsumer):
     
     async def _get_ollama_streaming_response(self, agent, query, model_id, training_data_list, system_prompt=None):
         """Get streaming response from Ollama agent."""
-        from .ollama_integration import OllamaClient, is_ollama_available
+        from .ollama_integration import is_ollama_available
         import asyncio
         from queue import Queue
         import threading
@@ -419,7 +417,7 @@ class AgentChatConsumer(AsyncWebsocketConsumer):
                             'done': True
                         }))
                         break
-                except:
+                except Exception:
                     # Timeout or empty queue, check if done
                     await asyncio.sleep(0.05)
                     continue

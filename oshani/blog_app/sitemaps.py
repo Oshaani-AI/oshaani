@@ -1,6 +1,5 @@
 """Sitemap configuration for blog app."""
 from django.contrib.sitemaps import Sitemap
-from django.urls import reverse
 from django.utils import timezone
 from .models import BlogPost, BlogCategory, BlogTag
 
@@ -8,7 +7,6 @@ from .models import BlogPost, BlogCategory, BlogTag
 class BlogPostSitemap(Sitemap):
     """Sitemap for blog posts."""
     changefreq = 'weekly'
-    priority = 0.8
     protocol = 'https'
     
     def items(self):

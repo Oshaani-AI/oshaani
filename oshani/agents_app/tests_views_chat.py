@@ -1,20 +1,17 @@
 """
 Unit tests for chat views (views_chat.py).
 """
-from django.test import TestCase, RequestFactory, Client
+from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from datetime import timedelta
-from unittest.mock import Mock, patch, MagicMock
 import json
 import uuid
 
 from .models import Agent, Conversation, ConversationMessage, ConversationFile, AIModel
 from .views_chat import (
-    chat_home, send_chat_message, get_conversation, 
-    get_conversations_list, upload_chat_file, submit_feedback,
-    get_conversation_messages_paginated, user_has_agent_access
+    user_has_agent_access
 )
 
 
@@ -56,7 +53,7 @@ class ChatHomeViewTestCase(TestCase):
     def test_chat_home_displays_conversations(self):
         """Test that chat_home displays user conversations."""
         # Create a conversation
-        conversation = Conversation.objects.create(
+        Conversation.objects.create(
             agent=self.agent,
             user=self.user,
             conversation_id=str(uuid.uuid4()),
@@ -117,18 +114,8 @@ class SendChatMessageViewTestCase(TestCase):
         self.agent.model = self.model
         self.agent.save()
     
-    @patch('agents_app.views_chat.AgentLoop')
-    def test_send_message_creates_conversation(self, mock_agent_loop):
+    def test_send_message_creates_conversation(self):
         """Test that sending a message creates a new conversation."""
-        # Mock agent loop
-        mock_loop_instance = Mock()
-        mock_loop_instance.execute.return_value = {
-            'response': 'Test response',
-            'message_id': 1,
-            'user_message_id': 2
-        }
-        mock_agent_loop.return_value = mock_loop_instance
-        
         response = self.client.post(
             '/api/chat/send/',
             data=json.dumps({
@@ -150,8 +137,7 @@ class SendChatMessageViewTestCase(TestCase):
         self.assertEqual(conversation.agent, self.agent)
         self.assertEqual(conversation.user, self.user)
     
-    @patch('agents_app.views_chat.AgentLoop')
-    def test_send_message_with_file_ids(self, mock_agent_loop):
+    def test_send_message_with_file_ids(self):
         """Test sending message with file attachments."""
         # Create a file first
         conversation_file = ConversationFile.objects.create(
@@ -162,15 +148,6 @@ class SendChatMessageViewTestCase(TestCase):
             file_id=str(uuid.uuid4()),
             download_url=''
         )
-        
-        # Mock agent loop
-        mock_loop_instance = Mock()
-        mock_loop_instance.execute.return_value = {
-            'response': 'Test response',
-            'message_id': 1,
-            'user_message_id': 2
-        }
-        mock_agent_loop.return_value = mock_loop_instance
         
         response = self.client.post(
             '/api/chat/send/',
@@ -190,8 +167,7 @@ class SendChatMessageViewTestCase(TestCase):
         conversation_file.refresh_from_db()
         self.assertIsNotNone(conversation_file.conversation)
     
-    @patch('agents_app.views_chat.AgentLoop')
-    def test_send_message_includes_generated_files(self, mock_agent_loop):
+    def test_send_message_includes_generated_files(self):
         """Test that generated files are included in response."""
         # Create conversation
         conversation = Conversation.objects.create(
@@ -214,24 +190,15 @@ class SendChatMessageViewTestCase(TestCase):
         generated_file.uploaded_at = timezone.now()
         generated_file.save()
         
-        # Mock agent loop
-        mock_loop_instance = Mock()
-        mock_loop_instance.execute.return_value = {
-            'response': 'Test response',
-            'message_id': 1,
-            'user_message_id': 2
-        }
-        mock_agent_loop.return_value = mock_loop_instance
-        
         # Create user and agent messages
-        user_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=conversation,
             message_type='user',
             content='Hello',
             created_at=timezone.now() - timedelta(seconds=10)
         )
         
-        agent_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=conversation,
             message_type='agent',
             content='Response',
@@ -338,7 +305,7 @@ class GetConversationViewTestCase(TestCase):
     def test_get_conversation_includes_files(self):
         """Test that get_conversation includes files for agent messages."""
         # Create user message
-        user_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=self.conversation,
             message_type='user',
             content='Hello',
@@ -346,7 +313,7 @@ class GetConversationViewTestCase(TestCase):
         )
         
         # Create agent message
-        agent_msg = ConversationMessage.objects.create(
+        ConversationMessage.objects.create(
             conversation=self.conversation,
             message_type='agent',
             content='Response',
@@ -354,7 +321,7 @@ class GetConversationViewTestCase(TestCase):
         )
         
         # Create file linked to conversation
-        conversation_file = ConversationFile.objects.create(
+        ConversationFile.objects.create(
             agent=self.agent,
             conversation=self.conversation,
             file_name='test.txt',
@@ -553,13 +520,13 @@ class GetConversationsListViewTestCase(TestCase):
     def test_get_conversations_list_returns_conversations(self):
         """Test that get_conversations_list returns user conversations."""
         # Create conversations
-        conv1 = Conversation.objects.create(
+        Conversation.objects.create(
             agent=self.agent,
             user=self.user,
             conversation_id=str(uuid.uuid4()),
             status='active'
         )
-        conv2 = Conversation.objects.create(
+        Conversation.objects.create(
             agent=self.agent,
             user=self.user,
             conversation_id=str(uuid.uuid4()),

@@ -1,5 +1,4 @@
 """Use case determination for AI models based on their characteristics."""
-import re
 
 
 def determine_model_use_cases(model_id, model_name, description, provider_name, input_modalities, output_modalities):

@@ -3,7 +3,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -11,9 +10,7 @@ from .models import (
     Agent,
     AgentAPIKey,
     TrainingData,
-    TestResult,
     AIModel,
-    AgentFeedback,
     UserProfile,
     AgentShare,
     AgentPublicShare,
@@ -30,7 +27,7 @@ import uuid
 import logging
 logger = logging.getLogger(__name__)
 from .feedback_optimizer import FeedbackOptimizer
-from .serializers import AgentSerializer, TrainingDataSerializer, TestResultSerializer, AgentWebhookSerializer
+from .serializers import AgentWebhookSerializer
 from .aws_integration import get_bedrock_client
 from .tasks import sync_available_models
 import json
@@ -232,7 +229,6 @@ def agents_list(request):
     from datetime import timedelta
     
     now = timezone.now()
-    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_30_days = now - timedelta(days=30)
     
     # Get usage stats for user's agents (as owner)
@@ -455,7 +451,6 @@ def create_first_agent(request):
             import re
             
             # Read sop.html file
-            sop_template_path = 'agents_app/templates/system_sop.html'
             sop_file_path = os.path.join(settings.BASE_DIR, 'agents_app', 'templates', 'system_sop.html')
             
             if os.path.exists(sop_file_path):
@@ -579,7 +574,7 @@ def agent_create(request):
         
         # Check agent creation limit before proceeding
         try:
-            from agents_app.platform_utils import can_perform_action, get_usage_limit, get_usage_count
+            from agents_app.platform_utils import can_perform_action
             can_create, current_count, limit, remaining = can_perform_action(request.user, 'agent_creations')
             if not can_create:
                 if limit is None:
@@ -1024,7 +1019,6 @@ def agent_detail(request, slug):
         from .models import SharedAgentUsage
         from django.db.models import Sum, Count, Max
         from django.utils import timezone
-        from datetime import timedelta
         
         # Get current period usage
         now = timezone.now()
@@ -1444,7 +1438,7 @@ def agent_train(request, slug):
                     agent.status = 'testing'
                     agent.save(update_fields=['status'])
                     messages.success(request, 'Training completed!')
-            except Exception as e:
+            except Exception:
                 pass
         
         return redirect('agent_train', slug=agent.slug)
@@ -1458,7 +1452,7 @@ def agent_train(request, slug):
                 agent.status = 'testing'
                 agent.save(update_fields=['status'])
                 messages.success(request, 'Training completed!')
-        except Exception as e:
+        except Exception:
             pass
     
     # Get all available tools (including disabled ones for display)
@@ -1542,7 +1536,7 @@ def agent_train(request, slug):
                     validation_dt = datetime.fromisoformat(last_validation_time.replace('Z', '+00:00'))
                     if timezone.make_aware(validation_dt) if timezone.is_naive(validation_dt) else validation_dt < validation_threshold:
                         needs_validation = True
-                except:
+                except Exception:
                     needs_validation = True
             
             if needs_validation:
@@ -1605,7 +1599,7 @@ def agent_train(request, slug):
     page_number = request.GET.get('page', 1)
     try:
         training_data_page = paginator.page(page_number)
-    except:
+    except Exception:
         training_data_page = paginator.page(1)
     
     # Maximum documents per agent
@@ -1715,7 +1709,6 @@ def training_data_detail(request, slug, training_data_id):
                     logger.warning(f"Error deleting RAG index status: {str(e)}")
                 
                 # Delete the training data
-                training_data_id_for_redirect = training_data.id
                 training_data.delete()
                 
                 # Update training data count
@@ -1980,7 +1973,6 @@ def agent_publish(request, slug):
     change_summary = agent.get_change_summary() if has_unpublished_changes else []
     
     # Get feedback information
-    from .models import AgentFeedback
     feedbacks = agent.feedbacks.all()
     feedback_summary = {
         'total': feedbacks.count(),
@@ -2097,7 +2089,6 @@ def update_agent_model(request, slug):
     
     # Get available models with use cases serialized for template
     # Get available and compatible models (exclude incompatible ones)
-    from django.db.models import Q
     available_models = AIModel.objects.filter(
         is_available=True
     ).exclude(
@@ -2256,14 +2247,14 @@ def mcp_server_create(request, slug):
             args = json.loads(args_text) if args_text else []
             if not isinstance(args, list):
                 args = []
-        except:
+        except Exception:
             args = []
         
         try:
             headers = json.loads(headers_text) if headers_text else {}
             if not isinstance(headers, dict):
                 headers = {}
-        except:
+        except Exception:
             headers = {}
         
         # For HTTP transport, use user API key for MCP (not agent key)
@@ -2274,24 +2265,22 @@ def mcp_server_create(request, slug):
                 user_api_key = None
                 try:
                     from .models import UserAPIKey
-                    user_api_key_obj = UserAPIKey.objects.filter(
+                    UserAPIKey.objects.filter(
                         user=request.user, 
                         is_active=True
                     ).first()
                     # Note: Plaintext keys are not stored in database for security
                     # User must manually enter their API key in MCP server configuration
-                    pass
-                except:
+                except Exception:
                     pass
                 
                 # Fallback to UserProfile API key
                 if not user_api_key:
                     try:
-                        user_profile = request.user.profile
+                        request.user.profile
                         # Note: Plaintext keys are not stored in database for security
                         # User must manually enter their API key in MCP server configuration
-                        pass
-                    except:
+                    except Exception:
                         pass
                 
                 if user_api_key:
@@ -2321,7 +2310,7 @@ def mcp_server_create(request, slug):
                 test_client.disconnect()
                 
                 # Create MCP server
-                mcp_server = MCPServer.objects.create(
+                MCPServer.objects.create(
                     agent=agent,
                     name=name,
                     description=description,
@@ -2359,7 +2348,7 @@ def mcp_server_create(request, slug):
             # MCP client not available - skip validation but warn user
             messages.warning(request, 'MCP client validation skipped (client not available). Creating server without validation.')
             try:
-                mcp_server = MCPServer.objects.create(
+                MCPServer.objects.create(
                     agent=agent,
                     name=name,
                     description=description,
@@ -2424,14 +2413,14 @@ def mcp_server_update(request, slug, mcp_server_id):
             args = json.loads(args_text) if args_text else []
             if not isinstance(args, list):
                 args = []
-        except:
+        except Exception:
             args = []
         
         try:
             headers = json.loads(headers_text) if headers_text else {}
             if not isinstance(headers, dict):
                 headers = {}
-        except:
+        except Exception:
             headers = {}
         
         # For HTTP transport, use user API key for MCP (not agent key)
@@ -2442,24 +2431,22 @@ def mcp_server_update(request, slug, mcp_server_id):
                 user_api_key = None
                 try:
                     from .models import UserAPIKey
-                    user_api_key_obj = UserAPIKey.objects.filter(
+                    UserAPIKey.objects.filter(
                         user=request.user, 
                         is_active=True
                     ).first()
                     # Note: Plaintext keys are not stored in database for security
                     # User must manually enter their API key in MCP server configuration
-                    pass
-                except:
+                except Exception:
                     pass
                 
                 # Fallback to UserProfile API key
                 if not user_api_key:
                     try:
-                        user_profile = request.user.profile
+                        request.user.profile
                         # Note: Plaintext keys are not stored in database for security
                         # User must manually enter their API key in MCP server configuration
-                        pass
-                    except:
+                    except Exception:
                         pass
                 
                 if user_api_key:
@@ -2637,7 +2624,6 @@ def user_profile(request):
     
     # Get all published agents with their API keys (own + shared)
     from django.db.models import Q
-    from .models import AgentShare
     
     # Build query using Q objects to avoid queryset combination issues
     q = Q(
@@ -2852,8 +2838,6 @@ def share_agent(request, slug):
         return redirect('agent_detail', slug=agent.slug)
     
     if request.method == 'POST':
-        action = request.POST.get('action', '')
-        
         email = request.POST.get('email', '').strip()
         message = request.POST.get('message', '').strip()
         expires_days = request.POST.get('expires_days', '')
@@ -3047,7 +3031,6 @@ def withdraw_agent_share(request, share_id):
     
     try:
         share = get_object_or_404(AgentShare, id=share_id)
-        agent_id = share.agent.id
         email = share.email
         
         # Check if user owns the agent
@@ -3142,7 +3125,7 @@ def generate_public_share_url(request, slug):
             # Deactivate any existing shares
             AgentPublicShare.objects.filter(agent=agent, is_active=True).update(is_active=False)
             
-            public_share = AgentPublicShare.objects.create(
+            AgentPublicShare.objects.create(
                 agent=agent,
                 shared_by=request.user,
                 token=token,
@@ -3510,7 +3493,7 @@ def social_media_oauth_callback(request, platform):
     Note: agent_id is NO LONGER in the URL. It's retrieved from cache using state.
     This allows OAuth providers to use a single fixed callback URL.
     """
-    from connectors.models import Connector, ConnectorType
+    from connectors.models import Connector
     from connectors.social_media_oauth import (
         LinkedInPublishOAuth, FacebookPublishOAuth, 
         TwitterPublishOAuth, InstagramPublishOAuth
@@ -3594,13 +3577,13 @@ def social_media_oauth_callback(request, platform):
         # Publish post
         try:
             if platform == 'linkedin':
-                result = LinkedInPublishOAuth.publish_post(access_token, share_text, agent_url)
+                LinkedInPublishOAuth.publish_post(access_token, share_text, agent_url)
             elif platform == 'facebook':
-                result = FacebookPublishOAuth.publish_post(access_token, share_text, agent_url)
+                FacebookPublishOAuth.publish_post(access_token, share_text, agent_url)
             elif platform == 'twitter':
                 # Twitter doesn't support URLs in text well, include in text
                 twitter_text = f"🤖 Check out this AI agent: {agent.name}\n\n{agent.description[:200] if agent.description else ''}\n\n{agent_url}\n\n#AI #Agent #Automation"
-                result = TwitterPublishOAuth.publish_post(access_token, twitter_text)
+                TwitterPublishOAuth.publish_post(access_token, twitter_text)
             elif platform == 'instagram':
                 # Instagram requires image, so we'll just show success message
                 messages.success(request, f'Successfully connected to Instagram! Use the share link feature to copy content for Instagram.')
@@ -3622,7 +3605,6 @@ def social_media_oauth_callback(request, platform):
 def accept_agent_share(request, token):
     """Accept an agent share via token."""
     from .models import AgentShare
-    logger = logging.getLogger(__name__)
     
     try:
         share = AgentShare.objects.get(token=token)

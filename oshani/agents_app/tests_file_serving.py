@@ -1,12 +1,10 @@
 """
 Unit tests for file serving functionality.
 """
-from django.test import TestCase, RequestFactory, Client
+from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 from django.http import Http404
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import uuid
 
 from .models import Agent, Conversation, ConversationFile

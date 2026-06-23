@@ -8,11 +8,11 @@ from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404
+from django.http import Http404
 import logging
 from .models import (
-    Agent, TrainingData, TestResult, AIModel, Conversation, ConversationMessage, 
-    ToolCall, CustomTool, ConversationFile, MCPServer, Notification, UserProfile, InferenceProfile
+    Agent, TestResult, AIModel, Conversation, ConversationMessage, 
+    ConversationFile, MCPServer, Notification, UserProfile, InferenceProfile
 )
 from .authentication import AgentAPIKeyAuthentication
 from .serializers import (
@@ -21,15 +21,14 @@ from .serializers import (
     ChatRequestSerializer, QueryRequestSerializer, InvokeRequestSerializer,
     AIModelSerializer, CreateConversationSerializer, ContinueConversationSerializer,
     AgentWebhookSerializer,
-    GetAnswerSerializer, FindConversationSerializer, FileUploadSerializer,
+    FindConversationSerializer, FileUploadSerializer,
     MCPServerSerializer, NotificationSerializer, UserProfileSerializer,
     InferenceProfileSerializer, CreateInferenceProfileSerializer
 )
 from .permissions import IsAgentOwner, HasAgentAPIKey, IsPublishedAgent, SessionOrAgentAPIKeyPermission
-from .aws_integration import get_bedrock_client, get_quick_suite_client
+from .aws_integration import get_bedrock_client
 from .tasks import sync_available_models
 from .agent_loop import AgentLoop
-from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,6 @@ class AgentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Get queryset filtered by user, including shared agents."""
         from django.db.models import Q
-        from .models import AgentShare
         
         # Base query: user's own agents
         q = Q(user=self.request.user)
@@ -617,7 +615,6 @@ class AgentViewSet(viewsets.ModelViewSet):
             
             # Get the model from agent - ensure it's valid
             model = agent.model
-            model_provider = model.provider
             model_id = model.model_id
             
             # Validate model_id is not empty
@@ -894,7 +891,6 @@ class InferenceProfileViewSet(viewsets.ModelViewSet):
 
 
 # Simplified API endpoints
-from rest_framework.views import APIView
 from rest_framework.response import Response as APIResponse
 from rest_framework.exceptions import PermissionDenied
 
@@ -928,14 +924,6 @@ class AgentChatView(APIView):
             pass
 
         try:
-            # Determine which client to use based on agent's model
-            if agent.model:
-                model_provider = agent.model.provider
-                model_id = agent.model.model_id
-            else:
-                model_provider = agent.configuration.get('provider') if agent.configuration else None
-                model_id = agent.configuration.get('model') if agent.configuration else None
-            
             # Use AgentLoop for tool calling support
             # Get or create conversation
             # For testing status agents, always start fresh - create new conversation
@@ -1015,14 +1003,6 @@ class AgentQueryView(APIView):
             pass
 
         try:
-            # Determine which client to use based on agent's model
-            if agent.model:
-                model_provider = agent.model.provider
-                model_id = agent.model.model_id
-            else:
-                model_provider = agent.configuration.get('provider') if agent.configuration else None
-                model_id = agent.configuration.get('model') if agent.configuration else None
-            
             # Use AgentLoop for tool calling support
             # Get or create conversation
             # For testing status agents, always start fresh - create new conversation
