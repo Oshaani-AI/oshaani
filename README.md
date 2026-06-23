@@ -29,39 +29,53 @@ See [LICENSE](LICENSE) for full terms.
 - **AI/RAG:** Amazon Bedrock, Ollama, LangChain
 - **Auth:** Django auth + OAuth (LinkedIn, Google) via django-allauth
 
-## Quick Start
+## Getting Started with Docker Compose
 
-The application requires MySQL and Redis. Docker Compose (below) is the easiest path. For a manual local setup:
+Docker Compose is the recommended way to run the app. It starts the full stack — **web**, **Celery worker**, **Celery beat**, **MySQL**, **Redis**, and **Qdrant** — with a single command.
 
-```bash
-cd oshani
-./setup.sh                     # installs dependencies and prepares the environment
-python manage.py migrate
-python manage.py runserver
-```
+### Prerequisites
 
-`runserver` is fine for development. For WebSocket chat and ASGI features, run with Daphne, and start Celery for background tasks:
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2 (`docker compose`)
 
-```bash
-./start_celery.sh             # Celery worker + beat
-```
-
-See `oshani/setup.sh` for detailed local setup instructions.
-
-### Docker Compose (recommended)
-
-Runs the full stack: **web**, **Celery worker**, **Celery beat**, **MySQL**, **Redis**, and **Qdrant**.
+### 1. Configure environment
 
 ```bash
 cp .env.example .env
-# Edit .env — set DJANGO_SECRET_KEY at minimum
+```
 
+Edit `.env` and set, at minimum, `DJANGO_SECRET_KEY`. Other useful values:
+
+- `MYSQL_USER` — MySQL app username (password is set to the same value)
+- `DJANGO_SUPERUSER_USERNAME` / `DJANGO_SUPERUSER_PASSWORD` / `DJANGO_SUPERUSER_EMAIL` — initial admin user
+- `AWS_*` / `OLLAMA_*` — model providers (optional)
+
+> The `DB_*`, Redis, and Qdrant connection settings are wired automatically by `docker-compose.yml`; you do not need to set them in `.env`.
+
+### 2. Build and start
+
+```bash
 docker compose up --build
 ```
 
-Open http://localhost:8000
+On startup the `web` container automatically waits for MySQL, runs database **migrations**, collects **static files**, and creates the **initial admin user** — no manual steps required.
 
-Services:
+Run it in the background with `-d`:
+
+```bash
+docker compose up --build -d
+```
+
+### 3. Open the app
+
+| URL | Description |
+|-----|-------------|
+| http://localhost:8000 | Login page |
+| http://localhost:8000/chat/ | Chat home (after login) |
+| http://localhost:8000/admin/ | Django admin |
+
+Sign in with the admin credentials from your `.env` (defaults: username `manoj.sahu`, password from `DJANGO_SUPERUSER_PASSWORD`).
+
+### Services and ports
 
 | Service      | Purpose                          | Port  |
 |-------------|-----------------------------------|-------|
@@ -72,20 +86,32 @@ Services:
 | redis       | Cache, Celery broker, Channels    | 6379  |
 | qdrant      | Vector store for RAG              | 6333  |
 
-On first startup, an admin user is created automatically (defaults in `.env.example`):
-
-- **Username:** `manoj.sahu`
-- **Password:** set via `DJANGO_SUPERUSER_PASSWORD` in `.env`
-
-Log in at http://localhost:8000/accounts/login/ or `/admin/`.
-
-To create additional users manually:
+### Common commands
 
 ```bash
-docker compose exec web python manage.py createsuperuser
+docker compose logs -f web                      # Tail web logs
+docker compose ps                               # Show running services
+docker compose exec web python manage.py shell  # Django shell
+docker compose exec web python manage.py createsuperuser  # Add another admin
+docker compose down                             # Stop the stack
+docker compose down -v                          # Stop and remove all data volumes
+docker compose up --build -d web                # Rebuild and restart just the web service
 ```
 
-The image uses `python:3-slim-bookworm` (latest Python 3 on Debian Bookworm).
+The image is built from `python:3-slim-bookworm` (latest Python 3 on Debian Bookworm).
+
+### Local development (without Docker)
+
+Requires MySQL and Redis running locally.
+
+```bash
+cd oshani
+./setup.sh                     # installs dependencies and prepares the environment
+python manage.py migrate
+python manage.py runserver     # use Daphne + ./start_celery.sh for full ASGI/async features
+```
+
+See `oshani/setup.sh` for detailed local setup instructions.
 
 ## Configuration
 
