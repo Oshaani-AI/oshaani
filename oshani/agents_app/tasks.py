@@ -43,6 +43,31 @@ def sync_bedrock_models():
             response = client.bedrock_agent_client.list_foundation_models()
             models = response.get('modelSummaries', [])
             
+            # Build a map of base model id -> cross-region inference profile id from
+            # the system-defined profiles AWS actually exposes for this account/region.
+            # Profile ids are the model id prefixed with a geo (global./us./eu./apac./
+            # us-gov.); newer models (e.g. Opus 4.x) use the GLOBAL profile, so we
+            # cannot reliably guess the prefix and must read it from AWS.
+            inference_profile_map = {}
+            try:
+                geo_prefixes = ('global.', 'us-gov.', 'us.', 'eu.', 'apac.')
+                profile_resp = client.bedrock_agent_client.list_inference_profiles(maxResults=1000)
+                for profile in profile_resp.get('inferenceProfileSummaries', []):
+                    if str(profile.get('status', '')).upper() != 'ACTIVE':
+                        continue
+                    profile_id = profile.get('inferenceProfileId', '')
+                    base_id = profile_id
+                    for prefix in geo_prefixes:
+                        if profile_id.startswith(prefix):
+                            base_id = profile_id[len(prefix):]
+                            break
+                    if base_id and base_id != profile_id:
+                        # Prefer a regional profile over global only if none set yet.
+                        inference_profile_map.setdefault(base_id, profile_id)
+                logger.info(f"Discovered {len(inference_profile_map)} cross-region inference profiles")
+            except Exception as profile_err:
+                logger.warning(f"Could not list inference profiles: {profile_err}. Profile-only models may not be invocable.")
+            
             # Filter out deprecated/legacy models and models requiring inference provisioning
             active_models = []
             deprecated_count = 0
@@ -84,21 +109,28 @@ def sync_bedrock_models():
                     logger.debug(f"Skipping model with deprecation warning in description: {model_id}")
                     continue
                 
-                # Check inference types - include both ON_DEMAND and PROVISIONED models
+                # Check inference types - include ON_DEMAND, PROVISIONED, and
+                # INFERENCE_PROFILE (cross-region) models.
                 inference_types = model_summary.get('inferenceTypesSupported', [])
                 if not inference_types:
                     # If inference types not specified, assume it might require provisioning - skip it
                     logger.debug(f"Skipping model without inference types: {model_id}")
                     continue
                 
-                # Include models that support ON_DEMAND (no provisioning) or PROVISIONED (requires inference profile)
-                if 'ON_DEMAND' not in inference_types and 'PROVISIONED' not in inference_types:
+                # Include models reachable via ON_DEMAND, PROVISIONED, or a
+                # cross-region INFERENCE_PROFILE. Newer Bedrock models (e.g.
+                # Claude 3.5+/Opus 4.x) are INFERENCE_PROFILE-only.
+                supported_types = {'ON_DEMAND', 'PROVISIONED', 'INFERENCE_PROFILE'}
+                if not supported_types.intersection(inference_types):
                     inference_required_count += 1
                     logger.debug(f"Skipping model with unsupported inference types: {model_id} (inference types: {inference_types})")
                     continue
                 
-                # Track if model requires inference profile
-                requires_inference_profile = 'PROVISIONED' in inference_types and 'ON_DEMAND' not in inference_types
+                # Track whether this model can only be invoked through an
+                # inference profile (no direct ON_DEMAND access).
+                requires_inference_profile = 'ON_DEMAND' not in inference_types and (
+                    'PROVISIONED' in inference_types or 'INFERENCE_PROFILE' in inference_types
+                )
                 
                 # Include active models (both ON_DEMAND and PROVISIONED)
                 model_summary['_requires_inference_profile'] = requires_inference_profile
@@ -159,6 +191,14 @@ def sync_bedrock_models():
                     requires_inference_profile = model_summary.get('_requires_inference_profile', False)
                     inference_types = model_summary.get('inferenceTypesSupported', [])
                     
+                    # Resolve the actual cross-region inference profile id (if any)
+                    # so invocation can use it directly instead of guessing a prefix.
+                    inference_profile_id = inference_profile_map.get(model_id)
+                    if requires_inference_profile and not inference_profile_id:
+                        logger.warning(
+                            f"Model {model_id} requires an inference profile but none was found in this region"
+                        )
+                    
                     # Determine best use cases for this model
                     use_cases = determine_model_use_cases(
                         model_id=model_id,
@@ -185,6 +225,7 @@ def sync_bedrock_models():
                                 'model_arn': model_summary.get('modelArn', ''),
                                 'inference_types_supported': inference_types,
                                 'requires_inference_profile': requires_inference_profile,
+                                'inference_profile_id': inference_profile_id,
                                 'model_lifecycle': model_lifecycle,
                                 'lifecycle_status': lifecycle_status,
                                 'is_compatible': is_compatible,

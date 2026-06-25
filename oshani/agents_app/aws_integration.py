@@ -533,6 +533,70 @@ class BedrockClient:
                     pass
             raise Exception(f"Failed to test agent: {str(e)}")
     
+    def _resolve_bedrock_invocation_id(self, bedrock_model):
+        """Resolve the modelId to use when calling invoke_model.
+
+        Newer Bedrock models (e.g. Claude 3.5+/Opus 4.x) are only invocable via
+        a cross-region (system-defined) inference profile, whose id is the model
+        id prefixed with a geo such as ``us.``/``eu.``/``apac.``/``global.``.
+        The exact prefix varies per model and region, so we prefer the real
+        profile id discovered during sync (stored on the model's metadata) and
+        only fall back to a region-based guess if it is missing. Returns the
+        original id unchanged on any uncertainty.
+        """
+        try:
+            if not bedrock_model:
+                return bedrock_model
+
+            # Already a geo-prefixed inference profile id or a full ARN.
+            known_prefixes = ('us.', 'eu.', 'apac.', 'us-gov.', 'global.')
+            if bedrock_model.startswith(known_prefixes) or bedrock_model.startswith('arn:'):
+                return bedrock_model
+
+            from .models import AIModel
+            ai_model = AIModel.objects.filter(
+                model_id=bedrock_model, provider='bedrock'
+            ).first()
+            if not ai_model:
+                return bedrock_model
+
+            metadata = ai_model.metadata or {}
+            requires_profile = metadata.get('requires_inference_profile', False)
+            inference_types = metadata.get('inference_types_supported', [])
+            if not (requires_profile or 'INFERENCE_PROFILE' in inference_types):
+                return bedrock_model
+
+            # Prefer the real inference profile id captured at sync time.
+            stored_profile_id = metadata.get('inference_profile_id')
+            if stored_profile_id:
+                logger.info(
+                    f"Using synced inference profile id: {bedrock_model} -> {stored_profile_id}"
+                )
+                return stored_profile_id
+
+            # Fallback: guess the geo prefix from the active region.
+            region = getattr(self, 'region', '') or getattr(settings, 'AWS_REGION', 'us-east-1')
+            region = region.lower()
+            if region.startswith('eu-'):
+                geo = 'eu.'
+            elif region.startswith('ap-'):
+                geo = 'apac.'
+            elif region.startswith('us-gov-'):
+                geo = 'us-gov.'
+            else:
+                geo = 'us.'
+
+            profile_id = f"{geo}{bedrock_model}"
+            logger.info(
+                f"Guessed inference-profile model id: {bedrock_model} -> {profile_id} (region={region})"
+            )
+            return profile_id
+        except Exception as e:
+            logger.warning(
+                f"Could not resolve inference profile id for {bedrock_model}: {e}. Using original id."
+            )
+            return bedrock_model
+
     def invoke_agent(self, agent_id, query, context=None, model=None, system_prompt=None, model_provider=None, training_data=None, tools_enabled=True, inference_profile_arn=None, user=None, agent_db_id=None, max_tokens=None):
         """
         Invoke Bedrock agent with optimized prompt handling.
@@ -973,8 +1037,9 @@ class BedrockClient:
                     invoke_params['modelId'] = inference_profile_arn
                     logger.info(f"Using inference profile ARN as modelId: {inference_profile_arn} for model {bedrock_model}")
                 else:
-                    # Use model ID directly (for ON_DEMAND models)
-                    invoke_params['modelId'] = bedrock_model
+                    # Use model ID directly (for ON_DEMAND models), auto-resolving
+                    # to a cross-region inference profile id when required.
+                    invoke_params['modelId'] = self._resolve_bedrock_invocation_id(bedrock_model)
                 
                 response = self.bedrock_client.invoke_model(**invoke_params)
             except ClientError as e:
@@ -1645,7 +1710,7 @@ class BedrockClient:
                 invoke_params['modelId'] = inference_profile_arn
                 logger.info(f"Using inference profile for streaming: {inference_profile_arn}")
             else:
-                invoke_params['modelId'] = bedrock_model
+                invoke_params['modelId'] = self._resolve_bedrock_invocation_id(bedrock_model)
             
             # Call invoke_model_with_response_stream
             logger.info(f"Starting Bedrock streaming for model: {bedrock_model}")
