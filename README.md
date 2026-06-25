@@ -35,7 +35,68 @@ Docker Compose is the recommended way to run the app. It starts the full stack â
 
 ### Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2 (`docker compose`)
+- [Docker](https://docs.docker.com/get-docker/)
+
+### Install Docker Compose v2
+
+Docker Compose v2 is the `docker compose` CLI plugin (not the legacy standalone `docker-compose` binary). [Docker Desktop](https://docs.docker.com/desktop/) on macOS and Windows includes it.
+
+On most Linux distributions you can install the plugin from the package manager:
+
+```bash
+# Debian / Ubuntu
+sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+
+# Fedora / RHEL
+sudo dnf install -y docker-compose-plugin
+```
+
+On **Amazon Linux 2023** the `docker-compose-plugin` package is not available in the default repos, so install the official plugin binary manually:
+
+```bash
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+```
+
+Verify the installation:
+
+```bash
+docker compose version
+```
+
+You should see `Docker Compose version v2.x.x` (or newer).
+
+### Install Docker Buildx
+
+`docker compose build` requires the Buildx plugin **v0.17.0 or later**. Docker Desktop and most recent Docker Engine packages include a compatible version â€” check yours with:
+
+```bash
+docker buildx version
+```
+
+If Buildx is missing or older than v0.17.0 (common on **Amazon Linux 2023**), install the latest plugin binary manually:
+
+```bash
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+ARCH=$(uname -m); [ "$ARCH" = "x86_64" ] && ARCH=amd64; [ "$ARCH" = "aarch64" ] && ARCH=arm64
+sudo curl -SL "https://github.com/docker/buildx/releases/latest/download/buildx-$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+').linux-${ARCH}" \
+  -o /usr/local/lib/docker/cli-plugins/docker-buildx
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+docker buildx version
+```
+
+### Allow your user to run Docker (Linux)
+
+If you get `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`, add your user to the `docker` group:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker   # or log out and back in for the change to take effect
+```
+
+Alternatively, prefix Docker commands with `sudo`.
 
 ### 1. Configure environment
 

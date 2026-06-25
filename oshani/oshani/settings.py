@@ -42,9 +42,11 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'  # Isolate browsing context
 
 # HTTPS Security (nginx handles SSL termination, but Django should know it's behind HTTPS)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = False  # Nginx handles HTTPS redirect
-SESSION_COOKIE_SECURE = True  # Only send session cookie over HTTPS
-CSRF_COOKIE_SECURE = True  # Only send CSRF cookie over HTTPS
+# Configurable via env so HTTP-only deployments (e.g. local/IP access without
+# TLS) can disable the Secure flag; defaults stay secure for production.
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'  # Nginx handles HTTPS redirect
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True') == 'True'  # Only send session cookie over HTTPS
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True') == 'True'  # Only send CSRF cookie over HTTPS
 SESSION_COOKIE_SAMESITE = 'Lax'  # Mitigate CSRF on top-level cross-site requests
 CSRF_COOKIE_SAMESITE = 'Lax'
 
@@ -289,6 +291,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
 ]
+
+# Append extra trusted origins from env (comma-separated, full scheme required),
+# e.g. CSRF_TRUSTED_ORIGINS=http://1.2.3.4:8000,https://my.domain.com
+_extra_csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS += [o.strip() for o in _extra_csrf_origins.split(',') if o.strip()]
 
 # AWS Configuration
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
